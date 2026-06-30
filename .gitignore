@@ -398,6 +398,5 @@ FodyWeavers.xsd
 *.sln.iml
 
 
-# Generated files
-/Dolly/Generated/*
-/.idea
+# opencode
+opencode/*
