@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
-namespace ImageShare.Endpoints;
+namespace ImageShare.Authentication;
 
-public static class AuthEndpoints
+public static class AuthenticationEndpoints
 {
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder endpoints)
     {
@@ -21,17 +21,14 @@ public static class AuthEndpoints
                 new AuthenticationProperties { RedirectUri = "/" },
                 new[] { CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme }));
 
-        endpoints.MapGet("/user", (HttpContext context) =>
+        endpoints.MapGet("/user", (User user) =>
         {
-            if (context.User.Identity?.IsAuthenticated != true)
-                return Results.Unauthorized();
-
-            var claims = context.User.Claims.Select(c => new { c.Type, c.Value });
-            return Results.Ok(new
+            if (!user.IsAuthenticated)
             {
-                context.User.Identity.Name,
-                Claims = claims
-            });
+                return Results.Unauthorized();
+            }
+
+            return Results.Ok(user);
         }).RequireAuthorization();
 
         return endpoints;

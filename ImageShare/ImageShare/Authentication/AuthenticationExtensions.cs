@@ -1,16 +1,18 @@
 ﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
-namespace ImageShare.Infrastructure;
+namespace ImageShare.Authentication;
 
 public static class AuthenticationExtensions
 {
+    public static IServiceCollection AddUser(this IServiceCollection services)
+    {
+        services.AddHttpContextAccessor();
+        return services.AddScoped<User>();
+    }
+
     public static IServiceCollection AddOpenIdConnectAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddOptions<OidcSettings>()
-            .BindConfiguration("OpenIdConnect")
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
         var oidcSettings = configuration.GetSection("OpenIdConnect").Get<OidcSettings>() ?? throw new InvalidDataException("");
 
         services.AddAuthentication(options =>
@@ -29,6 +31,7 @@ public static class AuthenticationExtensions
             options.Scope.Add("openid");
             options.Scope.Add("profile");
             options.Scope.Add("email");
+            options.Scope.Add("image_share_filter");
             options.CallbackPath = "/signin-oidc";
             options.SignedOutCallbackPath = "/signout-callback-oidc";
             options.UsePkce = true;
