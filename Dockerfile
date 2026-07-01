@@ -25,12 +25,17 @@ RUN npm i -g "opencode-ai@${OPENCODE_VERSION}" && \
 RUN npm install -g corepack && \
   corepack enable pnpm
 
-# install dotnet
-RUN wget https://packages.microsoft.com/config/debian/${DEBIAN_VERSION_NUMBER}/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
+# Install microsoft packages repository
+RUN wget -q https://packages.microsoft.com/config/debian/${DEBIAN_VERSION_NUMBER}/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
   dpkg -i packages-microsoft-prod.deb && \
   rm packages-microsoft-prod.deb && \
-  apt-get update && \
-  apt-get install -y dotnet-sdk-10.0
+  apt-get update
+
+# Install powershell
+RUN apt-get install -y powershell
+
+# install dotnet
+RUN   apt-get install -y dotnet-sdk-10.0
 
 # non-root user (recommended)
 RUN adduser --disabled-password opencode
