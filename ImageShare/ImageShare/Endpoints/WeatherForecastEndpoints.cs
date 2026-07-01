@@ -1,4 +1,4 @@
-namespace ImageShare.Endpoints;
+﻿namespace ImageShare.Endpoints;
 
 public static class WeatherForecastEndpoints
 {
@@ -26,9 +26,4 @@ public static class WeatherForecastEndpoints
 
         return endpoints;
     }
-}
-
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
@@ -29,7 +29,7 @@ public static class AuthEndpoints
             var claims = context.User.Claims.Select(c => new { c.Type, c.Value });
             return Results.Ok(new
             {
-                Name = context.User.Identity.Name,
+                context.User.Identity.Name,
                 Claims = claims
             });
         }).RequireAuthorization();

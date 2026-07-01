@@ -1,4 +1,4 @@
-using ImageShare.Endpoints;
+﻿using ImageShare.Endpoints;
 using ImageShare.Infrastructure;
 using Scalar.AspNetCore;
 
@@ -23,4 +23,4 @@ app.MapHealthEndpoints();
 app.MapWeatherForecastEndpoints();
 app.MapAuthEndpoints();
 
-app.Run();
+await app.RunAsync();

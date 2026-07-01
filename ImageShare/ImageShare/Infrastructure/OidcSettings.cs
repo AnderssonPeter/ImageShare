@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace ImageShare.Infrastructure;

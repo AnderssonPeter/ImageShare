@@ -1,9 +1,9 @@
-todo:
+﻿todo:
 [ ] Add nuget mcp
 [ ] BE
   [ ] NativeAOT
-  [ ] editorconfig
-  [ ] Linting
+  [X] editorconfig
+  [X] Linting
   [X] Scalar
   [ ] Add user class
   [ ] Parse scopes to detect what images we are allowed to read

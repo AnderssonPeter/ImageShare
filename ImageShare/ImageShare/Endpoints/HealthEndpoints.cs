@@ -1,4 +1,4 @@
-namespace ImageShare.Endpoints;
+﻿namespace ImageShare.Endpoints;
 
 public static class HealthEndpoints
 {
