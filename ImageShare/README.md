@@ -1,10 +1,13 @@
 ﻿todo:
-[ ] Add nuget mcp
-[ ] Enable dotnet and typescript LSP
+[X] Add nuget mcp
+[X] Enable dotnet and typescript LSP
+[X] Add powershell to docker?
 [ ] BE
-  [ ] Add run script
-    [ ] Add dotnet format
-    [ ] Add test start application
+  [X] Add run script
+    [X] Add dotnet format
+    [X] Add test start application
+      [ ] Modify to scan the output instead of doing a health check
+      [ ] Move the script to a file
   [X] NativeAOT
   [X] editorconfig
   [X] Linting
