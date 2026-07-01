@@ -1,37 +1,22 @@
 ﻿using System.Diagnostics;
-using System.Text.RegularExpressions;
 
 namespace ImageShare.Authentication;
 
-public class User
+public class User : IUser
 {
+    private readonly ImageShareFilterService _imageShareFilterService;
+
     public required bool IsAuthenticated { get; init; }
     public required string Name { get; init; }
-    public required string ImageShareFilter { get; init; }
+    private string ImageShareFilter { get; init; }
 
-    public bool CanAccessFolder(string folder)
+    public bool CanAccessFolder(string folder) =>
+        _imageShareFilterService.GetimageShareFilterRegex(ImageShareFilter).IsMatch(folder);
+
+    public User(IHttpContextAccessor httpContextAccessor, ImageShareFilterService imageShareFilterService)
     {
-        if (string.IsNullOrEmpty(ImageShareFilter))
-            return false;
+        _imageShareFilterService = imageShareFilterService;
 
-        var patterns = ImageShareFilter.Split('|');
-
-        var regexParts = new List<string>();
-
-        foreach (var pattern in patterns)
-        {
-            var escaped = Regex.Escape(pattern);
-            escaped = escaped.Replace("\\*", "[^/]*");
-            escaped = escaped.Replace("\\?", "[^/]");
-            regexParts.Add("^" + escaped + "$");
-        }
-
-        var regex = new Regex(string.Join('|', regexParts), RegexOptions.Compiled | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(0.25));
-        return regex.IsMatch(folder);
-    }
-
-    public User(IHttpContextAccessor httpContextAccessor)
-    {
         var context = httpContextAccessor.HttpContext ?? throw new UnreachableException("Failed to get http context");
 
         if (context.User.Identity?.IsAuthenticated != true)

@@ -5,8 +5,8 @@ using ImageShare.Endpoints;
 namespace ImageShare;
 
 [JsonSerializable(typeof(WeatherForecast))]
-[JsonSerializable(typeof(User))]
 [JsonSerializable(typeof(WeatherForecast[]))]
+[JsonSerializable(typeof(IUser))]
 // register ALL types of serialisable DTOs
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower)]
 internal partial class AppJsonSerializerContext : JsonSerializerContext;

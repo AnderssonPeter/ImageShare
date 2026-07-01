@@ -11,6 +11,9 @@ public static class AuthenticationExtensions
         return services.AddScoped<User>();
     }
 
+    public static IServiceCollection AddImageShareFilter(this IServiceCollection services) =>
+        services.AddSingleton<ImageShareFilterService>();
+
     public static IServiceCollection AddOpenIdConnectAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         var oidcSettings = configuration.GetSection("OpenIdConnect").Get<OidcSettings>() ?? throw new InvalidDataException("");
