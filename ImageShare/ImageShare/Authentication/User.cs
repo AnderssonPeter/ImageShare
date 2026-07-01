@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace ImageShare.Authentication;
 
@@ -8,15 +9,36 @@ public class User
     public required string Name { get; init; }
     public required string ImageShareFilter { get; init; }
 
+    public bool CanAccessFolder(string folder)
+    {
+        if (string.IsNullOrEmpty(ImageShareFilter))
+            return false;
+
+        var patterns = ImageShareFilter.Split('|');
+
+        var regexParts = new List<string>();
+
+        foreach (var pattern in patterns)
+        {
+            var escaped = Regex.Escape(pattern);
+            escaped = escaped.Replace("\\*", "[^/]*");
+            escaped = escaped.Replace("\\?", "[^/]");
+            regexParts.Add("^" + escaped + "$");
+        }
+
+        var regex = new Regex(string.Join('|', regexParts), RegexOptions.Compiled | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(0.25));
+        return regex.IsMatch(folder);
+    }
+
     public User(IHttpContextAccessor httpContextAccessor)
     {
         var context = httpContextAccessor.HttpContext ?? throw new UnreachableException("Failed to get http context");
 
         if (context.User.Identity?.IsAuthenticated != true)
         {
-            this.IsAuthenticated = false;
-            this.Name = "";
-            this.ImageShareFilter = "";
+            IsAuthenticated = false;
+            Name = "";
+            ImageShareFilter = "";
             return;
         }
 
@@ -27,8 +49,8 @@ public class User
 
         var imageShareFilter = context.User.Claims.Single(c => c.Type.Equals("image_share_filter")).Value;
 
-        this.IsAuthenticated = true;
-        this.Name = name;
-        this.ImageShareFilter = imageShareFilter;
+        IsAuthenticated = true;
+        Name = name;
+        ImageShareFilter = imageShareFilter;
     }
 }
