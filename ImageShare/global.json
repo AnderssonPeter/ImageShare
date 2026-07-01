@@ -1,0 +1,13 @@
+﻿{
+  "sdk": {
+    "version": "10.0.301",
+    "rollForward": "latestPatch"
+  },
+  "scripts": {
+    "format": "dotnet format ImageShare.slnx",
+    "format:check": "dotnet format ImageShare.slnx --verify-no-changes",
+    "test": "dotnet run --project ImageShare.Tests/ImageShare.Tests.csproj",
+    "build": "dotnet build",
+    "ci": "dotnet r format:check && dotnet r build && dotnet r test"
+  }
+}

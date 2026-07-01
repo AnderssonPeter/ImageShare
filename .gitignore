@@ -397,6 +397,6 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
-
 # opencode
-opencode/*
+opencode/state/*
+opencode/share/*

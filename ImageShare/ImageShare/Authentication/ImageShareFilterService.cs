@@ -7,7 +7,7 @@ public class ImageShareFilterService
     private readonly Dictionary<string, Regex> _cache = [];
     private readonly Lock _lock = new();
 
-    public Regex GetimageShareFilterRegex(string imageShareFilter)
+    public Regex GetImageShareFilterRegex(string imageShareFilter)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(imageShareFilter);
         lock (_lock)

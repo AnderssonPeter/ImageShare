@@ -1,7 +1,12 @@
 <Solution>
   <Folder Name="/Solution Items/">
+    <File Path="../.gitignore" />
+    <File Path=".dockerignore" />
     <File Path=".editorconfig" />
+    <File Path="dotnet-tools.json" />
+    <File Path="global.json" />
     <File Path="README.md" />
   </Folder>
+  <Project Path="ImageShare.Tests/ImageShare.Tests.csproj" />
   <Project Path="ImageShare/ImageShare.csproj" />
 </Solution>

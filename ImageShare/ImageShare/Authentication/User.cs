@@ -11,7 +11,7 @@ public class User : IUser
     private string ImageShareFilter { get; init; }
 
     public bool CanAccessFolder(string folder) =>
-        _imageShareFilterService.GetimageShareFilterRegex(ImageShareFilter).IsMatch(folder);
+        _imageShareFilterService.GetImageShareFilterRegex(ImageShareFilter).IsMatch(folder);
 
     public User(IHttpContextAccessor httpContextAccessor, ImageShareFilterService imageShareFilterService)
     {
