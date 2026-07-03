@@ -1,4 +1,4 @@
-using ImageMagick;
+﻿using ImageMagick;
 using ImageShare.Thumbnail;
 
 namespace ImageShare.Tests;
