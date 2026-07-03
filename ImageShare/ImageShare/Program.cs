@@ -1,5 +1,6 @@
 ﻿using ImageShare;
 using ImageShare.Authentication;
+using ImageShare.Browsing;
 using ImageShare.Health;
 using ImageShare.Thumbnail;
 using Scalar.AspNetCore;
@@ -36,7 +37,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapHealthEndpoints();
-app.MapWeatherForecastEndpoints();
 app.MapAuthEndpoints();
 app.MapFolderEndpoints();
 
