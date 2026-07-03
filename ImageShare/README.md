@@ -19,6 +19,7 @@
   [X] Parse scopes to detect what images we are allowed to read
   [ ] Add endpoint to fetch folder
   [ ] Add endpoint to fetch images
+  [X] Find a way to generate thumbprints
 [ ] FE
   [ ] Client Generation
   [ ] editorconfig
