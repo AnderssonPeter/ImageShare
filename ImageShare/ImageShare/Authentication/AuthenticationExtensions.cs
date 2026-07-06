@@ -16,6 +16,10 @@ public static class AuthenticationExtensions
 
     public static IServiceCollection AddOpenIdConnectAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddOptions<OidcSettings>()
+            .BindConfiguration("OpenIdConnect")
+            .Validated();
+
         var oidcSettings = configuration.GetSection("OpenIdConnect").Get<OidcSettings>() ?? throw new InvalidDataException("");
 
         services.AddAuthentication(options =>

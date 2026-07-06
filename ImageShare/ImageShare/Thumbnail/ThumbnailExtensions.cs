@@ -2,20 +2,17 @@
 
 public static class ThumbnailExtensions
 {
-    public static IServiceCollection AddThumbnailService(this IServiceCollection services, IConfiguration? configuration = null)
+    public static IServiceCollection AddThumbnailService(this IServiceCollection services)
     {
-        var thumbnailOptions = configuration?.GetSection("Thumbnail").Get<ThumbnailOptions>() ?? new ThumbnailOptions();
-        services.AddSingleton<IThumbnailService>(new ThumbnailService(thumbnailOptions));
+        services.AddOptions<ThumbnailOptions>()
+            .BindConfiguration("Thumbnail")
+            .Validated();
 
-        var thumbprintOptions = configuration?.GetSection("Thumbprint").Get<ThumbprintOptions>() ?? new ThumbprintOptions();
-        services.Configure<ThumbprintOptions>(options =>
-        {
-            options.ThumbSuffix = thumbprintOptions.ThumbSuffix;
-            options.ThumbFormat = thumbprintOptions.ThumbFormat;
-            options.WatchForChanges = thumbprintOptions.WatchForChanges;
-            options.MaxConcurrentGenerations = thumbprintOptions.MaxConcurrentGenerations;
-        });
-        //services.AddHostedService<ThumbprintService>();
+        services.AddSingleton<IThumbnailService, ThumbnailService>();
+
+        services.AddOptions<ThumbprintOptions>()
+            .BindConfiguration("Thumbprint")
+            .Validated();
 
         return services;
     }

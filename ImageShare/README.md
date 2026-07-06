@@ -18,7 +18,7 @@
     [X] Add unit tests for canAccessFolder method
   [X] Parse scopes to detect what images we are allowed to read
   [X] Keep one list of supported image formats in configuration and use it instead of hardcoding in both ImageEndpoints and ThumbprintService, it should be it's own options object and in appsettings.json it should be avif, webp, jpg, png.
-  [ ] When adding options add validation attributes and validate them on startup.
+  [X] When adding options add validation attributes and validate them on startup
   [ ] Add endpoint to fetch folder
     [ ] BrowserEndpoint must support duplicate images with different formats
     [ ] BrowserEndpoint should not return the file extension
@@ -33,11 +33,11 @@
   [X] Find a way to generate thumbprints
   [ ] Move the Paginate method to a helper method and make it generic
   [ ] Make service generate the image in all possible formats
-    [ ] Generate thumbnails for all formats and in all formats
-    [ ] Create a mock of IFileProvider that keeps state in memory and use for unit testing
     [ ] There is a mix of Thumbprint and Thumbnail in the codebase, we should standardize on one of them
       [ ] Modify the ThumbnailService to instead convert between formats and also specify a target resolution
       [ ] Rename the folder and all classes inside to something more appropriate, like ImageConversion, ImageConveter
+    [ ] Generate thumbnails for all formats and in all formats
+    [ ] Change from PhysicalFileProvider to WritablePhysicalFileProvider, register it as both ISyncWritableFileProvider, IAsyncWritableFileProvider and IFileProvider, use IAsyncWritableFileProvider when creating new files.
   [ ] Add static analysis unit test that ensures that all minimal endpoints parameters has [FromQuery], [FromRoute], [FromBody], [FromHeader] or [FromServices] attributes
 [ ] FE
   [ ] Client Generation

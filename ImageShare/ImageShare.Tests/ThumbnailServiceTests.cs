@@ -1,11 +1,12 @@
 ﻿using ImageMagick;
 using ImageShare.Thumbnail;
+using Microsoft.Extensions.Options;
 
 namespace ImageShare.Tests;
 
 public class ThumbnailServiceTests
 {
-    private static readonly ThumbnailService DefaultService = new();
+    private static readonly ThumbnailService DefaultService = new(Options.Create(new ThumbnailOptions()));
 
     private static byte[] CreateTestAvif()
     {
@@ -148,7 +149,7 @@ public class ThumbnailServiceTests
     public async Task GenerateThumbnail_ServiceWithDefaults_UsesProvidedDefaults()
     {
         var defaults = new ThumbnailOptions { MaxWidth = 50, MaxHeight = 50 };
-        var service = new ThumbnailService(defaults);
+        var service = new ThumbnailService(Options.Create(defaults));
         var avif = CreateTestAvif();
 
         var result = service.GenerateThumbnail(avif);
@@ -162,7 +163,7 @@ public class ThumbnailServiceTests
     public async Task GenerateThumbnail_NullOptions_FallsBackToDefaults()
     {
         var defaults = new ThumbnailOptions { OutputFormat = "png" };
-        var service = new ThumbnailService(defaults);
+        var service = new ThumbnailService(Options.Create(defaults));
         var avif = CreateTestAvif();
 
         var result = service.GenerateThumbnail(avif, null);

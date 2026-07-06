@@ -1,10 +1,11 @@
 ﻿using ImageMagick;
+using Microsoft.Extensions.Options;
 
 namespace ImageShare.Thumbnail;
 
-public sealed class ThumbnailService(ThumbnailOptions? defaults = null) : IThumbnailService
+public sealed class ThumbnailService(IOptions<ThumbnailOptions> options) : IThumbnailService
 {
-    private readonly ThumbnailOptions _defaults = defaults ?? new ThumbnailOptions();
+    private readonly ThumbnailOptions _defaults = options.Value;
 
     public ReadOnlyMemory<byte> GenerateThumbnail(ReadOnlySpan<byte> imageData, ThumbnailOptions? options = null)
     {

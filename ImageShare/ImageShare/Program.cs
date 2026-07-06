@@ -14,9 +14,9 @@ builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.T
 builder.Services.AddOpenIdConnectAuthentication(builder.Configuration);
 builder.Services.AddImageShareFilter();
 builder.Services.AddUser();
-builder.Services.AddThumbnailService(builder.Configuration);
-builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection("Storage"));
-builder.Services.Configure<ImageFormatOptions>(builder.Configuration.GetSection("ImageFormats"));
+builder.Services.AddThumbnailService();
+builder.Services.AddOptions<StorageOptions>().BindConfiguration("Storage").Validated();
+builder.Services.AddOptions<ImageFormatOptions>().BindConfiguration("ImageFormats").Validated();
 builder.Services.AddSingleton<IFileProvider>(sp => new PhysicalFileProvider(sp.GetRequiredService<IOptions<StorageOptions>>().Value.BasePath));
 
 var app = builder.Build();
@@ -29,6 +29,7 @@ if (app.Environment.IsDevelopment())
         options.Title = "ImageShare";
         options.Telemetry = false;
         options.Theme = ScalarTheme.Solarized;
+        options.ShowDeveloperTools = DeveloperToolsVisibility.Never;
         options.Agent = new ScalarAgentOptions
         {
             Disabled = true
