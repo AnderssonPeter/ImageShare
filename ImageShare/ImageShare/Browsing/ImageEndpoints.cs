@@ -9,12 +9,6 @@ namespace ImageShare.Browsing;
 
 public static class ImageEndpoints
 {
-    private static readonly FileExtensionContentTypeProvider ContentTypeProvider = new();
-
-    static ImageEndpoints() => ContentTypeProvider.Mappings[".avif"] = "image/avif";
-
-    private static readonly string[] ConvertExcludeFormats = ["avif"];
-
     public static IEndpointRouteBuilder MapImageEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/images").RequireAuthorization();
@@ -23,9 +17,12 @@ public static class ImageEndpoints
             IFileProvider fileProvider,
             IThumbnailService thumbnailService,
             IOptions<ImageFormatOptions> imageFormats,
+            IContentTypeProvider contentTypeProvider,
             User user,
             HttpContext context,
-            string path) => await ServeImageAsync(fileProvider, thumbnailService, imageFormats.Value, user, path, context.Request.Headers.Accept, context.RequestAborted));
+            string path,
+            bool thumbnail = false) =>
+            await ServeImageAsync(fileProvider, thumbnailService, imageFormats.Value, contentTypeProvider, user, path, context.Request.Headers.Accept, thumbnail, context.RequestAborted));
 
         return endpoints;
     }
@@ -34,9 +31,11 @@ public static class ImageEndpoints
         IFileProvider fileProvider,
         IThumbnailService thumbnailService,
         ImageFormatOptions imageFormats,
+        IContentTypeProvider contentTypeProvider,
         IUser user,
         string relativePath,
         StringValues acceptHeader,
+        bool thumbnail,
         CancellationToken cancellationToken)
     {
         if (!user.IsAuthenticated)
@@ -44,93 +43,143 @@ public static class ImageEndpoints
             return Results.Unauthorized();
         }
 
+        if (relativePath.Contains("..", StringComparison.Ordinal))
+        {
+            return Results.BadRequest();
+        }
+
         if (PathHelper.IsInFolder(relativePath) && !user.CanAccessFolder(PathHelper.GetFirstSegment(relativePath)))
         {
-            return Results.NotFound();
+            return Results.Forbid();
         }
 
-        var fileInfo = fileProvider.GetFileInfo(relativePath);
+        var baseName = Path.GetFileNameWithoutExtension(relativePath);
 
-        if (!fileInfo.Exists || fileInfo.IsDirectory)
+        if (baseName.Contains(ThumbprintOptions.ThumbInfix, StringComparison.Ordinal))
+        {
+            return Results.BadRequest();
+        }
+
+        var directory = Path.GetDirectoryName(relativePath) ?? "";
+        var candidates = FindMatchingFiles(fileProvider, directory, baseName);
+
+        if (candidates.Count == 0)
         {
             return Results.NotFound();
         }
 
-        if (Path.GetFileNameWithoutExtension(relativePath).Contains(ThumbprintOptions.ThumbInfix, StringComparison.Ordinal))
-        {
-            return Results.NotFound();
-        }
-
-        var originalMime = GetMimeType(Path.GetExtension(relativePath));
-
-        if (originalMime is not null && IsFormatAccepted(acceptHeader, originalMime))
-        {
-            return ServeFile(fileInfo, originalMime);
-        }
-
-        var thumbResult = TryServeThumb(fileProvider, relativePath, acceptHeader);
-        if (thumbResult is not null)
-        {
-            return thumbResult;
-        }
-
-        return await ServeConverted(fileInfo, relativePath, thumbnailService, imageFormats, acceptHeader, cancellationToken);
+        return await ServeBestMatchAsync(candidates, thumbnailService, contentTypeProvider, acceptHeader, thumbnail, cancellationToken);
     }
 
-    private static IResult? TryServeThumb(IFileProvider fileProvider, string relativePath, StringValues acceptHeader)
+    private static List<IFileInfo> FindMatchingFiles(IFileProvider fileProvider, ImageFormatOptions imageFormats, string directory, string baseName)
     {
-        var dir = Path.GetDirectoryName(relativePath) ?? "";
-        var name = Path.GetFileNameWithoutExtension(relativePath);
-        var thumbRelPath = string.IsNullOrEmpty(dir)
-            ? $"{name}{ThumbprintOptions.ThumbInfix}.jpg"
-            : $"{dir}/{name}{ThumbprintOptions.ThumbInfix}.jpg";
+        var candidates = new List<IFileInfo>();
+        var contents = fileProvider.GetDirectoryContents(directory);
 
-        var thumbInfo = fileProvider.GetFileInfo(thumbRelPath);
-
-        if (thumbInfo.Exists && IsFormatAccepted(acceptHeader, "image/jpeg"))
+        foreach (var item in contents)
         {
-            return ServeFile(thumbInfo, "image/jpeg");
-        }
-
-        return null;
-    }
-
-    private static async Task<IResult> ServeConverted(
-        IFileInfo fileInfo,
-        string relativePath,
-        IThumbnailService thumbnailService,
-        ImageFormatOptions imageFormats,
-        StringValues acceptHeader,
-        CancellationToken ct)
-    {
-        await using var stream = fileInfo.CreateReadStream();
-        await using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms, ct);
-        var imageData = ms.ToArray();
-
-        foreach (var format in imageFormats.SupportedFormats)
-        {
-            if (ConvertExcludeFormats.Contains(format, StringComparer.OrdinalIgnoreCase))
+            if (item.IsDirectory)
             {
                 continue;
             }
 
-            var mime = GetMimeType($".{format}")!;
-            if (IsFormatAccepted(acceptHeader, mime))
+            var extension = Path.GetExtension(item.Name).TrimStart('.');
+            if (string.Equals(Path.GetFileNameWithoutExtension(item.Name), baseName, StringComparison.OrdinalIgnoreCase) && imageFormats.SupportedFormats.Contains(extension, StringComparer.OrdinalIgnoreCase))
             {
-                var thumbData = thumbnailService.GenerateThumbnail(imageData, new ThumbnailOptions { OutputFormat = format });
-                return Results.Bytes(thumbData, mime);
+                candidates.Add(item);
             }
         }
 
-        return Results.Bytes(imageData, GetMimeType(Path.GetExtension(relativePath)) ?? "application/octet-stream");
+        candidates.Sort((a, b) => a.Length.CompareTo(b.Length));
+
+        return candidates;
+    }
+
+    private static async Task<IResult> ServeBestMatchAsync(
+        List<IFileInfo> candidates,
+        IThumbnailService thumbnailService,
+        IContentTypeProvider contentTypeProvider,
+        StringValues acceptHeader,
+        bool thumbnail,
+        CancellationToken ct)
+    {
+        if (thumbnail)
+        {
+            return await ServeThumbAsync(candidates, thumbnailService, contentTypeProvider, acceptHeader, ct);
+        }
+
+        foreach (var file in candidates)
+        {
+            if (Path.GetFileNameWithoutExtension(file.Name).Contains(ThumbprintOptions.ThumbInfix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var mime = contentTypeProvider.GetContentType(Path.GetExtension(file.Name));
+
+            if (IsFormatAccepted(acceptHeader, mime))
+            {
+                return ServeFile(file, mime);
+            }
+        }
+
+        return Results.StatusCode(406);
+    }
+
+    private static async Task<IResult> ServeThumbAsync(
+        List<IFileInfo> candidates,
+        IThumbnailService thumbnailService,
+        IContentTypeProvider contentTypeProvider,
+        StringValues acceptHeader,
+        CancellationToken ct)
+    {
+        foreach (var file in candidates)
+        {
+            var baseName = Path.GetFileNameWithoutExtension(file.Name);
+
+            if (!baseName.Contains(ThumbprintOptions.ThumbInfix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var mime = contentTypeProvider.GetContentType(Path.GetExtension(file.Name));
+
+            if (IsFormatAccepted(acceptHeader, mime))
+            {
+                return ServeFile(file, mime);
+            }
+        }
+
+        var source = candidates.FirstOrDefault(f =>
+            !Path.GetFileNameWithoutExtension(f.Name).Contains(ThumbprintOptions.ThumbInfix, StringComparison.Ordinal));
+
+        if (source is null)
+        {
+            return Results.NotFound();
+        }
+
+        var imageData = await ReadAllBytesAsync(source, ct);
+        var thumbData = thumbnailService.GenerateThumbnail(imageData);
+        var thumbMime = contentTypeProvider.GetContentType(".jpeg");
+
+        if (!IsFormatAccepted(acceptHeader, thumbMime))
+        {
+            return Results.StatusCode(406);
+        }
+
+        return Results.Bytes(thumbData, thumbMime);
+    }
+
+    private static async Task<byte[]> ReadAllBytesAsync(IFileInfo fileInfo, CancellationToken ct)
+    {
+        await using var stream = fileInfo.CreateReadStream();
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms, ct);
+        return ms.ToArray();
     }
 
     internal static IResult ServeFile(IFileInfo fileInfo, string mimeType) =>
         Results.Stream(fileInfo.CreateReadStream(), mimeType);
-
-    internal static string? GetMimeType(string extension) =>
-        ContentTypeProvider.TryGetContentType(extension, out var mime) ? mime : null;
 
     internal static bool IsFormatAccepted(StringValues acceptHeader, string mimeType)
     {
@@ -162,4 +211,3 @@ public static class ImageEndpoints
         return false;
     }
 }
-

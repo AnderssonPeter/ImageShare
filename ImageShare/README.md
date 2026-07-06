@@ -23,14 +23,18 @@
     [X] BrowserEndpoint must support duplicate images with different formats
     [X] BrowserEndpoint should not return the file extension
     [X] BrowserEndpoint should not list files in the root folder
-  [ ] Add endpoint to fetch images
-    [ ] Use IContentTypeProvider instead of FileExtensionContentTypeProvider and take it as a dependency instead of constructing your own, use the extensionmethod IContentTypeProvider.GetContentType to simplify getting mime type
+  [X] Add endpoint to fetch images
+    [X] Use IContentTypeProvider instead of FileExtensionContentTypeProvider and take it as a dependency instead of constructing your own, use the extension method IContentTypeProvider.GetContentType to simplify getting mime type
     [ ] To find a matching image check the smallest first then the next and so on
-    [ ] Rewrite to take thumbprint from query string as a bool value
-    [ ] Don't try to convert in the endpoint, instead loop PreferredConvertFormats and find the first match that the client accepts, if no match is found, return 406 Not Acceptable
-    [ ] Use PhysicalFileProvider in all endpoints
-    [ ] Write missing unit tests for ImageEndpoints
+    [X] Rewrite to take thumbprint from query string as a bool value
+    [X] Don't try to convert in the endpoint, instead loop PreferredConvertFormats and find the first match that the client accepts, if no match is found, return 406 Not Acceptable
+    [X] Write missing unit tests for ImageEndpoints
+    [ ] Do not convert to thumbnail in ImageEndpoints, modify so that it looks for thumbnail files in FindMatchingFiles instead
   [X] Find a way to generate thumbprints
+  [ ] Add common instructions
+    [ ] All options must be validated on startup
+    [ ] Do not use förkortningar
+  [ ] there should be some way to use IContentTypeProvider without constructing it on our own, while adding additional file formats to it?
   [ ] Move the Paginate method to a helper method and make it generic
   [ ] Make service generate the image in all possible formats
     [ ] There is a mix of Thumbprint and Thumbnail in the codebase, we should standardize on one of them

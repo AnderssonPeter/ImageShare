@@ -3,6 +3,7 @@ using ImageShare.Authentication;
 using ImageShare.Browsing;
 using ImageShare.Health;
 using ImageShare.Thumbnail;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
@@ -17,6 +18,12 @@ builder.Services.AddUser();
 builder.Services.AddThumbnailService();
 builder.Services.AddOptions<StorageOptions>().BindConfiguration("Storage").Validated();
 builder.Services.AddOptions<ImageFormatOptions>().BindConfiguration("ImageFormats").Validated();
+builder.Services.AddSingleton<IContentTypeProvider>(sp =>
+{
+    var provider = new FileExtensionContentTypeProvider();
+    provider.Mappings[".avif"] = "image/avif";
+    return provider;
+});
 builder.Services.AddSingleton<IFileProvider>(sp => new PhysicalFileProvider(sp.GetRequiredService<IOptions<StorageOptions>>().Value.BasePath));
 
 var app = builder.Build();
