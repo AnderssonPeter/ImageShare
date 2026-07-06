@@ -3,6 +3,8 @@ using ImageShare.Authentication;
 using ImageShare.Browsing;
 using ImageShare.Health;
 using ImageShare.Thumbnail;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +16,7 @@ builder.Services.AddImageShareFilter();
 builder.Services.AddUser();
 builder.Services.AddThumbnailService(builder.Configuration);
 builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection("Storage"));
+builder.Services.AddSingleton<IFileProvider>(sp => new PhysicalFileProvider(sp.GetRequiredService<IOptions<StorageOptions>>().Value.BasePath));
 
 var app = builder.Build();
 
@@ -39,5 +42,6 @@ app.UseAuthorization();
 app.MapHealthEndpoints();
 app.MapAuthEndpoints();
 app.MapFolderEndpoints();
+app.MapImageEndpoints();
 
 await app.RunAsync();

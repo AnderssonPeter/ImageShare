@@ -14,9 +14,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="ImageShare.Tests" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <AdditionalFiles Include="BannedSymbols.txt" />
     <TrimmerRootAssembly Include="Magick.NET-Q8-x64" />
     <TrimmerRootAssembly Include="Magick.NET.Core" />
   </ItemGroup>
@@ -25,6 +23,10 @@
     <PackageReference Include="Magick.NET-Q8-x64" Version="14.14.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.9" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.OpenApi" Version="2.9.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.16.7" />

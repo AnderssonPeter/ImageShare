@@ -1,0 +1,4 @@
+M:System.IO.Path.Combine(System.String,System.String);Path traversal must go through PathHelper.Combine for validation
+M:System.IO.Path.Combine(System.String,System.String,System.String);Path traversal must go through PathHelper.Combine for validation
+M:System.IO.Path.Combine(System.String,System.String,System.String,System.String);Path traversal must go through PathHelper.Combine for validation
+M:System.IO.Path.Combine(System.String[]);Path traversal must go through PathHelper.Combine for validation

@@ -2,5 +2,5 @@
 
 public interface IThumbnailService
 {
-    ReadOnlyMemory<byte> GenerateThumbnail(ReadOnlySpan<byte> avifData, ThumbnailOptions? options = null);
+    ReadOnlyMemory<byte> GenerateThumbnail(ReadOnlySpan<byte> imageData, ThumbnailOptions? options = null);
 }

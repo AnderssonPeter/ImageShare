@@ -1,5 +1,6 @@
 ﻿using ImageShare.Authentication;
-using Microsoft.Extensions.Options;
+using ImageShare.Thumbnail;
+using Microsoft.Extensions.FileProviders;
 
 namespace ImageShare.Browsing;
 
@@ -13,16 +14,16 @@ public static class BrowsingEndpoints
     {
         var group = endpoints.MapGroup("/folders").RequireAuthorization();
 
-        group.MapGet("/", (IOptions<StorageOptions> storageOptions, User user, int page = DefaultPage, int pageSize = DefaultPageSize) =>
-            GetEntries(storageOptions.Value.BasePath, string.Empty, user, page, pageSize));
+        group.MapGet("/", (IFileProvider fileProvider, User user, int page = DefaultPage, int pageSize = DefaultPageSize) =>
+            GetEntries(fileProvider, string.Empty, user, page, pageSize));
 
-        group.MapGet("/{**path}", (IOptions<StorageOptions> storageOptions, User user, string path, int page = DefaultPage, int pageSize = DefaultPageSize) =>
-            GetEntries(storageOptions.Value.BasePath, path, user, page, pageSize));
+        group.MapGet("/{**path}", (IFileProvider fileProvider, User user, string path, int page = DefaultPage, int pageSize = DefaultPageSize) =>
+            GetEntries(fileProvider, path, user, page, pageSize));
 
         return endpoints;
     }
 
-    internal static IResult GetEntries(string basePath, string relativePath, IUser user, int page, int pageSize)
+    internal static IResult GetEntries(IFileProvider fileProvider, string relativePath, IUser user, int page, int pageSize)
     {
         if (!user.IsAuthenticated)
         {
@@ -34,43 +35,50 @@ public static class BrowsingEndpoints
             return Results.BadRequest();
         }
 
-        var targetPath = Path.GetFullPath(Path.Combine(basePath, relativePath));
-
-        if (!targetPath.StartsWith(Path.GetFullPath(basePath), StringComparison.Ordinal))
+        if (relativePath.Contains("..", StringComparison.Ordinal))
         {
             return Results.BadRequest();
         }
 
-        if (!Directory.Exists(targetPath))
+        if (!string.IsNullOrEmpty(relativePath) && !user.CanAccessFolder(PathHelper.GetFirstSegment(relativePath)))
         {
             return Results.NotFound();
         }
 
+        var contents = fileProvider.GetDirectoryContents(relativePath);
+
         var isRoot = string.IsNullOrEmpty(relativePath);
-        var entries = CollectEntries(targetPath, isRoot, user);
+        var entries = CollectEntries(contents, isRoot, user);
 
         return Results.Ok(Paginate(entries, page, pageSize));
     }
 
-    private static List<FolderEntry> CollectEntries(string targetPath, bool isRoot, IUser user)
+    private static List<FolderEntry> CollectEntries(IDirectoryContents contents, bool isRoot, IUser user)
     {
         var entries = new List<FolderEntry>();
 
-        foreach (var dir in Directory.EnumerateDirectories(targetPath))
+        foreach (var item in contents)
         {
-            var name = Path.GetFileName(dir);
+            var name = item.Name;
 
-            if (isRoot && !user.CanAccessFolder(name))
+            if (item.IsDirectory)
             {
-                continue;
+                if (isRoot && !user.CanAccessFolder(name))
+                {
+                    continue;
+                }
+
+                entries.Add(new FolderEntry { Name = name, Type = EntryType.Folder });
             }
+            else
+            {
+                if (name.Contains(ThumbprintOptions.ThumbInfix, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
 
-            entries.Add(new FolderEntry { Name = name, Type = EntryType.Folder });
-        }
-
-        foreach (var file in Directory.EnumerateFiles(targetPath))
-        {
-            entries.Add(new FolderEntry { Name = Path.GetFileName(file), Type = EntryType.File });
+                entries.Add(new FolderEntry { Name = name, Type = EntryType.File });
+            }
         }
 
         entries.Sort((a, b) =>

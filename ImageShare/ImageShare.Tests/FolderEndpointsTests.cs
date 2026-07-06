@@ -1,6 +1,7 @@
 ﻿using ImageShare.Authentication;
 using ImageShare.Browsing;
 using Microsoft.AspNetCore.Http;
+using Mirality.FileProviders.InMemory;
 
 namespace ImageShare.Tests;
 
@@ -21,42 +22,34 @@ public class FolderEndpointsTests
         public bool CanAccessFolder(string folder) => _allowedFolders.Contains(folder);
     }
 
-    private static void CreateFile(string dir, string name) =>
-        File.WriteAllText(Path.Combine(dir, name), string.Empty);
-
-    private static void CreateDir(string dir, string name) =>
-        Directory.CreateDirectory(Path.Combine(dir, name));
-
     private static PaginatedResult<FolderEntry> GetResult(IResult result) =>
         (PaginatedResult<FolderEntry>)((Microsoft.AspNetCore.Http.HttpResults.Ok<PaginatedResult<FolderEntry>>)result).Value!;
 
     private const int Page = 1;
     private const int PageSize = 50;
 
+    private static void AddDir(InMemoryFileProvider fs, string path) =>
+        fs.Write($"{path}/.keep", Array.Empty<byte>());
+
+    private static void AddFile(InMemoryFileProvider fs, string path) =>
+        fs.Write(path, Array.Empty<byte>());
+
     [Test]
     public async Task GetEntries_Unauthenticated_ReturnsUnauthorized()
     {
+        var fs = new InMemoryFileProvider();
         var user = new TestUser { IsAuthenticated = false };
-        var result = BrowsingEndpoints.GetEntries("/tmp", string.Empty, user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fs, string.Empty, user, Page, PageSize);
 
         await Assert.That(IsStatusCode(result, 401)).IsTrue();
     }
 
     [Test]
-    public async Task GetEntries_NonExistentPath_ReturnsNotFound()
-    {
-        var user = new TestUser();
-        var result = BrowsingEndpoints.GetEntries("/nonexistent-path-xyz", string.Empty, user, Page, PageSize);
-
-        await Assert.That(IsStatusCode(result, 404)).IsTrue();
-    }
-
-    [Test]
     public async Task GetEntries_PathTraversal_ReturnsBadRequest()
     {
-        using var _ = new DisposableTempDir(out var basePath);
+        var fs = new InMemoryFileProvider();
         var user = new TestUser();
-        var result = BrowsingEndpoints.GetEntries(basePath, "../etc", user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fs, "../etc", user, Page, PageSize);
 
         await Assert.That(IsStatusCode(result, 400)).IsTrue();
     }
@@ -67,9 +60,9 @@ public class FolderEndpointsTests
     [Arguments(1, 501)]
     public async Task GetEntries_InvalidPagination_ReturnsBadRequest(int page, int pageSize)
     {
-        using var _ = new DisposableTempDir(out var basePath);
+        var fs = new InMemoryFileProvider();
         var user = new TestUser();
-        var result = BrowsingEndpoints.GetEntries(basePath, string.Empty, user, page, pageSize);
+        var result = BrowsingEndpoints.GetEntries(fs, string.Empty, user, page, pageSize);
 
         await Assert.That(IsStatusCode(result, 400)).IsTrue();
     }
@@ -77,13 +70,13 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_Root_FiltersFoldersByAccess()
     {
-        using var _ = new DisposableTempDir(out var basePath);
-        CreateDir(basePath, "allowed-folder");
-        CreateDir(basePath, "blocked-folder");
-        CreateFile(basePath, "file.txt");
+        var fs = new InMemoryFileProvider();
+        AddDir(fs, "allowed-folder");
+        AddDir(fs, "blocked-folder");
+        AddFile(fs, "file.txt");
 
         var user = new TestUser().Allow("allowed-folder");
-        var result = BrowsingEndpoints.GetEntries(basePath, string.Empty, user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fs, string.Empty, user, Page, PageSize);
 
         var paginated = GetResult(result);
         await Assert.That(paginated.Items).IsNotNull();
@@ -104,12 +97,12 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_Root_AllFoldersBlocked_ReturnsOnlyFiles()
     {
-        using var _ = new DisposableTempDir(out var basePath);
-        CreateDir(basePath, "secret");
-        CreateFile(basePath, "public.txt");
+        var fs = new InMemoryFileProvider();
+        AddDir(fs, "secret");
+        AddFile(fs, "public.txt");
 
         var user = new TestUser();
-        var result = BrowsingEndpoints.GetEntries(basePath, string.Empty, user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fs, string.Empty, user, Page, PageSize);
 
         var paginated = GetResult(result);
         await Assert.That(paginated.Items.Count).IsEqualTo(1);
@@ -119,17 +112,27 @@ public class FolderEndpointsTests
     }
 
     [Test]
+    public async Task GetEntries_BlockedSubfolder_ReturnsNotFound()
+    {
+        var fs = new InMemoryFileProvider();
+        AddDir(fs, "secret/nested");
+
+        var user = new TestUser();
+        var result = BrowsingEndpoints.GetEntries(fs, "secret/nested", user, Page, PageSize);
+
+        await Assert.That(IsStatusCode(result, 404)).IsTrue();
+    }
+
+    [Test]
     public async Task GetEntries_Subfolder_DoesNotFilterByAccess()
     {
-        using var _ = new DisposableTempDir(out var basePath);
-        CreateDir(basePath, "allowed");
-        var subDir = Path.Combine(basePath, "allowed");
-        CreateDir(subDir, "sub-secret");
-        CreateDir(subDir, "sub-public");
-        CreateFile(subDir, "sub-file.txt");
+        var fs = new InMemoryFileProvider();
+        AddFile(fs, "allowed/sub-file.txt");
+        AddFile(fs, "allowed/sub-secret/x");
+        AddFile(fs, "allowed/sub-public/x");
 
         var user = new TestUser().Allow("allowed");
-        var result = BrowsingEndpoints.GetEntries(basePath, "allowed", user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fs, "allowed", user, Page, PageSize);
 
         var paginated = GetResult(result);
         await Assert.That(paginated.Items.Count).IsEqualTo(3);
@@ -144,9 +147,9 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_EmptyDirectory_ReturnsEmpty()
     {
-        using var _ = new DisposableTempDir(out var basePath);
+        var fs = new InMemoryFileProvider();
         var user = new TestUser();
-        var result = BrowsingEndpoints.GetEntries(basePath, string.Empty, user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fs, string.Empty, user, Page, PageSize);
 
         var paginated = GetResult(result);
         await Assert.That(paginated.Items.Count).IsEqualTo(0);
@@ -156,12 +159,12 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_SortsFoldersBeforeFiles()
     {
-        using var _ = new DisposableTempDir(out var basePath);
-        CreateFile(basePath, "a.txt");
-        CreateDir(basePath, "z-folder");
+        var fs = new InMemoryFileProvider();
+        AddFile(fs, "a.txt");
+        AddDir(fs, "z-folder");
 
         var user = new TestUser().Allow("z-folder");
-        var result = BrowsingEndpoints.GetEntries(basePath, string.Empty, user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fs, string.Empty, user, Page, PageSize);
 
         var paginated = GetResult(result);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("z-folder");
@@ -173,14 +176,14 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_SortsAlphabeticallyWithinType()
     {
-        using var _ = new DisposableTempDir(out var basePath);
-        CreateDir(basePath, "b-folder");
-        CreateDir(basePath, "a-folder");
-        CreateFile(basePath, "z-file.txt");
-        CreateFile(basePath, "a-file.txt");
+        var fs = new InMemoryFileProvider();
+        AddDir(fs, "b-folder");
+        AddDir(fs, "a-folder");
+        AddFile(fs, "z-file.txt");
+        AddFile(fs, "a-file.txt");
 
         var user = new TestUser().Allow("a-folder").Allow("b-folder");
-        var result = BrowsingEndpoints.GetEntries(basePath, string.Empty, user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fs, string.Empty, user, Page, PageSize);
 
         var paginated = GetResult(result);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("a-folder");
@@ -192,28 +195,28 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_Pagination_ReturnsRequestedPage()
     {
-        using var _ = new DisposableTempDir(out var basePath);
+        var fs = new InMemoryFileProvider();
         for (var i = 1; i <= 5; i++)
         {
-            CreateFile(basePath, $"{i}.txt");
+            AddFile(fs, $"{i}.txt");
         }
 
         var user = new TestUser();
 
-        var page1 = GetResult(BrowsingEndpoints.GetEntries(basePath, string.Empty, user, page: 1, pageSize: 2));
+        var page1 = GetResult(BrowsingEndpoints.GetEntries(fs, string.Empty, user, page: 1, pageSize: 2));
         await Assert.That(page1.Items.Count).IsEqualTo(2);
         await Assert.That(page1.TotalCount).IsEqualTo(5);
         await Assert.That(page1.Page).IsEqualTo(1);
         await Assert.That(page1.Items[0].Name).IsEqualTo("1.txt");
         await Assert.That(page1.Items[1].Name).IsEqualTo("2.txt");
 
-        var page2 = GetResult(BrowsingEndpoints.GetEntries(basePath, string.Empty, user, page: 2, pageSize: 2));
+        var page2 = GetResult(BrowsingEndpoints.GetEntries(fs, string.Empty, user, page: 2, pageSize: 2));
         await Assert.That(page2.Items.Count).IsEqualTo(2);
         await Assert.That(page2.Page).IsEqualTo(2);
         await Assert.That(page2.Items[0].Name).IsEqualTo("3.txt");
         await Assert.That(page2.Items[1].Name).IsEqualTo("4.txt");
 
-        var page3 = GetResult(BrowsingEndpoints.GetEntries(basePath, string.Empty, user, page: 3, pageSize: 2));
+        var page3 = GetResult(BrowsingEndpoints.GetEntries(fs, string.Empty, user, page: 3, pageSize: 2));
         await Assert.That(page3.Items.Count).IsEqualTo(1);
         await Assert.That(page3.Page).IsEqualTo(3);
         await Assert.That(page3.Items[0].Name).IsEqualTo("5.txt");
@@ -222,16 +225,33 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_PageBeyondTotal_ReturnsEmptyItems()
     {
-        using var _ = new DisposableTempDir(out var basePath);
-        CreateFile(basePath, "only.txt");
+        var fs = new InMemoryFileProvider();
+        AddFile(fs, "only.txt");
 
         var user = new TestUser();
-        var result = BrowsingEndpoints.GetEntries(basePath, string.Empty, user, page: 5, pageSize: 10);
+        var result = BrowsingEndpoints.GetEntries(fs, string.Empty, user, page: 5, pageSize: 10);
 
         var paginated = GetResult(result);
         await Assert.That(paginated.Items.Count).IsEqualTo(0);
         await Assert.That(paginated.TotalCount).IsEqualTo(1);
         await Assert.That(paginated.Page).IsEqualTo(5);
+    }
+
+    [Test]
+    public async Task GetEntries_ExcludesThumbprintFiles()
+    {
+        var fs = new InMemoryFileProvider();
+        AddFile(fs, "photo.avif");
+        AddFile(fs, "photo.thumb.jpg");
+        AddFile(fs, "image.png");
+        AddFile(fs, "image.thumb.png");
+
+        var user = new TestUser();
+        var paginated = GetResult(BrowsingEndpoints.GetEntries(fs, string.Empty, user, Page, PageSize));
+
+        await Assert.That(paginated.TotalCount).IsEqualTo(2);
+        await Assert.That(paginated.Items[0].Name).IsEqualTo("image.png");
+        await Assert.That(paginated.Items[1].Name).IsEqualTo("photo.avif");
     }
 
     private static bool IsStatusCode(IResult result, int statusCode)
@@ -244,26 +264,5 @@ public class FolderEndpointsTests
             Microsoft.AspNetCore.Http.HttpResults.Ok<PaginatedResult<FolderEntry>> => statusCode == 200,
             _ => false,
         };
-    }
-}
-
-file sealed class DisposableTempDir : IDisposable
-{
-    private readonly string _path;
-
-    public DisposableTempDir(out string path)
-    {
-        _path = Path.Combine(Path.GetTempPath(), $"imageshare-test-{Guid.NewGuid()}");
-        Directory.CreateDirectory(_path);
-        path = _path;
-    }
-
-    public void Dispose()
-    {
-        try
-        {
-            Directory.Delete(_path, true);
-        }
-        catch { /* best effort */ }
     }
 }

@@ -6,16 +6,11 @@ public sealed class ThumbnailService(ThumbnailOptions? defaults = null) : IThumb
 {
     private readonly ThumbnailOptions _defaults = defaults ?? new ThumbnailOptions();
 
-    public ReadOnlyMemory<byte> GenerateThumbnail(ReadOnlySpan<byte> avifData, ThumbnailOptions? options = null)
+    public ReadOnlyMemory<byte> GenerateThumbnail(ReadOnlySpan<byte> imageData, ThumbnailOptions? options = null)
     {
         var opts = options ?? _defaults;
 
-        var settings = new MagickReadSettings
-        {
-            Format = MagickFormat.Avif,
-        };
-
-        using var image = new MagickImage(avifData, settings);
+        using var image = new MagickImage(imageData);
 
         var geometry = new MagickGeometry((uint)opts.MaxWidth, (uint)opts.MaxHeight)
         {
