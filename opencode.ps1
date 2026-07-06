@@ -6,3 +6,7 @@ docker run -it --rm `
   -v .:/app `
   -p 19876:19876 `
   opencode-image-share:latest
+
+# run as readonly
+# find all package.json and map node_module to tmp fs
+# find all *.csproj and map obj, bin to tmp fs

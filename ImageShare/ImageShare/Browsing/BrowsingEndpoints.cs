@@ -56,6 +56,7 @@ public static class BrowsingEndpoints
     private static List<FolderEntry> CollectEntries(IDirectoryContents contents, bool isRoot, IUser user)
     {
         var entries = new List<FolderEntry>();
+        var seenFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var item in contents)
         {
@@ -72,12 +73,23 @@ public static class BrowsingEndpoints
             }
             else
             {
+                if (isRoot)
+                {
+                    continue;
+                }
+
                 if (name.Contains(ThumbprintOptions.ThumbInfix, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                entries.Add(new FolderEntry { Name = name, Type = EntryType.File });
+                var nameWithoutExtension = Path.GetFileNameWithoutExtension(name);
+                if (!seenFiles.Add(nameWithoutExtension))
+                {
+                    continue;
+                }
+
+                entries.Add(new FolderEntry { Name = nameWithoutExtension, Type = EntryType.File });
             }
         }
 
