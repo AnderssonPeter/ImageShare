@@ -9,6 +9,7 @@ internal sealed class ThumbprintService : BackgroundService
     private readonly string _basePath;
     private readonly IThumbnailService _thumbnailService;
     private readonly ThumbprintOptions _options;
+    private readonly ImageFormatOptions _imageFormats;
     private readonly ILogger<ThumbprintService> _logger;
     private readonly ThumbnailOptions _thumbOpts;
     private FileSystemWatcher? _watcher;
@@ -18,11 +19,13 @@ internal sealed class ThumbprintService : BackgroundService
         IFileProvider fileProvider,
         IThumbnailService thumbnailService,
         IOptions<ThumbprintOptions> thumbprintOptions,
+        IOptions<ImageFormatOptions> imageFormats,
         ILogger<ThumbprintService> logger)
     {
         _basePath = fileProvider.GetFileInfo("").PhysicalPath!;
         _thumbnailService = thumbnailService;
         _options = thumbprintOptions.Value;
+        _imageFormats = imageFormats.Value;
         _logger = logger;
         _thumbOpts = new ThumbnailOptions { OutputFormat = _options.ThumbFormat };
     }
@@ -153,7 +156,7 @@ internal sealed class ThumbprintService : BackgroundService
     private bool IsImageFile(string path)
     {
         var ext = Path.GetExtension(path);
-        return _options.ImageExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase);
+        return _imageFormats.SupportedFormats.Any(f => string.Equals(ext, $".{f}", StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool IsThumbprintFile(string path)

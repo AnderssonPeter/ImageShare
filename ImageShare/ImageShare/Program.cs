@@ -16,6 +16,7 @@ builder.Services.AddImageShareFilter();
 builder.Services.AddUser();
 builder.Services.AddThumbnailService(builder.Configuration);
 builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection("Storage"));
+builder.Services.Configure<ImageFormatOptions>(builder.Configuration.GetSection("ImageFormats"));
 builder.Services.AddSingleton<IFileProvider>(sp => new PhysicalFileProvider(sp.GetRequiredService<IOptions<StorageOptions>>().Value.BasePath));
 
 var app = builder.Build();

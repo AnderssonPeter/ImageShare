@@ -10,7 +10,6 @@ public static class ThumbnailExtensions
         var thumbprintOptions = configuration?.GetSection("Thumbprint").Get<ThumbprintOptions>() ?? new ThumbprintOptions();
         services.Configure<ThumbprintOptions>(options =>
         {
-            options.ImageExtensions = thumbprintOptions.ImageExtensions;
             options.ThumbSuffix = thumbprintOptions.ThumbSuffix;
             options.ThumbFormat = thumbprintOptions.ThumbFormat;
             options.WatchForChanges = thumbprintOptions.WatchForChanges;

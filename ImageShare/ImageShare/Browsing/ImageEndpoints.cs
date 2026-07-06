@@ -2,6 +2,7 @@
 using ImageShare.Thumbnail;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 
 namespace ImageShare.Browsing;
@@ -12,7 +13,7 @@ public static class ImageEndpoints
 
     static ImageEndpoints() => ContentTypeProvider.Mappings[".avif"] = "image/avif";
 
-    private static readonly string[] PreferredConvertFormats = ["jpeg", "png", "webp"];
+    private static readonly string[] ConvertExcludeFormats = ["avif"];
 
     public static IEndpointRouteBuilder MapImageEndpoints(this IEndpointRouteBuilder endpoints)
     {
@@ -21,9 +22,10 @@ public static class ImageEndpoints
         group.MapGet("/{**path}", async (
             IFileProvider fileProvider,
             IThumbnailService thumbnailService,
+            IOptions<ImageFormatOptions> imageFormats,
             User user,
             HttpContext context,
-            string path) => await ServeImageAsync(fileProvider, thumbnailService, user, path, context.Request.Headers.Accept, context.RequestAborted));
+            string path) => await ServeImageAsync(fileProvider, thumbnailService, imageFormats.Value, user, path, context.Request.Headers.Accept, context.RequestAborted));
 
         return endpoints;
     }
@@ -31,6 +33,7 @@ public static class ImageEndpoints
     internal static async Task<IResult> ServeImageAsync(
         IFileProvider fileProvider,
         IThumbnailService thumbnailService,
+        ImageFormatOptions imageFormats,
         IUser user,
         string relativePath,
         StringValues acceptHeader,
@@ -71,7 +74,7 @@ public static class ImageEndpoints
             return thumbResult;
         }
 
-        return await ServeConverted(fileInfo, relativePath, thumbnailService, acceptHeader, cancellationToken);
+        return await ServeConverted(fileInfo, relativePath, thumbnailService, imageFormats, acceptHeader, cancellationToken);
     }
 
     private static IResult? TryServeThumb(IFileProvider fileProvider, string relativePath, StringValues acceptHeader)
@@ -96,6 +99,7 @@ public static class ImageEndpoints
         IFileInfo fileInfo,
         string relativePath,
         IThumbnailService thumbnailService,
+        ImageFormatOptions imageFormats,
         StringValues acceptHeader,
         CancellationToken ct)
     {
@@ -104,8 +108,13 @@ public static class ImageEndpoints
         await stream.CopyToAsync(ms, ct);
         var imageData = ms.ToArray();
 
-        foreach (var format in PreferredConvertFormats)
+        foreach (var format in imageFormats.SupportedFormats)
         {
+            if (ConvertExcludeFormats.Contains(format, StringComparer.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
             var mime = GetMimeType($".{format}")!;
             if (IsFormatAccepted(acceptHeader, mime))
             {
