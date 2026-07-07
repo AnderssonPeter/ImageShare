@@ -28,6 +28,8 @@
     [X] BrowserEndpoint must support duplicate images with different formats
     [X] BrowserEndpoint should not return the file extension
     [X] BrowserEndpoint should not list files in the root folder
+  [ ] Add a function to get a random image in a folder
+  [ ] Don't list empty folders in BrowserEndpoint
   [X] Add endpoint to fetch images
     [X] Use IContentTypeProvider instead of FileExtensionContentTypeProvider and take it as a dependency instead of constructing your own, use the extension method IContentTypeProvider.GetContentType to simplify getting mime type
     [X] Rewrite to take thumbprint from query string as a bool value
@@ -37,17 +39,22 @@
     [X] Do not convert to thumbnail in ImageEndpoints, modify so that it looks for thumbnail files in FindMatchingFiles instead
   [X] Find a way to generate thumbprints
   [ ] Add common instructions
-    [ ] All options must be validated on startup
-    [ ] Do not use förkortningar
+    [X] All options must be validated on startup
+    [X] Do not use abbreviations
+    [X] ImageConverterJobTests should not use a physical directory and instead use the memory file provider!
+    [X] Do not use reflection in tests to access method, instead make it internal and use InternalsVisibleTo attribute to access it in tests
+    [X] Do not use time based tests, Task.Delay is not a feasible solution
   [ ] there should be some way to use IContentTypeProvider without constructing it on our own, while adding additional file formats to it?
   [X] Move the Paginate method to a helper method and make it generic and reuse it in both BrowserEndpoint and ImageEndpoints
-  [ ] Make service generate the image in all possible formats
-    [ ] There is a mix of Thumbprint and Thumbnail in the codebase, we should standardize on one of them
-      [ ] Modify the ThumbnailService to instead convert between formats and also specify a target resolution
-      [ ] Rename the folder and all classes inside to something more appropriate, like ImageConversion, ImageConveter
-    [ ] Generate thumbnails for all formats and in all formats
-    [ ] Change from PhysicalFileProvider to WritablePhysicalFileProvider, register it as both ISyncWritableFileProvider, IAsyncWritableFileProvider and IFileProvider, use IAsyncWritableFileProvider when creating new files.
+  [X] Make service generate the image in all possible formats
+    [X] There is a mix of Thumbprint and Thumbnail in the codebase, we should standardize on one of them
+      [X] Modify the ThumbnailService to instead convert between formats and also specify a target resolution
+      [X] Rename the folder and all classes inside to something more appropriate, like ImageConversion, ImageConveter
+    [X] Generate thumbnails for all formats and in all formats
+    [X] Change from PhysicalFileProvider to WritablePhysicalFileProvider, register it as both IAsyncWritableFileProvider and IFileProvider, use IAsyncWritableFileProvider when creating new files.
+    [ ] use an enum for image formats instead of magic strings
   [ ] Add static analysis unit test that ensures that all minimal endpoints parameters has [FromQuery], [FromRoute], [FromBody], [FromHeader] or [FromServices] attributes
+  [ ] Fork and add cancellationToken to ReadAsBytesAsync
 [ ] FE
   [ ] Client Generation
   [ ] editorconfig

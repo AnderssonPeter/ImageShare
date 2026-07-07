@@ -66,6 +66,7 @@ Your goal is to help me write effective unit tests with TUnit, covering both sta
 - Use `[DependsOn(nameof(OtherTest))]` to create test dependencies
 - Use `[Timeout(milliseconds)]` to set test timeouts
 - Create custom attributes by extending TUnit's base attributes
+- Cancellation, the method of the unit test can have a parameter of type `CancellationToken`, this can be used to abort the test early
 
 ## Test Organization
 

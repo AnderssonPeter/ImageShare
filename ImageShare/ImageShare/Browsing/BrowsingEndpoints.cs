@@ -1,5 +1,5 @@
 ﻿using ImageShare.Authentication;
-using ImageShare.Thumbnail;
+using ImageShare.ImageConversion;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.FileProviders;
 
@@ -79,7 +79,7 @@ public static class BrowsingEndpoints
                     continue;
                 }
 
-                if (name.Contains(ThumbprintOptions.ThumbInfix, StringComparison.OrdinalIgnoreCase))
+                if (ImageConverterJob.IsThumbprintFile(name))
                 {
                     continue;
                 }
@@ -94,14 +94,14 @@ public static class BrowsingEndpoints
             }
         }
 
-        entries.Sort((a, b) =>
+        entries.Sort((left, right) =>
         {
-            if (a.Type != b.Type)
+            if (left.Type != right.Type)
             {
-                return a.Type == EntryType.Folder ? -1 : 1;
+                return left.Type == EntryType.Folder ? -1 : 1;
             }
 
-            return string.Compare(a.Name, b.Name, StringComparison.Ordinal);
+            return string.Compare(left.Name, right.Name, StringComparison.Ordinal);
         });
 
         return entries;

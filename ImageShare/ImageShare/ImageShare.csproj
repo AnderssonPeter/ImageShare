@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-<PropertyGroup>
+  <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -13,8 +13,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AdditionalFiles Include="..\BannedSymbols.txt" Link="BannedSymbols.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="ImageShare.Tests" />
-    <AdditionalFiles Include="BannedSymbols.txt" />
     <TrimmerRootAssembly Include="Magick.NET-Q8-x64" />
     <TrimmerRootAssembly Include="Magick.NET.Core" />
   </ItemGroup>
@@ -23,6 +26,7 @@
     <PackageReference Include="Magick.NET-Q8-x64" Version="14.14.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.9" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <PackageReference Include="Mirality.FileProviders.InMemory" Version="6.2.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>

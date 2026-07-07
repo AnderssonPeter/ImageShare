@@ -13,6 +13,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AdditionalFiles Include="..\BannedSymbols.txt" Link="BannedSymbols.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Mirality.FileProviders.InMemory" Version="6.2.1" />
     <PackageReference Include="TUnit" Version="*" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.2.3" />

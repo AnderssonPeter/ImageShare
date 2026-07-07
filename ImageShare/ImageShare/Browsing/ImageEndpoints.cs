@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using ImageShare.Authentication;
-using ImageShare.Thumbnail;
+using ImageShare.ImageConversion;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
@@ -54,7 +54,7 @@ public static class ImageEndpoints
 
         var baseName = Path.GetFileNameWithoutExtension(relativePath);
 
-        if (baseName.Contains(ThumbprintOptions.ThumbInfix, StringComparison.Ordinal))
+        if (ImageConverterJob.IsThumbprintFile(baseName))
         {
             return TypedResults.BadRequest();
         }
@@ -82,7 +82,7 @@ public static class ImageEndpoints
         var candidates = new List<IFileInfo>();
         var contents = fileProvider.GetDirectoryContents(directory);
 
-        baseName = thumbnail ? baseName + ThumbprintOptions.ThumbInfix : baseName;
+        baseName = thumbnail ? baseName + ImageConverterOptions.ThumbnailInfix : baseName;
 
         foreach (var item in contents)
         {
@@ -106,7 +106,7 @@ public static class ImageEndpoints
             candidates.Add(item);
         }
 
-        candidates.Sort((a, b) => a.Length.CompareTo(b.Length));
+        candidates.Sort((left, right) => left.Length.CompareTo(right.Length));
 
         return candidates;
     }
@@ -118,11 +118,11 @@ public static class ImageEndpoints
     {
         foreach (var file in candidates)
         {
-            var mime = contentTypeProvider.GetContentType(Path.GetExtension(file.Name));
+            var mimeType = contentTypeProvider.GetContentType(Path.GetExtension(file.Name));
 
-            if (IsFormatAccepted(acceptHeader, mime))
+            if (IsFormatAccepted(acceptHeader, mimeType))
             {
-                return ServeFile(file, mime);
+                return ServeFile(file, mimeType);
             }
         }
 

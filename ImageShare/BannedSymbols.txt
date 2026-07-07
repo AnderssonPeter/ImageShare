@@ -1,0 +1,10 @@
+M:System.IO.Path.Combine(System.String,System.String);Path traversal must go through PathHelper.Combine for validation
+M:System.IO.Path.Combine(System.String,System.String,System.String);Path traversal must go through PathHelper.Combine for validation
+M:System.IO.Path.Combine(System.String,System.String,System.String,System.String);Path traversal must go through PathHelper.Combine for validation
+M:System.IO.Path.Combine(System.String[]);Path traversal must go through PathHelper.Combine for validation
+M:System.IO.Path.GetFullPath(System.String);Path resolution must go through the file provider
+M:System.IO.Directory.Exists(System.String);Directory existence checks must go through the file provider
+M:System.IO.Directory.EnumerateFiles(System.String);File enumeration must go through the file provider
+M:System.IO.Directory.EnumerateFiles(System.String,System.String);File enumeration must go through the file provider
+M:System.IO.Directory.EnumerateFiles(System.String,System.String,System.IO.EnumerationOptions);File enumeration must go through the file provider
+M:System.IO.Directory.EnumerateFiles(System.String,System.String,System.IO.SearchOption);File enumeration must go through the file provider
