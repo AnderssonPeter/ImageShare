@@ -127,7 +127,7 @@ public class ImageEndpointsTests
         var fs = new InMemoryFileProvider();
         AddFile(fs, "photo.png", MagickFormat.Png);
         var user = new TestUser { IsAuthenticated = false };
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo.png", StringValues.Empty, thumbnail: false, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo.png", StringValues.Empty, thumbnail: false);
 
         await Assert.That(IsStatusCode(result, 401)).IsTrue();
     }
@@ -138,7 +138,7 @@ public class ImageEndpointsTests
         var fs = new InMemoryFileProvider();
         AddFile(fs, "secret/photo.png", MagickFormat.Png);
         var user = new TestUser();
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "secret/photo.png", StringValues.Empty, thumbnail: false, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "secret/photo.png", StringValues.Empty, thumbnail: false);
 
         await Assert.That(IsStatusCode(result, 404)).IsTrue();
     }
@@ -149,7 +149,7 @@ public class ImageEndpointsTests
         var fs = new InMemoryFileProvider();
         AddFile(fs, "secret/nested/photo.png", MagickFormat.Png);
         var user = new TestUser();
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "secret/nested/photo.png", StringValues.Empty, thumbnail: false, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "secret/nested/photo.png", StringValues.Empty, thumbnail: false);
 
         await Assert.That(IsStatusCode(result, 404)).IsTrue();
     }
@@ -159,7 +159,7 @@ public class ImageEndpointsTests
     {
         var fs = new InMemoryFileProvider();
         var user = new TestUser().Allow("vacation");
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "missing.avif", StringValues.Empty, thumbnail: false, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "missing.avif", StringValues.Empty, thumbnail: false);
 
         await Assert.That(IsStatusCode(result, 404)).IsTrue();
     }
@@ -169,7 +169,7 @@ public class ImageEndpointsTests
     {
         var fs = new InMemoryFileProvider();
         var user = new TestUser().Allow("vacation");
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "../etc", StringValues.Empty, thumbnail: false, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "../etc", StringValues.Empty, thumbnail: false);
 
         await Assert.That(IsStatusCode(result, 404)).IsTrue();
     }
@@ -181,7 +181,7 @@ public class ImageEndpointsTests
         AddFile(fs, "photo.avif", MagickFormat.Avif);
         AddThumbFile(fs, "photo.avif");
         var user = new TestUser().Allow("vacation");
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo.thumb.jpg", StringValues.Empty, thumbnail: false, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo.thumb.jpg", StringValues.Empty, thumbnail: false);
 
         await Assert.That(IsStatusCode(result, 404)).IsTrue();
     }
@@ -192,7 +192,7 @@ public class ImageEndpointsTests
         var fs = new InMemoryFileProvider();
         AddFile(fs, "photo.png", MagickFormat.Png);
         var user = new TestUser().Allow("vacation");
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo.png", StringValues.Empty, thumbnail: false, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo.png", StringValues.Empty, thumbnail: false);
 
         await Assert.That(IsStatusCode(result, 200)).IsTrue();
         await Assert.That(GetContentType(result)).IsEqualTo("image/png");
@@ -204,7 +204,7 @@ public class ImageEndpointsTests
         var fs = new InMemoryFileProvider();
         AddFile(fs, "photo.avif", MagickFormat.Avif);
         var user = new TestUser().Allow("vacation");
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo.avif", "image/avif,image/jpeg", thumbnail: false, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo.avif", "image/avif,image/jpeg", thumbnail: false);
 
         await Assert.That(IsStatusCode(result, 200)).IsTrue();
         await Assert.That(GetContentType(result)).IsEqualTo("image/avif");
@@ -217,7 +217,7 @@ public class ImageEndpointsTests
         AddFile(fs, "photo.avif", MagickFormat.Avif);
         AddThumbFile(fs, "photo.avif");
         var user = new TestUser().Allow("vacation");
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", StringValues.Empty, thumbnail: true, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", StringValues.Empty, thumbnail: true);
 
         await Assert.That(IsStatusCode(result, 200)).IsTrue();
         await Assert.That(GetContentType(result)).IsEqualTo("image/jpeg");
@@ -229,7 +229,7 @@ public class ImageEndpointsTests
         var fs = new InMemoryFileProvider();
         AddFile(fs, "photo.avif", MagickFormat.Avif);
         var user = new TestUser().Allow("vacation");
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", StringValues.Empty, thumbnail: true, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", StringValues.Empty, thumbnail: true);
 
         await Assert.That(IsStatusCode(result, 404)).IsTrue();
     }
@@ -239,7 +239,7 @@ public class ImageEndpointsTests
     {
         var fs = new InMemoryFileProvider();
         var user = new TestUser().Allow("vacation");
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "missing", StringValues.Empty, thumbnail: true, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "missing", StringValues.Empty, thumbnail: true);
 
         await Assert.That(IsStatusCode(result, 404)).IsTrue();
     }
@@ -251,7 +251,7 @@ public class ImageEndpointsTests
         AddFile(fs, "photo.avif", MagickFormat.Avif);
         AddThumbFile(fs, "photo.avif");
         var user = new TestUser().Allow("vacation");
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", "image/webp,image/png", thumbnail: true, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", "image/webp,image/png", thumbnail: true);
 
         await Assert.That(IsStatusCode(result, 406)).IsTrue();
     }
@@ -262,7 +262,7 @@ public class ImageEndpointsTests
         var fs = new InMemoryFileProvider();
         AddFile(fs, "photo.avif", MagickFormat.Avif);
         var user = new TestUser().Allow("vacation");
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", "image/jpeg", thumbnail: false, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", "image/jpeg", thumbnail: false);
 
         await Assert.That(IsStatusCode(result, 200)).IsTrue();
         await Assert.That(GetContentType(result)).IsEqualTo("image/jpeg");
@@ -274,7 +274,7 @@ public class ImageEndpointsTests
         var fs = new InMemoryFileProvider();
         AddFile(fs, "photo.avif", MagickFormat.Avif);
         var user = new TestUser().Allow("vacation");
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", "image/tiff", thumbnail: false, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", "image/tiff", thumbnail: false);
 
         await Assert.That(IsStatusCode(result, 406)).IsTrue();
     }
@@ -285,7 +285,7 @@ public class ImageEndpointsTests
         var fs = new InMemoryFileProvider();
         AddFile(fs, "photo.avif", MagickFormat.Avif);
         var user = new TestUser().Allow("vacation");
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", "image/webp,image/jpeg", thumbnail: false, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", "image/webp,image/jpeg", thumbnail: false);
 
         await Assert.That(IsStatusCode(result, 200)).IsTrue();
         await Assert.That(GetContentType(result)).IsEqualTo("image/jpeg");
@@ -303,7 +303,7 @@ public class ImageEndpointsTests
         fs.Write("photo.jpg", large.ToByteArray());
 
         var user = new TestUser().Allow("vacation");
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", "image/jpeg,image/png", thumbnail: false, CancellationToken.None);
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", "image/jpeg,image/png", thumbnail: false);
 
         await Assert.That(IsStatusCode(result, 200)).IsTrue();
         await Assert.That(GetContentType(result)).IsEqualTo("image/png");

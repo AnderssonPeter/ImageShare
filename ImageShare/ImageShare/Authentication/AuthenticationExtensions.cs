@@ -20,7 +20,7 @@ public static class AuthenticationExtensions
             .BindConfiguration("OpenIdConnect")
             .Validated();
 
-        var oidcSettings = configuration.GetSection("OpenIdConnect").Get<OidcSettings>() ?? throw new InvalidDataException("");
+        var oidcSettings = configuration.GetSection("OpenIdConnect").Get<OidcSettings>() ?? throw new InvalidDataException("Failed to get open id settings");
 
         services.AddAuthentication(options =>
         {

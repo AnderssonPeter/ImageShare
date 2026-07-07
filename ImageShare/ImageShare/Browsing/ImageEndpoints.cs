@@ -21,7 +21,7 @@ public static class ImageEndpoints
             HttpContext context,
             string path,
             bool thumbnail = false) =>
-            await ServeImageAsync(fileProvider, imageFormats.Value, contentTypeProvider, user, path, context.Request.Headers.Accept, thumbnail, context.RequestAborted));
+            await ServeImageAsync(fileProvider, imageFormats.Value, contentTypeProvider, user, path, context.Request.Headers.Accept, thumbnail));
 
         return endpoints;
     }
@@ -33,8 +33,7 @@ public static class ImageEndpoints
         IUser user,
         string relativePath,
         StringValues acceptHeader,
-        bool thumbnail,
-        CancellationToken cancellationToken)
+        bool thumbnail)
     {
         if (!user.IsAuthenticated)
         {
@@ -66,7 +65,7 @@ public static class ImageEndpoints
             return Results.NotFound();
         }
 
-        return await ServeBestMatchAsync(candidates, contentTypeProvider, acceptHeader, cancellationToken);
+        return await ServeBestMatchAsync(candidates, contentTypeProvider, acceptHeader);
     }
 
     private static List<IFileInfo> FindMatchingFiles(IFileProvider fileProvider, ImageFormatOptions imageFormats, string directory, string baseName, bool thumbnail)
