@@ -3,6 +3,7 @@ using ImageShare.Authentication;
 using ImageShare.Browsing;
 using ImageShare.Thumbnail;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Primitives;
 using Mirality.FileProviders.InMemory;
@@ -306,12 +307,12 @@ public class ImageEndpointsTests
 
     private static bool IsStatusCode(IResult result, int statusCode)
     {
-        return result switch
+        return Unwrap(result) switch
         {
-            Microsoft.AspNetCore.Http.HttpResults.NotFound => statusCode == 404,
-            Microsoft.AspNetCore.Http.HttpResults.BadRequest => statusCode == 400,
-            Microsoft.AspNetCore.Http.HttpResults.UnauthorizedHttpResult => statusCode == 401,
-            Microsoft.AspNetCore.Http.HttpResults.ForbidHttpResult => statusCode == 403,
+            NotFound => statusCode == 404,
+            BadRequest => statusCode == 400,
+            UnauthorizedHttpResult => statusCode == 401,
+            ForbidHttpResult => statusCode == 403,
             IStatusCodeHttpResult statusResult => statusResult.StatusCode == statusCode,
             _ => statusCode == 200,
         };
@@ -319,8 +320,12 @@ public class ImageEndpointsTests
 
     private static string? GetContentType(IResult result)
     {
-        var type = result.GetType();
+        var inner = Unwrap(result);
+        var type = inner.GetType();
         var prop = type.GetProperty("ContentType");
-        return prop?.GetValue(result) as string;
+        return prop?.GetValue(inner) as string;
     }
+
+    private static IResult Unwrap(IResult result) =>
+        result is INestedHttpResult nested ? (IResult)nested.Result : result;
 }

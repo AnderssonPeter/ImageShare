@@ -1,5 +1,7 @@
-﻿using ImageShare.Authentication;
+﻿using System.Diagnostics;
+using ImageShare.Authentication;
 using ImageShare.Thumbnail;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
@@ -26,7 +28,7 @@ public static class ImageEndpoints
         return endpoints;
     }
 
-    internal static async Task<IResult> ServeImageAsync(
+    internal static async Task<Results<FileStreamHttpResult, UnauthorizedHttpResult, BadRequest, ForbidHttpResult, NotFound, StatusCodeHttpResult>> ServeImageAsync(
         IFileProvider fileProvider,
         ImageFormatOptions imageFormats,
         IContentTypeProvider contentTypeProvider,
@@ -37,24 +39,24 @@ public static class ImageEndpoints
     {
         if (!user.IsAuthenticated)
         {
-            return Results.Unauthorized();
+            return TypedResults.Unauthorized();
         }
 
         if (relativePath.Contains("..", StringComparison.Ordinal))
         {
-            return Results.BadRequest();
+            return TypedResults.BadRequest();
         }
 
         if (PathHelper.IsInFolder(relativePath) && !user.CanAccessFolder(PathHelper.GetFirstSegment(relativePath)))
         {
-            return Results.Forbid();
+            return TypedResults.Forbid();
         }
 
         var baseName = Path.GetFileNameWithoutExtension(relativePath);
 
         if (baseName.Contains(ThumbprintOptions.ThumbInfix, StringComparison.Ordinal))
         {
-            return Results.BadRequest();
+            return TypedResults.BadRequest();
         }
 
         var directory = Path.GetDirectoryName(relativePath) ?? "";
@@ -62,10 +64,17 @@ public static class ImageEndpoints
 
         if (candidates.Count == 0)
         {
-            return Results.NotFound();
+            return TypedResults.NotFound();
         }
 
-        return await ServeBestMatchAsync(candidates, contentTypeProvider, acceptHeader);
+        var bestResult = await ServeBestMatchAsync(candidates, contentTypeProvider, acceptHeader);
+
+        return bestResult.Result switch
+        {
+            FileStreamHttpResult file => file,
+            StatusCodeHttpResult status => status,
+            _ => throw new UnreachableException("Failed to find a matching result type")
+        };
     }
 
     private static List<IFileInfo> FindMatchingFiles(IFileProvider fileProvider, ImageFormatOptions imageFormats, string directory, string baseName, bool thumbnail)
@@ -102,7 +111,7 @@ public static class ImageEndpoints
         return candidates;
     }
 
-    private static async Task<IResult> ServeBestMatchAsync(
+    private static async Task<Results<FileStreamHttpResult, StatusCodeHttpResult>> ServeBestMatchAsync(
         List<IFileInfo> candidates,
         IContentTypeProvider contentTypeProvider,
         StringValues acceptHeader)
@@ -117,11 +126,11 @@ public static class ImageEndpoints
             }
         }
 
-        return Results.StatusCode(406);
+        return TypedResults.StatusCode(406);
     }
 
-    internal static IResult ServeFile(IFileInfo fileInfo, string mimeType) =>
-        Results.Stream(fileInfo.CreateReadStream(), mimeType);
+    internal static FileStreamHttpResult ServeFile(IFileInfo fileInfo, string mimeType) =>
+        TypedResults.Stream(fileInfo.CreateReadStream(), mimeType);
 
     internal static bool IsFormatAccepted(StringValues acceptHeader, string mimeType)
     {

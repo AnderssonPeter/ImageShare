@@ -1,6 +1,7 @@
 ﻿using ImageShare.Authentication;
 using ImageShare.Browsing;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Mirality.FileProviders.InMemory;
 
 namespace ImageShare.Tests;
@@ -23,7 +24,7 @@ public class FolderEndpointsTests
     }
 
     private static PaginatedResult<FolderEntry> GetResult(IResult result) =>
-        (PaginatedResult<FolderEntry>)((Microsoft.AspNetCore.Http.HttpResults.Ok<PaginatedResult<FolderEntry>>)result).Value!;
+        (PaginatedResult<FolderEntry>)((Ok<PaginatedResult<FolderEntry>>)Unwrap(result)).Value!;
 
     private const int Page = 1;
     private const int PageSize = 50;
@@ -300,13 +301,16 @@ public class FolderEndpointsTests
 
     private static bool IsStatusCode(IResult result, int statusCode)
     {
-        return result switch
+        return Unwrap(result) switch
         {
-            Microsoft.AspNetCore.Http.HttpResults.UnauthorizedHttpResult => statusCode == 401,
-            Microsoft.AspNetCore.Http.HttpResults.NotFound => statusCode == 404,
-            Microsoft.AspNetCore.Http.HttpResults.BadRequest => statusCode == 400,
-            Microsoft.AspNetCore.Http.HttpResults.Ok<PaginatedResult<FolderEntry>> => statusCode == 200,
+            UnauthorizedHttpResult => statusCode == 401,
+            NotFound => statusCode == 404,
+            BadRequest => statusCode == 400,
+            Ok<PaginatedResult<FolderEntry>> => statusCode == 200,
             _ => false,
         };
     }
+
+    private static IResult Unwrap(IResult result) =>
+        result is INestedHttpResult nested ? (IResult)nested.Result : result;
 }

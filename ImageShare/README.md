@@ -2,6 +2,7 @@
 [X] Add nuget mcp
 [X] Enable dotnet and typescript LSP
 [X] Add powershell to docker
+[ ] Modify the script that starts the open code container, fix the todos in it!
 [ ] BE
   [X] Add run script
     [X] Add dotnet format
@@ -21,7 +22,8 @@
   [X] When adding options add validation attributes and validate them on startup
   [ ] Use DI in unit tests!?
   [ ] See if we can find a better way to structure the endpoints
-  [ ] Use typed result sets, and get rid of IsStatusCode helper method!
+  [X] Use typed result sets, and get rid of IsStatusCode helper method!
+  [ ] ServeBestMatchAsync and ServeImageAsync should not be async!
   [X] Add endpoint to fetch folder
     [X] BrowserEndpoint must support duplicate images with different formats
     [X] BrowserEndpoint should not return the file extension

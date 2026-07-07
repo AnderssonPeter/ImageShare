@@ -1,5 +1,6 @@
 ﻿using ImageShare.Authentication;
 using ImageShare.Thumbnail;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.FileProviders;
 
 namespace ImageShare.Browsing;
@@ -23,26 +24,26 @@ public static class BrowsingEndpoints
         return endpoints;
     }
 
-    internal static IResult GetEntries(IFileProvider fileProvider, string relativePath, IUser user, int page, int pageSize)
+    internal static Results<Ok<PaginatedResult<FolderEntry>>, UnauthorizedHttpResult, BadRequest, NotFound> GetEntries(IFileProvider fileProvider, string relativePath, IUser user, int page, int pageSize)
     {
         if (!user.IsAuthenticated)
         {
-            return Results.Unauthorized();
+            return TypedResults.Unauthorized();
         }
 
         if (page < 1 || pageSize < 1 || pageSize > MaxPageSize)
         {
-            return Results.BadRequest();
+            return TypedResults.BadRequest();
         }
 
         if (relativePath.Contains("..", StringComparison.Ordinal))
         {
-            return Results.BadRequest();
+            return TypedResults.BadRequest();
         }
 
         if (!string.IsNullOrEmpty(relativePath) && !user.CanAccessFolder(PathHelper.GetFirstSegment(relativePath)))
         {
-            return Results.NotFound();
+            return TypedResults.NotFound();
         }
 
         var contents = fileProvider.GetDirectoryContents(relativePath);
@@ -50,7 +51,7 @@ public static class BrowsingEndpoints
         var isRoot = string.IsNullOrEmpty(relativePath);
         var entries = CollectEntries(contents, isRoot, user);
 
-        return Results.Ok(Paginate(entries, page, pageSize));
+        return TypedResults.Ok(Paginate(entries, page, pageSize));
     }
 
     private static List<FolderEntry> CollectEntries(IDirectoryContents contents, bool isRoot, IUser user)
