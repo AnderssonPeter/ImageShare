@@ -19,17 +19,19 @@
   [X] Parse scopes to detect what images we are allowed to read
   [X] Keep one list of supported image formats in configuration and use it instead of hardcoding in both ImageEndpoints and ThumbprintService, it should be it's own options object and in appsettings.json it should be avif, webp, jpg, png.
   [X] When adding options add validation attributes and validate them on startup
+  [ ] Use DI in unit tests!?
+  [ ] See if we can find a better way to structure the endpoints
   [X] Add endpoint to fetch folder
     [X] BrowserEndpoint must support duplicate images with different formats
     [X] BrowserEndpoint should not return the file extension
     [X] BrowserEndpoint should not list files in the root folder
   [X] Add endpoint to fetch images
     [X] Use IContentTypeProvider instead of FileExtensionContentTypeProvider and take it as a dependency instead of constructing your own, use the extension method IContentTypeProvider.GetContentType to simplify getting mime type
-    [ ] To find a matching image check the smallest first then the next and so on
     [X] Rewrite to take thumbprint from query string as a bool value
     [X] Don't try to convert in the endpoint, instead loop PreferredConvertFormats and find the first match that the client accepts, if no match is found, return 406 Not Acceptable
     [X] Write missing unit tests for ImageEndpoints
-    [ ] Do not convert to thumbnail in ImageEndpoints, modify so that it looks for thumbnail files in FindMatchingFiles instead
+    [X] To find a matching image check the smallest first then the next and so on
+    [X] Do not convert to thumbnail in ImageEndpoints, modify so that it looks for thumbnail files in FindMatchingFiles instead
   [X] Find a way to generate thumbprints
   [ ] Add common instructions
     [ ] All options must be validated on startup

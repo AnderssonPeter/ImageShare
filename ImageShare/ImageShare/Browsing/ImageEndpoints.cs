@@ -15,21 +15,19 @@ public static class ImageEndpoints
 
         group.MapGet("/{**path}", async (
             IFileProvider fileProvider,
-            IThumbnailService thumbnailService,
             IOptions<ImageFormatOptions> imageFormats,
             IContentTypeProvider contentTypeProvider,
             User user,
             HttpContext context,
             string path,
             bool thumbnail = false) =>
-            await ServeImageAsync(fileProvider, thumbnailService, imageFormats.Value, contentTypeProvider, user, path, context.Request.Headers.Accept, thumbnail, context.RequestAborted));
+            await ServeImageAsync(fileProvider, imageFormats.Value, contentTypeProvider, user, path, context.Request.Headers.Accept, thumbnail, context.RequestAborted));
 
         return endpoints;
     }
 
     internal static async Task<IResult> ServeImageAsync(
         IFileProvider fileProvider,
-        IThumbnailService thumbnailService,
         ImageFormatOptions imageFormats,
         IContentTypeProvider contentTypeProvider,
         IUser user,
@@ -61,20 +59,22 @@ public static class ImageEndpoints
         }
 
         var directory = Path.GetDirectoryName(relativePath) ?? "";
-        var candidates = FindMatchingFiles(fileProvider, directory, baseName);
+        var candidates = FindMatchingFiles(fileProvider, imageFormats, directory, baseName, thumbnail);
 
         if (candidates.Count == 0)
         {
             return Results.NotFound();
         }
 
-        return await ServeBestMatchAsync(candidates, thumbnailService, contentTypeProvider, acceptHeader, thumbnail, cancellationToken);
+        return await ServeBestMatchAsync(candidates, contentTypeProvider, acceptHeader, cancellationToken);
     }
 
-    private static List<IFileInfo> FindMatchingFiles(IFileProvider fileProvider, ImageFormatOptions imageFormats, string directory, string baseName)
+    private static List<IFileInfo> FindMatchingFiles(IFileProvider fileProvider, ImageFormatOptions imageFormats, string directory, string baseName, bool thumbnail)
     {
         var candidates = new List<IFileInfo>();
         var contents = fileProvider.GetDirectoryContents(directory);
+
+        baseName = thumbnail ? baseName + ThumbprintOptions.ThumbInfix : baseName;
 
         foreach (var item in contents)
         {
@@ -84,10 +84,18 @@ public static class ImageEndpoints
             }
 
             var extension = Path.GetExtension(item.Name).TrimStart('.');
-            if (string.Equals(Path.GetFileNameWithoutExtension(item.Name), baseName, StringComparison.OrdinalIgnoreCase) && imageFormats.SupportedFormats.Contains(extension, StringComparer.OrdinalIgnoreCase))
+            if (!imageFormats.SupportedFormats.Contains(extension, StringComparer.OrdinalIgnoreCase))
             {
-                candidates.Add(item);
+                continue;
             }
+
+            var nameWithoutExtension = Path.GetFileNameWithoutExtension(item.Name);
+            if (!string.Equals(nameWithoutExtension, baseName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            candidates.Add(item);
         }
 
         candidates.Sort((a, b) => a.Length.CompareTo(b.Length));
@@ -97,24 +105,11 @@ public static class ImageEndpoints
 
     private static async Task<IResult> ServeBestMatchAsync(
         List<IFileInfo> candidates,
-        IThumbnailService thumbnailService,
         IContentTypeProvider contentTypeProvider,
-        StringValues acceptHeader,
-        bool thumbnail,
-        CancellationToken ct)
+        StringValues acceptHeader)
     {
-        if (thumbnail)
-        {
-            return await ServeThumbAsync(candidates, thumbnailService, contentTypeProvider, acceptHeader, ct);
-        }
-
         foreach (var file in candidates)
         {
-            if (Path.GetFileNameWithoutExtension(file.Name).Contains(ThumbprintOptions.ThumbInfix, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
             var mime = contentTypeProvider.GetContentType(Path.GetExtension(file.Name));
 
             if (IsFormatAccepted(acceptHeader, mime))
@@ -124,58 +119,6 @@ public static class ImageEndpoints
         }
 
         return Results.StatusCode(406);
-    }
-
-    private static async Task<IResult> ServeThumbAsync(
-        List<IFileInfo> candidates,
-        IThumbnailService thumbnailService,
-        IContentTypeProvider contentTypeProvider,
-        StringValues acceptHeader,
-        CancellationToken ct)
-    {
-        foreach (var file in candidates)
-        {
-            var baseName = Path.GetFileNameWithoutExtension(file.Name);
-
-            if (!baseName.Contains(ThumbprintOptions.ThumbInfix, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            var mime = contentTypeProvider.GetContentType(Path.GetExtension(file.Name));
-
-            if (IsFormatAccepted(acceptHeader, mime))
-            {
-                return ServeFile(file, mime);
-            }
-        }
-
-        var source = candidates.FirstOrDefault(f =>
-            !Path.GetFileNameWithoutExtension(f.Name).Contains(ThumbprintOptions.ThumbInfix, StringComparison.Ordinal));
-
-        if (source is null)
-        {
-            return Results.NotFound();
-        }
-
-        var imageData = await ReadAllBytesAsync(source, ct);
-        var thumbData = thumbnailService.GenerateThumbnail(imageData);
-        var thumbMime = contentTypeProvider.GetContentType(".jpeg");
-
-        if (!IsFormatAccepted(acceptHeader, thumbMime))
-        {
-            return Results.StatusCode(406);
-        }
-
-        return Results.Bytes(thumbData, thumbMime);
-    }
-
-    private static async Task<byte[]> ReadAllBytesAsync(IFileInfo fileInfo, CancellationToken ct)
-    {
-        await using var stream = fileInfo.CreateReadStream();
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms, ct);
-        return ms.ToArray();
     }
 
     internal static IResult ServeFile(IFileInfo fileInfo, string mimeType) =>
