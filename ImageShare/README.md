@@ -21,6 +21,7 @@
   [X] When adding options add validation attributes and validate them on startup
   [ ] Use DI in unit tests!?
   [ ] See if we can find a better way to structure the endpoints
+  [ ] Use typed result sets, and get rid of IsStatusCode helper method!
   [X] Add endpoint to fetch folder
     [X] BrowserEndpoint must support duplicate images with different formats
     [X] BrowserEndpoint should not return the file extension

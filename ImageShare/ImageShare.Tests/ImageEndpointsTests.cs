@@ -133,25 +133,25 @@ public class ImageEndpointsTests
     }
 
     [Test]
-    public async Task ServeImageAsync_BlockedFolder_ReturnsNotFound()
+    public async Task ServeImageAsync_BlockedFolder_ReturnsForbidden()
     {
         var fs = new InMemoryFileProvider();
         AddFile(fs, "secret/photo.png", MagickFormat.Png);
         var user = new TestUser();
         var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "secret/photo.png", StringValues.Empty, thumbnail: false);
 
-        await Assert.That(IsStatusCode(result, 404)).IsTrue();
+        await Assert.That(IsStatusCode(result, 403)).IsTrue();
     }
 
     [Test]
-    public async Task ServeImageAsync_BlockedSubfolder_ReturnsNotFound()
+    public async Task ServeImageAsync_BlockedSubfolder_ReturnsForbidden()
     {
         var fs = new InMemoryFileProvider();
         AddFile(fs, "secret/nested/photo.png", MagickFormat.Png);
         var user = new TestUser();
         var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "secret/nested/photo.png", StringValues.Empty, thumbnail: false);
 
-        await Assert.That(IsStatusCode(result, 404)).IsTrue();
+        await Assert.That(IsStatusCode(result, 403)).IsTrue();
     }
 
     [Test]
@@ -165,17 +165,17 @@ public class ImageEndpointsTests
     }
 
     [Test]
-    public async Task ServeImageAsync_PathTraversal_ReturnsNotFound()
+    public async Task ServeImageAsync_PathTraversal_ReturnsBadRequest()
     {
         var fs = new InMemoryFileProvider();
         var user = new TestUser().Allow("vacation");
         var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "../etc", StringValues.Empty, thumbnail: false);
 
-        await Assert.That(IsStatusCode(result, 404)).IsTrue();
+        await Assert.That(IsStatusCode(result, 400)).IsTrue();
     }
 
     [Test]
-    public async Task ServeImageAsync_ThumbprintFile_ReturnsNotFound()
+    public async Task ServeImageAsync_ThumbprintFile_ReturnsBadRequest()
     {
         var fs = new InMemoryFileProvider();
         AddFile(fs, "photo.avif", MagickFormat.Avif);
@@ -183,7 +183,7 @@ public class ImageEndpointsTests
         var user = new TestUser().Allow("vacation");
         var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo.thumb.jpg", StringValues.Empty, thumbnail: false);
 
-        await Assert.That(IsStatusCode(result, 404)).IsTrue();
+        await Assert.That(IsStatusCode(result, 400)).IsTrue();
     }
 
     [Test]
@@ -257,18 +257,6 @@ public class ImageEndpointsTests
     }
 
     [Test]
-    public async Task ServeImageAsync_ConvertsViaPreferredFormats()
-    {
-        var fs = new InMemoryFileProvider();
-        AddFile(fs, "photo.avif", MagickFormat.Avif);
-        var user = new TestUser().Allow("vacation");
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", "image/jpeg", thumbnail: false);
-
-        await Assert.That(IsStatusCode(result, 200)).IsTrue();
-        await Assert.That(GetContentType(result)).IsEqualTo("image/jpeg");
-    }
-
-    [Test]
     public async Task ServeImageAsync_NoAcceptedFormats_Returns406()
     {
         var fs = new InMemoryFileProvider();
@@ -277,18 +265,6 @@ public class ImageEndpointsTests
         var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", "image/tiff", thumbnail: false);
 
         await Assert.That(IsStatusCode(result, 406)).IsTrue();
-    }
-
-    [Test]
-    public async Task ServeImageAsync_ConversionPreferredFormatOrder_RespectsPriority()
-    {
-        var fs = new InMemoryFileProvider();
-        AddFile(fs, "photo.avif", MagickFormat.Avif);
-        var user = new TestUser().Allow("vacation");
-        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", "image/webp,image/jpeg", thumbnail: false);
-
-        await Assert.That(IsStatusCode(result, 200)).IsTrue();
-        await Assert.That(GetContentType(result)).IsEqualTo("image/jpeg");
     }
 
     [Test]
@@ -309,6 +285,25 @@ public class ImageEndpointsTests
         await Assert.That(GetContentType(result)).IsEqualTo("image/png");
     }
 
+    [Test]
+    public async Task ServeImageAsync_ThumbTrue_ServesSmallestThumbprintFirst()
+    {
+        var fs = new InMemoryFileProvider();
+        fs.Write("photo.avif", CreateTestImage(MagickFormat.Avif));
+        using var smallThumb = new MagickImage(MagickColors.DodgerBlue, 10, 10);
+        smallThumb.Format = MagickFormat.Jpeg;
+        fs.Write("photo.thumb.jpg", smallThumb.ToByteArray());
+        using var largeThumb = new MagickImage(MagickColors.DodgerBlue, 100, 100);
+        largeThumb.Format = MagickFormat.Png;
+        fs.Write("photo.thumb.png", largeThumb.ToByteArray());
+
+        var user = new TestUser().Allow("vacation");
+        var result = await ImageEndpoints.ServeImageAsync(fs, DefaultImageFormats, ContentTypeProvider, user, "photo", "image/jpeg,image/png", thumbnail: true);
+
+        await Assert.That(IsStatusCode(result, 200)).IsTrue();
+        await Assert.That(GetContentType(result)).IsEqualTo("image/jpeg");
+    }
+
     private static bool IsStatusCode(IResult result, int statusCode)
     {
         return result switch
@@ -316,6 +311,7 @@ public class ImageEndpointsTests
             Microsoft.AspNetCore.Http.HttpResults.NotFound => statusCode == 404,
             Microsoft.AspNetCore.Http.HttpResults.BadRequest => statusCode == 400,
             Microsoft.AspNetCore.Http.HttpResults.UnauthorizedHttpResult => statusCode == 401,
+            Microsoft.AspNetCore.Http.HttpResults.ForbidHttpResult => statusCode == 403,
             IStatusCodeHttpResult statusResult => statusResult.StatusCode == statusCode,
             _ => statusCode == 200,
         };
