@@ -23,7 +23,7 @@
   [ ] Use DI in unit tests!?
   [ ] See if we can find a better way to structure the endpoints
   [X] Use typed result sets, and get rid of IsStatusCode helper method!
-  [ ] ServeBestMatchAsync and ServeImageAsync should not be async!
+  [X] ServeBestMatchAsync and ServeImageAsync should not be async!
   [X] Add endpoint to fetch folder
     [X] BrowserEndpoint must support duplicate images with different formats
     [X] BrowserEndpoint should not return the file extension
@@ -40,7 +40,7 @@
     [ ] All options must be validated on startup
     [ ] Do not use förkortningar
   [ ] there should be some way to use IContentTypeProvider without constructing it on our own, while adding additional file formats to it?
-  [ ] Move the Paginate method to a helper method and make it generic
+  [X] Move the Paginate method to a helper method and make it generic and reuse it in both BrowserEndpoint and ImageEndpoints
   [ ] Make service generate the image in all possible formats
     [ ] There is a mix of Thumbprint and Thumbnail in the codebase, we should standardize on one of them
       [ ] Modify the ThumbnailService to instead convert between formats and also specify a target resolution

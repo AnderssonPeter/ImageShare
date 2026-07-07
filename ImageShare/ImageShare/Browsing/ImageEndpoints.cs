@@ -15,7 +15,7 @@ public static class ImageEndpoints
     {
         var group = endpoints.MapGroup("/images").RequireAuthorization();
 
-        group.MapGet("/{**path}", async (
+        group.MapGet("/{**path}", (
             IFileProvider fileProvider,
             IOptions<ImageFormatOptions> imageFormats,
             IContentTypeProvider contentTypeProvider,
@@ -23,12 +23,12 @@ public static class ImageEndpoints
             HttpContext context,
             string path,
             bool thumbnail = false) =>
-            await ServeImageAsync(fileProvider, imageFormats.Value, contentTypeProvider, user, path, context.Request.Headers.Accept, thumbnail));
+            ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, path, context.Request.Headers.Accept, thumbnail));
 
         return endpoints;
     }
 
-    internal static async Task<Results<FileStreamHttpResult, UnauthorizedHttpResult, BadRequest, ForbidHttpResult, NotFound, StatusCodeHttpResult>> ServeImageAsync(
+    internal static Results<FileStreamHttpResult, UnauthorizedHttpResult, BadRequest, ForbidHttpResult, NotFound, StatusCodeHttpResult> ServeImage(
         IFileProvider fileProvider,
         ImageFormatOptions imageFormats,
         IContentTypeProvider contentTypeProvider,
@@ -67,7 +67,7 @@ public static class ImageEndpoints
             return TypedResults.NotFound();
         }
 
-        var bestResult = await ServeBestMatchAsync(candidates, contentTypeProvider, acceptHeader);
+        var bestResult = ServeBestMatch(candidates, contentTypeProvider, acceptHeader);
 
         return bestResult.Result switch
         {
@@ -111,7 +111,7 @@ public static class ImageEndpoints
         return candidates;
     }
 
-    private static async Task<Results<FileStreamHttpResult, StatusCodeHttpResult>> ServeBestMatchAsync(
+    private static Results<FileStreamHttpResult, StatusCodeHttpResult> ServeBestMatch(
         List<IFileInfo> candidates,
         IContentTypeProvider contentTypeProvider,
         StringValues acceptHeader)

@@ -51,7 +51,7 @@ public static class BrowsingEndpoints
         var isRoot = string.IsNullOrEmpty(relativePath);
         var entries = CollectEntries(contents, isRoot, user);
 
-        return TypedResults.Ok(Paginate(entries, page, pageSize));
+        return TypedResults.Ok(PaginatedResult<FolderEntry>.Paginate(entries, page, pageSize));
     }
 
     private static List<FolderEntry> CollectEntries(IDirectoryContents contents, bool isRoot, IUser user)
@@ -105,22 +105,5 @@ public static class BrowsingEndpoints
         });
 
         return entries;
-    }
-
-    private static PaginatedResult<FolderEntry> Paginate(List<FolderEntry> entries, int page, int pageSize)
-    {
-        var totalCount = entries.Count;
-        var paged = entries
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-
-        return new PaginatedResult<FolderEntry>
-        {
-            Items = paged,
-            Page = page,
-            PageSize = pageSize,
-            TotalCount = totalCount,
-        };
     }
 }
