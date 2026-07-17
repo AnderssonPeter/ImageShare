@@ -1,16 +1,11 @@
 <Solution>
   <Folder Name="/Solution Items/">
-    <File Path="../.gitignore" />
     <File Path=".dockerignore" />
     <File Path=".editorconfig" />
+    <File Path=".gitignore" />
     <File Path="dotnet-tools.json" />
     <File Path="global.json" />
     <File Path="README.md" />
-  </Folder>
-  <Folder Name="/Solution Items/opencode/">
-    <File Path="../build.ps1" />
-    <File Path="../Dockerfile" />
-    <File Path="../opencode.ps1" />
   </Folder>
   <Project Path="ImageShare.Tests/ImageShare.Tests.csproj" />
   <Project Path="ImageShare/ImageShare.csproj" />
