@@ -4,12 +4,18 @@ using ImageShare.ImageConversion;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Mirality.FileProviders;
-using Mirality.FileProviders.InMemory;
 
 namespace ImageShare.Tests;
 
-public class ImageConverterJobTests
+[MicrosoftDI]
+public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, ImageConverter converter, IOptions<ImageFormatOptions> imageFormats, ILoggerFactory loggerFactory)
 {
+    private readonly ImageConverterJob _job = new(
+            fileProvider,
+            converter,
+            imageFormats,
+            loggerFactory.CreateLogger<ImageConverterJob>());
+
     private static byte[] CreateTestImage(int width = 100, int height = 100, MagickFormat format = MagickFormat.Avif)
     {
         using var image = new MagickImage(MagickColors.DodgerBlue, (uint)width, (uint)height);
@@ -17,7 +23,7 @@ public class ImageConverterJobTests
         return image.ToByteArray();
     }
 
-    private static void AddFile(InMemoryFileProvider fileProvider, string path, MagickFormat format = MagickFormat.Avif, int width = 100, int height = 100)
+    private void AddFile(string path, MagickFormat format = MagickFormat.Avif, int width = 100, int height = 100)
     {
         fileProvider.Create(Path.GetDirectoryName(path) ?? "");
         fileProvider.Write(path, CreateTestImage(width, height, format));
@@ -31,34 +37,18 @@ public class ImageConverterJobTests
         ThumbnailMaxHeight = 200,
     };
 
-    private static readonly ImageFormatOptions ImageFormats = new()
-    {
-        SupportedFormats = ["avif", "webp", "jpg", "png"]
-    };
-
     private static (int Width, int Height) Dimensions(byte[] data)
     {
         using var image = new MagickImage(data);
         return ((int)image.Width, (int)image.Height);
     }
 
-    private static ImageConverterJob CreateJob(InMemoryFileProvider fileProvider, ImageConverterOptions? converterOptions = null, ImageFormatOptions? imageFormats = null)
-    {
-        return new ImageConverterJob(
-            fileProvider,
-            new ImageConverter(Options.Create(converterOptions ?? DefaultConverterOptions)),
-            Options.Create(imageFormats ?? ImageFormats),
-            new LoggerFactory().CreateLogger<ImageConverterJob>());
-    }
-
     [Test]
     public async Task ConvertImage_ConvertsToAllOtherFormats(CancellationToken cancellationToken)
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddFile(fileProvider, "photo.avif");
-        var job = CreateJob(fileProvider);
+        AddFile("photo.avif");
 
-        await job.ConvertImageAsync("photo.avif", cancellationToken);
+        await _job.ConvertImageAsync("photo.avif", cancellationToken);
 
         await Assert.That(fileProvider.GetFileInfo("photo.webp").Exists).IsTrue();
         await Assert.That(fileProvider.GetFileInfo("photo.jpg").Exists).IsTrue();
@@ -71,11 +61,9 @@ public class ImageConverterJobTests
     [Test]
     public async Task ConvertImage_DoesNotCreateSourceFormat(CancellationToken cancellationToken)
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddFile(fileProvider, "photo.avif");
-        var job = CreateJob(fileProvider);
+        AddFile("photo.avif");
 
-        await job.ConvertImageAsync("photo.avif", cancellationToken);
+        await _job.ConvertImageAsync("photo.avif", cancellationToken);
 
         await Assert.That(fileProvider.GetFileInfo("photo.thumb.avif").Exists).IsFalse();
     }
@@ -83,11 +71,9 @@ public class ImageConverterJobTests
     [Test]
     public async Task ConvertImage_ConvertsJpegSources(CancellationToken cancellationToken)
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddFile(fileProvider, "photo.jpg", MagickFormat.Jpeg);
-        var job = CreateJob(fileProvider);
+        AddFile("photo.jpg", MagickFormat.Jpeg);
 
-        await job.ConvertImageAsync("photo.jpg", cancellationToken);
+        await _job.ConvertImageAsync("photo.jpg", cancellationToken);
 
         await Assert.That(fileProvider.GetFileInfo("photo.avif").Exists).IsTrue();
         await Assert.That(fileProvider.GetFileInfo("photo.webp").Exists).IsTrue();
@@ -97,13 +83,11 @@ public class ImageConverterJobTests
     [Test]
     public async Task ConvertImage_SkipsExistingFiles(CancellationToken cancellationToken)
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddFile(fileProvider, "photo.avif");
+        AddFile("photo.avif");
         var expectedContent = CreateTestImage(format: MagickFormat.WebP);
         fileProvider.Write("photo.webp", expectedContent);
-        var job = CreateJob(fileProvider);
 
-        await job.ConvertImageAsync("photo.avif", cancellationToken);
+        await _job.ConvertImageAsync("photo.avif", cancellationToken);
 
         var existingContent = FileProviderExtensions.ReadAsBytes(fileProvider.GetFileInfo("photo.webp"));
         await Assert.That(existingContent).IsEquivalentTo(expectedContent);
@@ -128,10 +112,7 @@ public class ImageConverterJobTests
     [Test]
     public async Task IsImageFile_ReturnsTrueForSupportedFormats()
     {
-        var fileProvider = new InMemoryFileProvider();
-        var job = CreateJob(fileProvider);
-
-        var result = job.IsImageFile("photo.avif");
+        var result = _job.IsImageFile("photo.avif");
 
         await Assert.That(result).IsTrue();
     }
@@ -139,10 +120,7 @@ public class ImageConverterJobTests
     [Test]
     public async Task IsImageFile_ReturnsFalseForUnsupportedFormats()
     {
-        var fileProvider = new InMemoryFileProvider();
-        var job = CreateJob(fileProvider);
-
-        var result = job.IsImageFile("photo.bmp");
+        var result = _job.IsImageFile("photo.bmp");
 
         await Assert.That(result).IsFalse();
     }
@@ -150,11 +128,9 @@ public class ImageConverterJobTests
     [Test]
     public async Task ConvertImage_ThumbnailIsSmallerThanOriginal(CancellationToken cancellationToken)
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddFile(fileProvider, "large.avif", width: 800, height: 600);
-        var job = CreateJob(fileProvider);
+        AddFile("large.avif", width: 800, height: 600);
 
-        await job.ConvertImageAsync("large.avif", cancellationToken);
+        await _job.ConvertImageAsync("large.avif", cancellationToken);
 
         var thumbnailData = FileProviderExtensions.ReadAsBytes(fileProvider.GetFileInfo("large.thumb.webp"));
         var (thumbnailWidth, thumbnailHeight) = Dimensions(thumbnailData);
@@ -165,11 +141,9 @@ public class ImageConverterJobTests
     [Test]
     public async Task ConvertImage_FullResolutionIsNotResized(CancellationToken cancellationToken)
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddFile(fileProvider, "large.avif", width: 800, height: 600);
-        var job = CreateJob(fileProvider);
+        AddFile("large.avif", width: 800, height: 600);
 
-        await job.ConvertImageAsync("large.avif", cancellationToken);
+        await _job.ConvertImageAsync("large.avif", cancellationToken);
 
         var fullData = FileProviderExtensions.ReadAsBytes(fileProvider.GetFileInfo("large.webp"));
         var (fullWidth, fullHeight) = Dimensions(fullData);
@@ -178,23 +152,16 @@ public class ImageConverterJobTests
     }
 
     [Test]
-    public async Task ScanAndConvertAsync_EmptyDirectory_DoesNotThrow(CancellationToken cancellationToken)
-    {
-        var fileProvider = new InMemoryFileProvider();
-        var job = CreateJob(fileProvider);
-
-        await job.ScanAndConvertAsync(cancellationToken);
-    }
+    public Task ScanAndConvertAsync_EmptyDirectory_DoesNotThrow(CancellationToken cancellationToken) =>
+        _job.ScanAndConvertAsync(cancellationToken);
 
     [Test]
     public async Task ScanAndConvertAsync_ConvertsAllSourceImages(CancellationToken cancellationToken)
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddFile(fileProvider, "photo.avif");
-        AddFile(fileProvider, "subdir/other.jpg", MagickFormat.Jpeg);
-        var job = CreateJob(fileProvider);
+        AddFile("photo.avif");
+        AddFile("subdir/other.jpg", MagickFormat.Jpeg);
 
-        await job.ScanAndConvertAsync(cancellationToken);
+        await _job.ScanAndConvertAsync(cancellationToken);
 
         await Assert.That(fileProvider.GetFileInfo("photo.webp").Exists).IsTrue();
         await Assert.That(fileProvider.GetFileInfo("photo.jpg").Exists).IsTrue();

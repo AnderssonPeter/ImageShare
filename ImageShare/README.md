@@ -2,7 +2,31 @@
 [X] Add nuget mcp
 [X] Enable dotnet and typescript LSP
 [X] Add powershell to docker
+[ ] Add Auth endpoint where you can provide a filter (same as `User.ImageShareFilter` and a end date, and returns a signed jwt token
+  [ ] Add a auth endpoint that accepts the jwt token from above as sign in
+  [ ] This should not replace the other auth both should work
+  [ ] To create the jwt token an admin role should be required
+[ ] Add api key authentication
+  [ ] This should not replace the other auth all three should work
+  [ ] The api keys should be stored in the settings file, with a `ImageShareFilter`
 [ ] Modify the script that starts the open code container, fix the todos in it!
+[ ] Allow opencode to access tmp folder by default
+[ ] What is rg cli tool? install in container?
+[ ] Add nuget mcp server
+[ ] Enable nuget mcp server
+[ ] Enable microsoft docs mcp server
+[ ] Add instructions to group files by funcitionality not type
+[ ] Add Arrange, Act, Assert comments to unit tests
+[ ] Folder endpoint should only return files that have a image file extension
+[ ] Add endpoint to download multiple images, from multiple folders recursively
+[ ] Add endpoint to get random image from a list of folder recursively
+[ ] In unit tests move AddDir (rename to AddDirectory), AddFile, AddImageFile, AddThumbFile, Unwrap and other common methods to extension methods
+[ ] Add CreateThumbnail, IsStatusCode, CreateTestImage, to a base class for unit tests
+[ ] Create a user mock class that can be reused in all unit tests instead of having one per test file
+  [ ] The mock class should be added to DI and resolved using DI (the tests should not call new on it)
+[ ] HasVisibleContent
+  [ ] should not return true when it finds a directory, it has to run recursively on sub directories
+  [ ] Thumbprints should not be included in the calculation, only images with the correct file extension should be included
 [ ] BE
   [X] Add run script
     [X] Add dotnet format
@@ -14,13 +38,15 @@
   [X] Linting
   [X] Scalar
   [X] Add user class
+  [ ] Don't use _ for private fields
+    [ ] Configure .editorconfig accordingly
   [X] Add canAccessFolder method to user class
     [X] Move the regex generation logic into it's own class that caches regexes for each filter.
     [X] Add unit tests for canAccessFolder method
   [X] Parse scopes to detect what images we are allowed to read
   [X] Keep one list of supported image formats in configuration and use it instead of hardcoding in both ImageEndpoints and ThumbprintService, it should be it's own options object and in appsettings.json it should be avif, webp, jpg, png.
   [X] When adding options add validation attributes and validate them on startup
-  [ ] Use DI in unit tests!?
+  [X] Use DI in unit tests!?
   [ ] See if we can find a better way to structure the endpoints
   [X] Use typed result sets, and get rid of IsStatusCode helper method!
   [X] ServeBestMatchAsync and ServeImageAsync should not be async!
@@ -28,8 +54,12 @@
     [X] BrowserEndpoint must support duplicate images with different formats
     [X] BrowserEndpoint should not return the file extension
     [X] BrowserEndpoint should not list files in the root folder
-  [ ] Add a function to get a random image in a folder
-  [ ] Don't list empty folders in BrowserEndpoint
+  [X] Add a function to get a random thumbnail image in a folder
+    [X] Move GetRandomThumbnail from BrowsingEndpoints to ImageEndpoints
+    [ ] No unit test should create a new InMemoryFileProvider and instead use the one provided by Dependency Injection
+    [ ] Unit tests should use IWritableFileProvider and IFileProvider instead of concrete implementations
+    [ ] Convert `/random-thumbnail/{**path}` to get `/random/{**path}` with a parameter to specify if you want a full image or thumbnail, and a parameter if to get recursively
+  [X] Don't list empty folders in BrowserEndpoint
   [X] Add endpoint to fetch images
     [X] Use IContentTypeProvider instead of FileExtensionContentTypeProvider and take it as a dependency instead of constructing your own, use the extension method IContentTypeProvider.GetContentType to simplify getting mime type
     [X] Rewrite to take thumbprint from query string as a bool value
@@ -38,7 +68,7 @@
     [X] To find a matching image check the smallest first then the next and so on
     [X] Do not convert to thumbnail in ImageEndpoints, modify so that it looks for thumbnail files in FindMatchingFiles instead
   [X] Find a way to generate thumbprints
-  [ ] Add common instructions
+  [X] Add common instructions
     [X] All options must be validated on startup
     [X] Do not use abbreviations
     [X] ImageConverterJobTests should not use a physical directory and instead use the memory file provider!

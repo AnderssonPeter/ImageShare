@@ -15,6 +15,15 @@ public static class ImageEndpoints
     {
         var group = endpoints.MapGroup("/images").RequireAuthorization();
 
+        group.MapGet("/random-thumbnail/{**path}", (
+            IFileProvider fileProvider,
+            IOptions<ImageFormatOptions> imageFormats,
+            IContentTypeProvider contentTypeProvider,
+            User user,
+            HttpContext context,
+            string path) =>
+            GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, path, context.Request.Headers.Accept));
+
         group.MapGet("/{**path}", (
             IFileProvider fileProvider,
             IOptions<ImageFormatOptions> imageFormats,
@@ -77,7 +86,7 @@ public static class ImageEndpoints
         };
     }
 
-    private static List<IFileInfo> FindMatchingFiles(IFileProvider fileProvider, ImageFormatOptions imageFormats, string directory, string baseName, bool thumbnail)
+    internal static List<IFileInfo> FindMatchingFiles(IFileProvider fileProvider, ImageFormatOptions imageFormats, string directory, string baseName, bool thumbnail)
     {
         var candidates = new List<IFileInfo>();
         var contents = fileProvider.GetDirectoryContents(directory);
@@ -111,7 +120,7 @@ public static class ImageEndpoints
         return candidates;
     }
 
-    private static Results<FileStreamHttpResult, StatusCodeHttpResult> ServeBestMatch(
+    internal static Results<FileStreamHttpResult, StatusCodeHttpResult> ServeBestMatch(
         List<IFileInfo> candidates,
         IContentTypeProvider contentTypeProvider,
         StringValues acceptHeader)
@@ -160,5 +169,92 @@ public static class ImageEndpoints
         }
 
         return false;
+    }
+
+    internal static Results<FileStreamHttpResult, UnauthorizedHttpResult, BadRequest, ForbidHttpResult, NotFound, StatusCodeHttpResult> GetRandomThumbnail(
+        IFileProvider fileProvider,
+        ImageFormatOptions imageFormats,
+        IContentTypeProvider contentTypeProvider,
+        IUser user,
+        string relativePath,
+        StringValues acceptHeader)
+    {
+        if (!user.IsAuthenticated)
+        {
+            return TypedResults.Unauthorized();
+        }
+
+        if (relativePath.Contains("..", StringComparison.Ordinal))
+        {
+            return TypedResults.BadRequest();
+        }
+
+        if (!PathHelper.IsInFolder(relativePath))
+        {
+            return TypedResults.BadRequest();
+        }
+
+        if (!user.CanAccessFolder(PathHelper.GetFirstSegment(relativePath)))
+        {
+            return TypedResults.Forbid();
+        }
+
+        var imageFiles = GetImageBaseNames(fileProvider, relativePath, imageFormats);
+
+        if (imageFiles.Count == 0)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var randomBaseName = imageFiles[Random.Shared.Next(imageFiles.Count)];
+
+        var candidates = FindMatchingFiles(fileProvider, imageFormats, relativePath, randomBaseName, thumbnail: true);
+
+        if (candidates.Count == 0)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var bestResult = ServeBestMatch(candidates, contentTypeProvider, acceptHeader);
+
+        return bestResult.Result switch
+        {
+            FileStreamHttpResult file => file,
+            StatusCodeHttpResult status => status,
+            _ => throw new UnreachableException("Failed to find a matching result type")
+        };
+    }
+
+    private static List<string> GetImageBaseNames(IFileProvider fileProvider, string directory, ImageFormatOptions imageFormats)
+    {
+        var imageFiles = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var item in fileProvider.GetDirectoryContents(directory))
+        {
+            if (!item.Exists || item.IsDirectory)
+            {
+                continue;
+            }
+
+            if (ImageConverterJob.IsThumbprintFile(item.Name))
+            {
+                continue;
+            }
+
+            var extension = Path.GetExtension(item.Name).TrimStart('.');
+            if (!imageFormats.SupportedFormats.Contains(extension, StringComparer.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var nameWithoutExtension = Path.GetFileNameWithoutExtension(item.Name);
+            if (seen.Add(nameWithoutExtension))
+            {
+                imageFiles.Add(nameWithoutExtension);
+            }
+        }
+
+        return imageFiles;
     }
 }

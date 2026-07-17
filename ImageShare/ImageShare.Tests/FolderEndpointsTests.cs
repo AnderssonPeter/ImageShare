@@ -1,12 +1,16 @@
-﻿using ImageShare.Authentication;
+﻿using ImageMagick;
+using ImageShare.Authentication;
 using ImageShare.Browsing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Mirality.FileProviders.InMemory;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Options;
+using Mirality.FileProviders;
 
 namespace ImageShare.Tests;
 
-public class FolderEndpointsTests
+[MicrosoftDI]
+public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IContentTypeProvider contentTypeProvider, IOptions<ImageFormatOptions> imageFormats)
 {
     private sealed class TestUser : IUser
     {
@@ -29,16 +33,27 @@ public class FolderEndpointsTests
     private const int Page = 1;
     private const int PageSize = 50;
 
-    private static void AddDir(InMemoryFileProvider fileProvider, string path) =>
+    private void AddDirectory(string path) =>
         fileProvider.Write($"{path}/.keep", []);
 
-    private static void AddFile(InMemoryFileProvider fileProvider, string path) =>
-        fileProvider.Write(path, []);
+    private void AddFile(string path, byte[] content) =>
+        fileProvider.Write(path, content);
+    private void AddFile(string path) =>
+        AddFile(path, []);
+
+    private void AddImageFile(string path, MagickFormat format)
+    {
+        using var image = new MagickImage(MagickColors.DodgerBlue, 100, 100);
+        image.Format = format;
+        AddFile(path, image.ToByteArray());
+    }
+
+    private static FileStreamHttpResult GetFileResult(IResult result) =>
+        (FileStreamHttpResult)((INestedHttpResult)result).Result;
 
     [Test]
     public async Task GetEntries_Unauthenticated_ReturnsUnauthorized()
     {
-        var fileProvider = new InMemoryFileProvider();
         var user = new TestUser { IsAuthenticated = false };
         var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize);
 
@@ -48,7 +63,6 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_PathTraversal_ReturnsBadRequest()
     {
-        var fileProvider = new InMemoryFileProvider();
         var user = new TestUser();
         var result = BrowsingEndpoints.GetEntries(fileProvider, "../etc", user, Page, PageSize);
 
@@ -61,7 +75,6 @@ public class FolderEndpointsTests
     [Arguments(1, 501)]
     public async Task GetEntries_InvalidPagination_ReturnsBadRequest(int page, int pageSize)
     {
-        var fileProvider = new InMemoryFileProvider();
         var user = new TestUser();
         var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, page, pageSize);
 
@@ -71,10 +84,9 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_Root_FiltersFoldersByAccess()
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddDir(fileProvider, "allowed-folder");
-        AddDir(fileProvider, "blocked-folder");
-        AddFile(fileProvider, "file.txt");
+        AddDirectory("allowed-folder");
+        AddDirectory("blocked-folder");
+        AddFile("file.txt");
 
         var user = new TestUser().Allow("allowed-folder");
         var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize);
@@ -95,10 +107,9 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_Root_ExcludesFiles()
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddFile(fileProvider, "photo.jpg");
-        AddFile(fileProvider, "document.pdf");
-        AddDir(fileProvider, "images");
+        AddFile("photo.jpg");
+        AddFile("document.pdf");
+        AddDirectory("images");
 
         var user = new TestUser().Allow("images");
         var paginated = GetResult(BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize));
@@ -111,9 +122,8 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_Root_AllFoldersBlocked_ReturnsEmpty()
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddDir(fileProvider, "secret");
-        AddFile(fileProvider, "public.txt");
+        AddDirectory("secret");
+        AddFile("public.txt");
 
         var user = new TestUser();
         var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize);
@@ -126,8 +136,7 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_BlockedSubfolder_ReturnsNotFound()
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddDir(fileProvider, "secret/nested");
+        AddDirectory("secret/nested");
 
         var user = new TestUser();
         var result = BrowsingEndpoints.GetEntries(fileProvider, "secret/nested", user, Page, PageSize);
@@ -138,10 +147,9 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_Subfolder_DoesNotFilterByAccess()
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddFile(fileProvider, "allowed/sub-file.txt");
-        AddFile(fileProvider, "allowed/sub-secret/x");
-        AddFile(fileProvider, "allowed/sub-public/x");
+        AddFile("allowed/sub-file.txt");
+        AddFile("allowed/sub-secret/x");
+        AddFile("allowed/sub-public/x");
 
         var user = new TestUser().Allow("allowed");
         var result = BrowsingEndpoints.GetEntries(fileProvider, "allowed", user, Page, PageSize);
@@ -159,7 +167,6 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_EmptyDirectory_ReturnsEmpty()
     {
-        var fileProvider = new InMemoryFileProvider();
         var user = new TestUser();
         var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize);
 
@@ -169,11 +176,52 @@ public class FolderEndpointsTests
     }
 
     [Test]
+    public async Task GetEntries_EmptyFolder_ExcludedFromListing()
+    {
+        AddDirectory("empty-folder");
+        AddDirectory("populated-folder");
+        AddFile("populated-folder/file.png");
+
+        var user = new TestUser().Allow("populated-folder").Allow("empty-folder");
+        var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize);
+
+        var paginated = GetResult(result);
+        await Assert.That(paginated.Items.Count).IsEqualTo(1);
+        await Assert.That(paginated.Items[0].Name).IsEqualTo("populated-folder");
+    }
+
+    [Test]
+    public async Task GetEntries_FolderWithOnlyThumbprintFiles_Excluded()
+    {
+        AddDirectory("normal-folder");
+        AddFile("thumb-only-folder/photo.thumb.jpg");
+
+        var user = new TestUser().Allow("normal-folder").Allow("thumb-only-folder");
+        var paginated = GetResult(BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize));
+
+        await Assert.That(paginated.Items.Count).IsEqualTo(1);
+        await Assert.That(paginated.Items[0].Name).IsEqualTo("normal-folder");
+    }
+
+    [Test]
+    public async Task GetEntries_Subfolder_EmptyDirectory_Hidden()
+    {
+        AddDirectory("parent/visible-folder");
+        AddFile("parent/visible-folder/file.jpg");
+        AddDirectory("parent/empty-folder");
+
+        var user = new TestUser().Allow("parent");
+        var paginated = GetResult(BrowsingEndpoints.GetEntries(fileProvider, "parent", user, Page, PageSize));
+
+        await Assert.That(paginated.Items.Count).IsEqualTo(1);
+        await Assert.That(paginated.Items[0].Name).IsEqualTo("visible-folder");
+    }
+
+    [Test]
     public async Task GetEntries_SortsFoldersBeforeFiles()
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddFile(fileProvider, "sub/a.txt");
-        AddDir(fileProvider, "sub/z-folder");
+        AddFile("sub/a.txt");
+        AddDirectory("sub/z-folder");
 
         var user = new TestUser().Allow("sub");
         var result = BrowsingEndpoints.GetEntries(fileProvider, "sub", user, Page, PageSize);
@@ -188,11 +236,10 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_SortsAlphabeticallyWithinType()
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddDir(fileProvider, "sub/b-folder");
-        AddDir(fileProvider, "sub/a-folder");
-        AddFile(fileProvider, "sub/z-file.txt");
-        AddFile(fileProvider, "sub/a-file.txt");
+        AddDirectory("sub/b-folder");
+        AddDirectory("sub/a-folder");
+        AddFile("sub/z-file.txt");
+        AddFile("sub/a-file.txt");
 
         var user = new TestUser().Allow("sub");
         var result = BrowsingEndpoints.GetEntries(fileProvider, "sub", user, Page, PageSize);
@@ -207,9 +254,8 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_Subfolder_StripsFileExtensions()
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddFile(fileProvider, "sub/image.avif");
-        AddFile(fileProvider, "sub/readme.txt");
+        AddFile("sub/image.avif");
+        AddFile("sub/readme.txt");
 
         var user = new TestUser().Allow("sub");
         var paginated = GetResult(BrowsingEndpoints.GetEntries(fileProvider, "sub", user, Page, PageSize));
@@ -223,11 +269,10 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_DeduplicatesSameNameDifferentFormats()
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddFile(fileProvider, "sub/photo.jpg");
-        AddFile(fileProvider, "sub/photo.avif");
-        AddFile(fileProvider, "sub/photo.png");
-        AddFile(fileProvider, "sub/other.webp");
+        AddFile("sub/photo.jpg");
+        AddFile("sub/photo.avif");
+        AddFile("sub/photo.png");
+        AddFile("sub/other.webp");
 
         var user = new TestUser().Allow("sub");
         var paginated = GetResult(BrowsingEndpoints.GetEntries(fileProvider, "sub", user, Page, PageSize));
@@ -240,10 +285,9 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_Pagination_ReturnsRequestedPage()
     {
-        var fileProvider = new InMemoryFileProvider();
         for (var i = 1; i <= 5; i++)
         {
-            AddFile(fileProvider, $"sub/{i}.txt");
+            AddFile($"sub/{i}.txt");
         }
 
         var user = new TestUser().Allow("sub");
@@ -270,8 +314,7 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_PageBeyondTotal_ReturnsEmptyItems()
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddFile(fileProvider, "sub/only.txt");
+        AddFile("sub/only.txt");
 
         var user = new TestUser().Allow("sub");
         var result = BrowsingEndpoints.GetEntries(fileProvider, "sub", user, page: 5, pageSize: 10);
@@ -285,11 +328,10 @@ public class FolderEndpointsTests
     [Test]
     public async Task GetEntries_ExcludesThumbprintFiles()
     {
-        var fileProvider = new InMemoryFileProvider();
-        AddFile(fileProvider, "sub/photo.avif");
-        AddFile(fileProvider, "sub/photo.thumb.jpg");
-        AddFile(fileProvider, "sub/image.png");
-        AddFile(fileProvider, "sub/image.thumb.png");
+        AddFile("sub/photo.avif");
+        AddFile("sub/photo.thumb.jpg");
+        AddFile("sub/image.png");
+        AddFile("sub/image.thumb.png");
 
         var user = new TestUser().Allow("sub");
         var paginated = GetResult(BrowsingEndpoints.GetEntries(fileProvider, "sub", user, Page, PageSize));
@@ -299,6 +341,109 @@ public class FolderEndpointsTests
         await Assert.That(paginated.Items[1].Name).IsEqualTo("photo");
     }
 
+    [Test]
+    public async Task GetRandomThumbnail_Unauthenticated_ReturnsUnauthorized()
+    {
+        var user = new TestUser { IsAuthenticated = false };
+        var result = ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, "photos", "");
+
+        await Assert.That(IsStatusCode(result, 401)).IsTrue();
+    }
+
+    [Test]
+    public async Task GetRandomThumbnail_PathTraversal_ReturnsBadRequest()
+    {
+        var user = new TestUser();
+        var result = ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, "../etc", "");
+
+        await Assert.That(IsStatusCode(result, 400)).IsTrue();
+    }
+
+    [Test]
+    public async Task GetRandomThumbnail_BlockedFolder_ReturnsForbidden()
+    {
+        AddImageFile("secret/photo.avif", MagickFormat.Avif);
+        var user = new TestUser();
+        var result = ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, "secret", "");
+
+        await Assert.That(IsStatusCode(result, 403)).IsTrue();
+    }
+
+    [Test]
+    public async Task GetRandomThumbnail_NoImageFiles_ReturnsNotFound()
+    {
+        AddFile("empty/readme.txt");
+        var user = new TestUser().Allow("empty");
+        var result = ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, "empty", "");
+
+        await Assert.That(IsStatusCode(result, 404)).IsTrue();
+    }
+
+    [Test]
+    public async Task GetRandomThumbnail_ReturnsThumbnail()
+    {
+        AddImageFile("vacation/photo.avif", MagickFormat.Avif);
+        AddFile("vacation/photo.thumb.jpg", CreateThumbnail());
+        var user = new TestUser().Allow("vacation");
+        var result = ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, "vacation", "");
+
+        await Assert.That(IsStatusCode(result, 200)).IsTrue();
+        var fileResult = GetFileResult(result);
+        await Assert.That(fileResult.ContentType).IsEqualTo("image/jpeg");
+    }
+
+    [Test]
+    public async Task GetRandomThumbnail_PicksRandomly()
+    {
+        AddImageFile("vacation/a.avif", MagickFormat.Avif);
+        AddImageFile("vacation/b.jpg", MagickFormat.Jpeg);
+        AddFile("vacation/a.thumb.jpg", CreateThumbnail());
+        AddFile("vacation/b.thumb.jpg", CreateThumbnail());
+        var user = new TestUser().Allow("vacation");
+
+        var gotA = false;
+        var gotB = false;
+        for (var i = 0; i < 50; i++)
+        {
+            var result = ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, "vacation", "");
+            await Assert.That(IsStatusCode(result, 200)).IsTrue();
+            var fileResult = GetFileResult(result);
+            if (fileResult.FileDownloadName == null)
+            {
+                gotA = true;
+            }
+            else
+            {
+                gotB = true;
+            }
+
+            if (gotA && gotB)
+            {
+                break;
+            }
+        }
+
+        await Assert.That(gotA).IsTrue();
+        await Assert.That(gotB).IsTrue();
+    }
+
+    [Test]
+    public async Task GetRandomThumbnail_NoThumbnailsAvailable_ReturnsNotFound()
+    {
+        AddImageFile("vacation/photo.avif", MagickFormat.Avif);
+        var user = new TestUser().Allow("vacation");
+        var result = ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, "vacation", "");
+
+        await Assert.That(IsStatusCode(result, 404)).IsTrue();
+    }
+
+    private static byte[] CreateThumbnail()
+    {
+        using var image = new MagickImage(MagickColors.DodgerBlue, 50, 50);
+        image.Format = MagickFormat.Jpeg;
+        return image.ToByteArray();
+    }
+
     private static bool IsStatusCode(IResult result, int statusCode)
     {
         return Unwrap(result) switch
@@ -306,6 +451,9 @@ public class FolderEndpointsTests
             UnauthorizedHttpResult => statusCode == 401,
             NotFound => statusCode == 404,
             BadRequest => statusCode == 400,
+            ForbidHttpResult => statusCode == 403,
+            StatusCodeHttpResult => statusCode == 406,
+            FileStreamHttpResult => statusCode == 200,
             Ok<PaginatedResult<FolderEntry>> => statusCode == 200,
             _ => false,
         };

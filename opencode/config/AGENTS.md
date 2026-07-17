@@ -45,3 +45,5 @@ When writing code that interacts with the file system:
   * The code interacting with it should use
 	* When only reading `IFileProvider`
 	* When reading and writing `IWritableFileProvider`
+
+`ISyncWritableFileProvider and `IWritableFileProvider` both inherit `IFileProvider` so there is no need to use both in the same class, if you need to write and read then use `IWritableFileProvider` but if you only need to read then use `IFileProvider`.

@@ -49,12 +49,12 @@ public static class BrowsingEndpoints
         var contents = fileProvider.GetDirectoryContents(relativePath);
 
         var isRoot = string.IsNullOrEmpty(relativePath);
-        var entries = CollectEntries(contents, isRoot, user);
+        var entries = CollectEntries(fileProvider, relativePath, contents, isRoot, user);
 
         return TypedResults.Ok(PaginatedResult<FolderEntry>.Paginate(entries, page, pageSize));
     }
 
-    private static List<FolderEntry> CollectEntries(IDirectoryContents contents, bool isRoot, IUser user)
+    private static List<FolderEntry> CollectEntries(IFileProvider fileProvider, string relativePath, IDirectoryContents contents, bool isRoot, IUser user)
     {
         var entries = new List<FolderEntry>();
         var seenFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -66,6 +66,13 @@ public static class BrowsingEndpoints
             if (item.IsDirectory)
             {
                 if (isRoot && !user.CanAccessFolder(name))
+                {
+                    continue;
+                }
+
+                var folderPath = string.IsNullOrEmpty(relativePath) ? name : $"{relativePath}/{name}";
+                var folderContents = fileProvider.GetDirectoryContents(folderPath);
+                if (!HasVisibleContent(folderContents))
                 {
                     continue;
                 }
@@ -105,5 +112,28 @@ public static class BrowsingEndpoints
         });
 
         return entries;
+    }
+
+    private static bool HasVisibleContent(IDirectoryContents folderContents)
+    {
+        foreach (var item in folderContents)
+        {
+            if (!item.Exists)
+            {
+                continue;
+            }
+
+            if (item.IsDirectory)
+            {
+                return true;
+            }
+
+            if (!ImageConverterJob.IsThumbprintFile(item.Name))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

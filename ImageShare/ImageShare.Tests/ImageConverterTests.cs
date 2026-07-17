@@ -4,7 +4,8 @@ using Microsoft.Extensions.Options;
 
 namespace ImageShare.Tests;
 
-public class ImageConverterTests
+[MicrosoftDI]
+public class ImageConverterTests(ImageConverter converter)
 {
     private static readonly ImageConverterOptions DefaultOptions = new()
     {
@@ -65,7 +66,7 @@ public class ImageConverterTests
     {
         var source = CreateTestImage();
 
-        var result = DefaultConverter.Convert(source, MagickFormat.Png, 80);
+        var result = converter.Convert(source, MagickFormat.Png, 80);
 
         await Assert.That(GetFormat(result)).IsEqualTo(MagickFormat.Png);
     }
@@ -78,7 +79,7 @@ public class ImageConverterTests
     {
         var source = CreateTestImage();
 
-        var result = DefaultConverter.Convert(source, MagickFormat.Jpeg, quality);
+        var result = converter.Convert(source, MagickFormat.Jpeg, quality);
 
         await Assert.That(result.Length).IsGreaterThan(0);
     }
@@ -88,7 +89,7 @@ public class ImageConverterTests
     {
         var source = CreateTestImage(800, 600);
 
-        var result = DefaultConverter.Convert(source, MagickFormat.Png, 80);
+        var result = converter.Convert(source, MagickFormat.Png, 80);
 
         var (width, height) = Dimensions(result);
         await Assert.That(width).IsEqualTo(800);
@@ -100,7 +101,7 @@ public class ImageConverterTests
     {
         var source = CreateTestImage(800, 600);
 
-        var result = DefaultConverter.Convert(source, MagickFormat.Jpeg, 80, maxWidth: 200);
+        var result = converter.Convert(source, MagickFormat.Jpeg, 80, maxWidth: 200);
 
         var (width, height) = Dimensions(result);
         await Assert.That(width).IsEqualTo(200);
@@ -112,7 +113,7 @@ public class ImageConverterTests
     {
         var source = CreateTestImage(800, 600);
 
-        var result = DefaultConverter.Convert(source, MagickFormat.Jpeg, 80, maxHeight: 150);
+        var result = converter.Convert(source, MagickFormat.Jpeg, 80, maxHeight: 150);
 
         var (width, height) = Dimensions(result);
         await Assert.That(width).IsEqualTo(200);
@@ -124,7 +125,7 @@ public class ImageConverterTests
     {
         var source = CreateTestImage(800, 600);
 
-        var result = DefaultConverter.Convert(source, MagickFormat.Jpeg, 80, maxWidth: 100, maxHeight: 100);
+        var result = converter.Convert(source, MagickFormat.Jpeg, 80, maxWidth: 100, maxHeight: 100);
 
         var (width, height) = Dimensions(result);
         await Assert.That(width).IsLessThanOrEqualTo(100);
@@ -136,7 +137,7 @@ public class ImageConverterTests
     {
         var source = CreateTestImage(50, 50);
 
-        var result = DefaultConverter.Convert(source, MagickFormat.Jpeg, 80, maxWidth: 200, maxHeight: 200);
+        var result = converter.Convert(source, MagickFormat.Jpeg, 80, maxWidth: 200, maxHeight: 200);
 
         var (width, height) = Dimensions(result);
         await Assert.That(width).IsLessThanOrEqualTo(200);
@@ -150,7 +151,7 @@ public class ImageConverterTests
     {
         var source = CreateTestImage();
 
-        var result = DefaultConverter.Convert(source, MagickFormat.WebP, 80);
+        var result = converter.Convert(source, MagickFormat.WebP, 80);
 
         await Assert.That(result.Length).IsGreaterThan(0);
     }
@@ -160,9 +161,9 @@ public class ImageConverterTests
     {
         var source = CreateTestImage();
         var options = new ImageConverterOptions { FullQuality = 50, ThumbnailQuality = 90, ThumbnailMaxWidth = 200, ThumbnailMaxHeight = 200 };
-        var converter = new ImageConverter(Options.Create(options));
+        var customConverter = new ImageConverter(Options.Create(options));
 
-        var result = converter.ConvertFull(source, MagickFormat.Jpeg);
+        var result = customConverter.ConvertFull(source, MagickFormat.Jpeg);
 
         await Assert.That(result.Length).IsGreaterThan(0);
     }
@@ -172,7 +173,7 @@ public class ImageConverterTests
     {
         var source = CreateTestImage(800, 600);
 
-        var result = DefaultConverter.ConvertFull(source, MagickFormat.Png);
+        var result = converter.ConvertFull(source, MagickFormat.Png);
 
         var (width, height) = Dimensions(result);
         await Assert.That(width).IsEqualTo(800);
@@ -184,7 +185,7 @@ public class ImageConverterTests
     {
         var source = CreateTestImage(800, 600);
 
-        var result = DefaultConverter.ConvertThumbnail(source, MagickFormat.Jpeg);
+        var result = converter.ConvertThumbnail(source, MagickFormat.Jpeg);
 
         var (width, height) = Dimensions(result);
         await Assert.That(width).IsLessThanOrEqualTo(200);
@@ -196,9 +197,9 @@ public class ImageConverterTests
     {
         var source = CreateTestImage();
         var options = new ImageConverterOptions { FullQuality = 80, ThumbnailQuality = 30, ThumbnailMaxWidth = 200, ThumbnailMaxHeight = 200 };
-        var converter = new ImageConverter(Options.Create(options));
+        var customConverter = new ImageConverter(Options.Create(options));
 
-        var result = converter.ConvertThumbnail(source, MagickFormat.Jpeg);
+        var result = customConverter.ConvertThumbnail(source, MagickFormat.Jpeg);
 
         await Assert.That(result.Length).IsGreaterThan(0);
     }
@@ -208,7 +209,7 @@ public class ImageConverterTests
     {
         var source = CreateTestImage();
 
-        var result = DefaultConverter.ConvertThumbnail(source, MagickFormat.Avif);
+        var result = converter.ConvertThumbnail(source, MagickFormat.Avif);
 
         await Assert.That(GetFormat(result)).IsEqualTo(MagickFormat.Avif);
     }
@@ -221,7 +222,7 @@ public class ImageConverterTests
 
         foreach (var format in formats)
         {
-            var result = DefaultConverter.Convert(source, format, 80);
+            var result = converter.Convert(source, format, 80);
 
             using var image = new MagickImage(result.Span);
             await Assert.That((int)image.Width).IsGreaterThan(0);
