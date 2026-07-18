@@ -1,8 +1,10 @@
 ﻿using ImageMagick;
 using ImageShare.Browsing;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Primitives;
 using Microsoft.Extensions.Options;
 using Mirality.FileProviders;
+using System.IO.Compression;
 
 namespace ImageShare.Tests;
 
@@ -258,7 +260,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     {
         // Arrange
         fileProvider.AddFile("sub/image.avif");
-        fileProvider.AddFile("sub/readme.txt");
+        fileProvider.AddFile("sub/readme.png");
         user.Allow("sub");
 
         // Act
@@ -296,7 +298,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
         // Arrange
         for (var i = 1; i <= 5; i++)
         {
-            fileProvider.AddFile($"sub/{i}.txt");
+            fileProvider.AddFile($"sub/{i}.png");
         }
 
         user.Allow("sub");
@@ -327,7 +329,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     public async Task GetEntries_PageBeyondTotal_ReturnsEmptyItems()
     {
         // Arrange
-        fileProvider.AddFile("sub/only.txt");
+        fileProvider.AddFile("sub/only.png");
         user.Allow("sub");
 
         // Act
@@ -357,6 +359,321 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
         await Assert.That(paginated.TotalCount).IsEqualTo(2);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("image");
         await Assert.That(paginated.Items[1].Name).IsEqualTo("photo");
+    }
+
+    [Test]
+    public async Task GetEntries_ExcludesNonImageFiles()
+    {
+        // Arrange
+        fileProvider.AddFile("sub/photo.avif");
+        fileProvider.AddFile("sub/readme.txt");
+        fileProvider.AddFile("sub/notes.md");
+        user.Allow("sub");
+
+        // Act
+        var paginated = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, "sub", user, Page, PageSize).GetFolderEntriesResult();
+
+        // Assert
+        await Assert.That(paginated.TotalCount).IsEqualTo(1);
+        await Assert.That(paginated.Items[0].Name).IsEqualTo("photo");
+        await Assert.That(paginated.Items[0].Type).IsEqualTo(EntryType.File);
+    }
+
+    [Test]
+    public async Task DownloadImages_Unauthenticated_ReturnsUnauthorized()
+    {
+        // Arrange
+        user.IsAuthenticated = false;
+
+        // Act
+        var result = ImageEndpoints.DownloadImages(fileProvider, imageFormats.Value, user, new StringValues(["vacation"]), new StringValues());
+
+        // Assert
+        await Assert.That(result.IsStatusCode(401)).IsTrue();
+    }
+
+    [Test]
+    public async Task DownloadImages_NoFolders_ReturnsBadRequest()
+    {
+        // Arrange
+        // Act
+        var result = ImageEndpoints.DownloadImages(fileProvider, imageFormats.Value, user, new StringValues(), new StringValues());
+
+        // Assert
+        await Assert.That(result.IsStatusCode(400)).IsTrue();
+    }
+
+    [Test]
+    public async Task DownloadImages_BlockedFolder_ReturnsForbidden()
+    {
+        // Arrange
+        fileProvider.AddFile("secret/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+
+        // Act
+        var result = ImageEndpoints.DownloadImages(fileProvider, imageFormats.Value, user, new StringValues(["secret"]), new StringValues());
+
+        // Assert
+        await Assert.That(result.IsStatusCode(403)).IsTrue();
+    }
+
+    [Test]
+    public async Task DownloadImages_NoImages_ReturnsNotFound()
+    {
+        // Arrange
+        fileProvider.AddFile("empty/readme.txt");
+        user.Allow("empty");
+
+        // Act
+        var result = ImageEndpoints.DownloadImages(fileProvider, imageFormats.Value, user, new StringValues(["empty"]), new StringValues());
+
+        // Assert
+        await Assert.That(result.IsStatusCode(404)).IsTrue();
+    }
+
+    [Test]
+    public async Task DownloadImages_ReturnsZipStream()
+    {
+        // Arrange
+        fileProvider.AddFile("vacation/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        user.Allow("vacation");
+
+        // Act
+        var result = ImageEndpoints.DownloadImages(fileProvider, imageFormats.Value, user, new StringValues(["vacation"]), new StringValues());
+
+        // Assert
+        await Assert.That(result.IsStatusCode(200)).IsTrue();
+        await Assert.That(result.GetContentType()).IsEqualTo("application/zip");
+    }
+
+    [Test]
+    public async Task DownloadImages_ZipContainsImagesRecursivelyExcludingThumbprintsAndNonImages()
+    {
+        // Arrange
+        var photoA = imageFactory.CreateTestImage(MagickFormat.Avif);
+        var photoB = imageFactory.CreateTestImage(MagickFormat.Jpeg);
+        fileProvider.AddFile("album/photo.avif", photoA);
+        fileProvider.AddFile("album/sub/nested.jpg", photoB);
+        fileProvider.AddFile("album/sub/readme.txt", []);
+        fileProvider.AddFile("album/photo.thumb.jpg", imageFactory.CreateThumbnail());
+        user.Allow("album");
+
+        var files = ImageEndpoints.EnumerateImageFiles(fileProvider, imageFormats.Value, "album").ToList();
+
+        // Act
+        using var memory = new MemoryStream();
+        await ImageEndpoints.WriteZipAsync(files, memory, CancellationToken.None);
+        memory.Position = 0;
+        using var archive = new ZipArchive(memory, ZipArchiveMode.Read);
+
+        // Assert
+        var entries = archive.Entries.Select(entry => entry.FullName).ToList();
+        await Assert.That(entries.Count).IsEqualTo(2);
+        await Assert.That(entries).Contains("album/photo.avif");
+        await Assert.That(entries).Contains("album/sub/nested.jpg");
+        await Assert.That(entries.Any(name => name.Contains("thumb", StringComparison.OrdinalIgnoreCase))).IsFalse();
+        await Assert.That(entries.Any(name => name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))).IsFalse();
+    }
+
+    [Test]
+    public async Task DownloadImages_MultipleFolders_FlattensIntoSingleArchive()
+    {
+        // Arrange
+        fileProvider.AddFile("album-a/a.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.AddFile("album-b/b.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
+        user.Allow("album-a").Allow("album-b");
+
+        var files = ImageEndpoints.EnumerateImageFiles(fileProvider, imageFormats.Value, "album-a")
+            .Concat(ImageEndpoints.EnumerateImageFiles(fileProvider, imageFormats.Value, "album-b"))
+            .ToList();
+
+        // Act
+        using var memory = new MemoryStream();
+        await ImageEndpoints.WriteZipAsync(files, memory, CancellationToken.None);
+        memory.Position = 0;
+        using var archive = new ZipArchive(memory, ZipArchiveMode.Read);
+
+        // Assert
+        var entries = archive.Entries.Select(entry => entry.FullName).ToList();
+        await Assert.That(entries.Count).IsEqualTo(2);
+        await Assert.That(entries).Contains("album-a/a.avif");
+        await Assert.That(entries).Contains("album-b/b.jpg");
+    }
+
+    [Test]
+    public async Task DownloadImages_UnsupportedFormat_ReturnsBadRequest()
+    {
+        // Arrange
+        fileProvider.AddFile("vacation/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        user.Allow("vacation");
+
+        // Act
+        var result = ImageEndpoints.DownloadImages(fileProvider, imageFormats.Value, user, new StringValues(["vacation"]), new StringValues(["gif"]));
+
+        // Assert
+        await Assert.That(result.IsStatusCode(400)).IsTrue();
+    }
+
+    [Test]
+    public async Task DownloadImages_FormatFilter_OnlyIncludesMatchingExtension()
+    {
+        // Arrange
+        fileProvider.AddFile("album/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.AddFile("album/picture.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
+        fileProvider.AddFile("album/drawing.png", imageFactory.CreateTestImage(MagickFormat.Png));
+        user.Allow("album");
+
+        var files = ImageEndpoints.EnumerateImageFiles(fileProvider, imageFormats.Value, "album")
+            .Where(file => string.Equals(Path.GetExtension(file.Info.Name).TrimStart('.'), "jpg", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        // Act
+        using var memory = new MemoryStream();
+        await ImageEndpoints.WriteZipAsync(files, memory, CancellationToken.None);
+        memory.Position = 0;
+        using var archive = new ZipArchive(memory, ZipArchiveMode.Read);
+
+        // Assert
+        var entries = archive.Entries.Select(entry => entry.FullName).ToList();
+        await Assert.That(entries.Count).IsEqualTo(1);
+        await Assert.That(entries).Contains("album/picture.jpg");
+    }
+
+    [Test]
+    public async Task DownloadImages_FormatFilter_NoMatches_ReturnsNotFound()
+    {
+        // Arrange
+        fileProvider.AddFile("album/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        user.Allow("album");
+
+        // Act
+        var result = ImageEndpoints.DownloadImages(fileProvider, imageFormats.Value, user, new StringValues(["album"]), new StringValues(["jpg"]));
+
+        // Assert
+        await Assert.That(result.IsStatusCode(404)).IsTrue();
+    }
+
+    [Test]
+    public async Task DownloadImages_ZipEntriesUseNoCompression()
+    {
+        // Arrange
+        var photo = imageFactory.CreateTestImage(MagickFormat.Avif);
+        fileProvider.AddFile("vacation/photo.avif", photo);
+        user.Allow("vacation");
+        var files = ImageEndpoints.EnumerateImageFiles(fileProvider, imageFormats.Value, "vacation").ToList();
+
+        // Act
+        using var memory = new MemoryStream();
+        await ImageEndpoints.WriteZipAsync(files, memory, CancellationToken.None);
+        memory.Position = 0;
+        using var archive = new ZipArchive(memory, ZipArchiveMode.Read);
+
+        // Assert
+        var entry = archive.Entries.Single();
+        await Assert.That(entry.CompressedLength).IsEqualTo(entry.Length);
+    }
+
+    [Test]
+    public async Task GetRandomImage_Unauthenticated_ReturnsUnauthorized()
+    {
+        // Arrange
+        user.IsAuthenticated = false;
+
+        // Act
+        var result = ImageEndpoints.GetRandomImage(fileProvider, imageFormats.Value, contentTypeProvider, user, new StringValues(["vacation"]), new StringValues());
+
+        // Assert
+        await Assert.That(result.IsStatusCode(401)).IsTrue();
+    }
+
+    [Test]
+    public async Task GetRandomImage_NoFolders_ReturnsBadRequest()
+    {
+        // Arrange
+        // Act
+        var result = ImageEndpoints.GetRandomImage(fileProvider, imageFormats.Value, contentTypeProvider, user, new StringValues(), new StringValues());
+
+        // Assert
+        await Assert.That(result.IsStatusCode(400)).IsTrue();
+    }
+
+    [Test]
+    public async Task GetRandomImage_BlockedFolder_ReturnsForbidden()
+    {
+        // Arrange
+        fileProvider.AddFile("secret/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+
+        // Act
+        var result = ImageEndpoints.GetRandomImage(fileProvider, imageFormats.Value, contentTypeProvider, user, new StringValues(["secret"]), new StringValues());
+
+        // Assert
+        await Assert.That(result.IsStatusCode(403)).IsTrue();
+    }
+
+    [Test]
+    public async Task GetRandomImage_NoImages_ReturnsNotFound()
+    {
+        // Arrange
+        fileProvider.AddFile("empty/readme.txt");
+        user.Allow("empty");
+
+        // Act
+        var result = ImageEndpoints.GetRandomImage(fileProvider, imageFormats.Value, contentTypeProvider, user, new StringValues(["empty"]), new StringValues());
+
+        // Assert
+        await Assert.That(result.IsStatusCode(404)).IsTrue();
+    }
+
+    [Test]
+    public async Task GetRandomImage_ReturnsImage()
+    {
+        // Arrange
+        fileProvider.AddFile("vacation/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        user.Allow("vacation");
+
+        // Act
+        var result = ImageEndpoints.GetRandomImage(fileProvider, imageFormats.Value, contentTypeProvider, user, new StringValues(["vacation"]), new StringValues());
+
+        // Assert
+        await Assert.That(result.IsStatusCode(200)).IsTrue();
+        var fileResult = result.GetFileResult();
+        await Assert.That(fileResult.ContentType).IsEqualTo("image/avif");
+    }
+
+    [Test]
+    public async Task GetRandomImage_PicksRandomlyAcrossFoldersRecursively()
+    {
+        // Arrange
+        fileProvider.AddFile("album-a/a.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.AddFile("album-b/sub/b.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
+        user.Allow("album-a").Allow("album-b");
+        var gotA = false;
+        var gotB = false;
+
+        // Act
+        for (var i = 0; i < 50; i++)
+        {
+            var result = ImageEndpoints.GetRandomImage(fileProvider, imageFormats.Value, contentTypeProvider, user, new StringValues(["album-a", "album-b"]), new StringValues());
+            await Assert.That(result.IsStatusCode(200)).IsTrue();
+            var fileResult = result.GetFileResult();
+            var served = fileResult.FileStream.ReadAllBytes();
+            if (served.SequenceEqual(fileProvider.GetFileInfo("album-a/a.avif").ReadAllBytes()))
+            {
+                gotA = true;
+            }
+            else if (served.SequenceEqual(fileProvider.GetFileInfo("album-b/sub/b.jpg").ReadAllBytes()))
+            {
+                gotB = true;
+            }
+
+            if (gotA && gotB)
+            {
+                break;
+            }
+        }
+
+        // Assert
+        await Assert.That(gotA).IsTrue();
+        await Assert.That(gotB).IsTrue();
     }
 
     [Test]

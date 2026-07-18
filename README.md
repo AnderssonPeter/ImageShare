@@ -20,8 +20,8 @@
 [X] Add TestUser to DI
 [X] Disallow root paths
 [ ] Folder endpoint should only return files that have a image file extension
-[ ] Add endpoint to download multiple images, from multiple folders recursively
-[ ] Add endpoint to get random image from a list of folder recursively
+[X] Add endpoint to download multiple images, from multiple folders recursively
+[X] Add endpoint to get random image from a list of folder recursively
 [X] In unit tests move AddDir (rename to AddDirectory), AddFile, AddImageFile, AddThumbFile, Unwrap and other common methods to extension methods
 [X] Add CreateThumbnail, IsStatusCode, CreateTestImage, to a base class for unit tests
 [X] Move the code for `dotnet r startup` to a powershell file, check if the Redirect logic is needed, if not then remove if it's needed make sure its compatible with both linux and windows

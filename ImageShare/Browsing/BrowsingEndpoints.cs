@@ -58,57 +58,58 @@ public static class BrowsingEndpoints
         var contents = fileProvider.GetDirectoryContents(relativePath);
         foreach (var item in contents)
         {
-            var name = item.Name;
-
             if (item.IsDirectory)
             {
-                if (isRoot && !user.CanAccessFolder(name))
+                if (isRoot && !user.CanAccessFolder(item.Name))
                 {
                     continue;
                 }
 
-                var folderPath = string.IsNullOrEmpty(relativePath) ? name : $"{relativePath}/{name}";
+                var folderPath = string.IsNullOrEmpty(relativePath) ? item.Name : $"{relativePath}/{item.Name}";
                 var folderContents = fileProvider.GetDirectoryContents(folderPath);
                 if (!HasVisibleContent(fileProvider, imageFormats, folderPath, folderContents))
                 {
                     continue;
                 }
 
-                entries.Add(new FolderEntry { Name = name, Type = EntryType.Folder });
+                entries.Add(new FolderEntry { Name = item.Name, Type = EntryType.Folder });
             }
-            else
+            else if (!isRoot && TryGetVisibleFileName(item.Name, imageFormats, seenFiles, out var fileName))
             {
-                if (isRoot)
-                {
-                    continue;
-                }
-
-                if (ImageConverterJob.IsThumbprintFile(name))
-                {
-                    continue;
-                }
-
-                var nameWithoutExtension = Path.GetFileNameWithoutExtension(name);
-                if (!seenFiles.Add(nameWithoutExtension))
-                {
-                    continue;
-                }
-
-                entries.Add(new FolderEntry { Name = nameWithoutExtension, Type = EntryType.File });
+                entries.Add(new FolderEntry { Name = fileName, Type = EntryType.File });
             }
         }
 
-        entries.Sort((left, right) =>
-        {
-            if (left.Type != right.Type)
-            {
-                return left.Type == EntryType.Folder ? -1 : 1;
-            }
-
-            return string.Compare(left.Name, right.Name, StringComparison.Ordinal);
-        });
+        entries.Sort(CompareEntries);
 
         return entries;
+    }
+
+    private static bool TryGetVisibleFileName(string name, ImageFormatOptions imageFormats, HashSet<string> seenFiles, out string fileName)
+    {
+        fileName = "";
+        if (ImageConverterJob.IsThumbprintFile(name))
+        {
+            return false;
+        }
+
+        if (!IsImageFile(name, imageFormats))
+        {
+            return false;
+        }
+
+        fileName = Path.GetFileNameWithoutExtension(name);
+        return seenFiles.Add(fileName);
+    }
+
+    private static int CompareEntries(FolderEntry left, FolderEntry right)
+    {
+        if (left.Type != right.Type)
+        {
+            return left.Type == EntryType.Folder ? -1 : 1;
+        }
+
+        return string.Compare(left.Name, right.Name, StringComparison.Ordinal);
     }
 
     private static bool HasVisibleContent(IFileProvider fileProvider, ImageFormatOptions imageFormats, string folderPath, IDirectoryContents folderContents)
@@ -151,11 +152,11 @@ public static class BrowsingEndpoints
         return false;
     }
 
-    private static bool IsImageFile(string path, ImageFormatOptions imageFormats)
+    internal static bool IsImageFile(string path, ImageFormatOptions imageFormats)
     {
         var extension = Path.GetExtension(path).TrimStart('.');
         return imageFormats.SupportedFormats.Contains(extension, StringComparer.OrdinalIgnoreCase);
     }
 
-    private static bool IsHiddenFile(string name) => name.StartsWith('.');
+    internal static bool IsHiddenFile(string name) => name.StartsWith('.');
 }
