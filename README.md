@@ -34,8 +34,8 @@
   [X] Add run script
     [X] Add dotnet format
     [X] Add test start application
-      [ ] Modify to scan the output instead of doing a health check
-      [ ] Move the script to a file
+      [X] Modify to scan the output instead of doing a health check
+      [X] Move the script to a file
   [X] NativeAOT
   [X] editorconfig
   [X] Linting
@@ -43,6 +43,15 @@
   [X] Add user class
   [ ] Don't use _ for private fields
     [ ] Configure .editorconfig accordingly
+  [ ] Try not to create helper classes or service classes, create extension methods or classes that handle the logic
+    [ ] BrowsingHelpers.IsImageFile/IsHiddenFile could be added to a `RelativePath` class, that is converted from string.
+    [ ] `PathHelper` could also be merged into `RelativePath`
+    [ ] BrowsingHelpers.HasVisibleContent Should be an extension method on IFileProvider
+    [ ] Add XML comments to the newly created methods
+  [ ] Add custom exception mapper
+  [ ] Don't check if `IsAuthenticated` inside Command/QueryHandler, use a behavior and attribute for that!
+  [/] Merge EnumerateImageFiles and GetImageBaseNames and add parameter for recursive or not
+  [/] Do we need FindMatchingFilesRecursive can't we just rewrite FindMatchingFiles to handle it correctly?
   [X] Add canAccessFolder method to user class
     [X] Move the regex generation logic into it's own class that caches regexes for each filter.
     [X] Add unit tests for canAccessFolder method
@@ -50,7 +59,7 @@
   [X] Keep one list of supported image formats in configuration and use it instead of hardcoding in both ImageEndpoints and ThumbprintService, it should be it's own options object and in appsettings.json it should be avif, webp, jpg, png.
   [X] When adding options add validation attributes and validate them on startup
   [X] Use DI in unit tests!?
-  [ ] See if we can find a better way to structure the endpoints
+  [X] See if we can find a better way to structure the endpoints
   [X] Use typed result sets, and get rid of IsStatusCode helper method!
   [X] ServeBestMatchAsync and ServeImageAsync should not be async!
   [X] Add endpoint to fetch folder
@@ -86,8 +95,9 @@
     [X] Generate thumbnails for all formats and in all formats
     [X] Change from PhysicalFileProvider to WritablePhysicalFileProvider, register it as both IAsyncWritableFileProvider and IFileProvider, use IAsyncWritableFileProvider when creating new files.
     [ ] use an enum for image formats instead of magic strings
-  [ ] Add static analysis unit test that ensures that all minimal endpoints parameters has [FromQuery], [FromRoute], [FromBody], [FromHeader] or [FromServices] attributes
-  [ ] Fork and add cancellationToken to ReadAsBytesAsync
+  [X] Add static analysis unit test that ensures that all minimal endpoints parameters has [FromQuery], [FromRoute], [FromBody], [FromHeader] or [FromServices] attributes
+  [ ] Call OpenApi endpoint instead of root in startup.ps1
+  [ ] Fork WritableFileProvider and add cancellationToken to ReadAsBytesAsync
 [ ] FE
   [ ] Add mcp server for tanstack
   [ ] Add mcp server for shadcn

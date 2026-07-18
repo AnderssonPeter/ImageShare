@@ -8,7 +8,7 @@ public static class AuthenticationExtensions
     public static IServiceCollection AddUser(this IServiceCollection services)
     {
         services.AddHttpContextAccessor();
-        return services.AddScoped<User>();
+        return services.AddScoped<IUser, User>();
     }
 
     public static IServiceCollection AddImageShareFilter(this IServiceCollection services) =>

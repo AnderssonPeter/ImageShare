@@ -1,5 +1,4 @@
-﻿using ImageShare.Authentication;
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -12,7 +11,7 @@ public static class AuthenticationEndpoints
     {
         endpoints.MapGet("/login", (string? returnUrl) =>
         {
-            var redirectUri = string.IsNullOrEmpty(returnUrl) ? "/weatherforecast" : returnUrl;
+            var redirectUri = string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl;
             return TypedResults.Challenge(
                 new AuthenticationProperties { RedirectUri = redirectUri },
                 new[] { OpenIdConnectDefaults.AuthenticationScheme });
@@ -23,7 +22,7 @@ public static class AuthenticationEndpoints
                 new AuthenticationProperties { RedirectUri = "/" },
                 new[] { CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme }));
 
-        endpoints.MapGet("/user", Results<Ok<User>, UnauthorizedHttpResult> (User user) =>
+        endpoints.MapGet("/user", Results<Ok<IUser>, UnauthorizedHttpResult> (IUser user) =>
         {
             if (!user.IsAuthenticated)
             {

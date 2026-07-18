@@ -3,7 +3,9 @@ using ImageShare.Authentication;
 using ImageShare.Browsing;
 using ImageShare.Health;
 using ImageShare.ImageConversion;
+using Mediator;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Mirality.FileProviders;
@@ -17,6 +19,7 @@ builder.Services.AddOpenIdConnectAuthentication(builder.Configuration);
 builder.Services.AddImageShareFilter();
 builder.Services.AddUser();
 builder.Services.AddImageConversion();
+builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
 builder.Services.AddOptions<StorageOptions>().BindConfiguration("Storage").Validated();
 builder.Services.AddOptions<ImageFormatOptions>().BindConfiguration("ImageFormats").Validated();
 builder.Services.AddSingleton<IContentTypeProvider>(serviceProvider =>

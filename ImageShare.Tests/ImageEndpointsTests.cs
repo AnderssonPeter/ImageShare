@@ -1,14 +1,13 @@
 ﻿using ImageMagick;
 using ImageShare.Browsing;
-using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.Options;
+using Mediator;
 using Microsoft.Extensions.Primitives;
 using Mirality.FileProviders;
 
 namespace ImageShare.Tests;
 
 [MicrosoftDI]
-public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IContentTypeProvider contentTypeProvider, IOptions<ImageFormatOptions> imageFormats, TestUser user, TestImageFactory imageFactory)
+public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IMediator mediator, TestUser user, TestImageFactory imageFactory)
 {
     [Test]
     [Arguments("", "image/jpeg", true)]
@@ -21,7 +20,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     public async Task IsFormatAccepted_MatchesExpectedBehavior(StringValues header, string format, bool expected)
     {
         // Act
-        var result = ImageEndpoints.IsFormatAccepted(header, format);
+        var result = BrowsingHelpers.IsFormatAccepted(header, format);
 
         // Assert
         await Assert.That(result).IsEqualTo(expected);
@@ -35,7 +34,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         user.IsAuthenticated = false;
 
         // Act
-        var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo.png", StringValues.Empty, thumbnail: false);
+        var result = await mediator.Send(new ServeImageQuery("photo.png", "", false));
 
         // Assert
         await Assert.That(result.IsStatusCode(401)).IsTrue();
@@ -48,7 +47,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         fileProvider.AddFile("secret/photo.png", imageFactory.CreateTestImage(MagickFormat.Png));
 
         // Act
-        var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "secret/photo.png", StringValues.Empty, thumbnail: false);
+        var result = await mediator.Send(new ServeImageQuery("secret/photo.png", "", false));
 
         // Assert
         await Assert.That(result.IsStatusCode(403)).IsTrue();
@@ -61,7 +60,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         fileProvider.AddFile("secret/nested/photo.png", imageFactory.CreateTestImage(MagickFormat.Png));
 
         // Act
-        var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "secret/nested/photo.png", StringValues.Empty, thumbnail: false);
+        var result = await mediator.Send(new ServeImageQuery("secret/nested/photo.png", "", false));
 
         // Assert
         await Assert.That(result.IsStatusCode(403)).IsTrue();
@@ -74,7 +73,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         user.Allow("vacation");
 
         // Act
-        var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "missing.avif", StringValues.Empty, thumbnail: false);
+        var result = await mediator.Send(new ServeImageQuery("missing.avif", "", false));
 
         // Assert
         await Assert.That(result.IsStatusCode(404)).IsTrue();
@@ -86,7 +85,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     [Arguments("/")]
     [Arguments("/etc/passwd")]
     public async Task ServeImage_UnsafePath_ThrowsArgumentException(string path) =>
-        await Assert.That(() => ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, path, StringValues.Empty, thumbnail: false)).Throws<ArgumentException>();
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(path, "", false))).Throws<ArgumentException>();
 
     [Test]
     public async Task ServeImage_ThumbprintFile_ReturnsBadRequest()
@@ -97,7 +96,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         user.Allow("vacation");
 
         // Act
-        var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo.thumb.jpg", StringValues.Empty, thumbnail: false);
+        var result = await mediator.Send(new ServeImageQuery("photo.thumb.jpg", "", false));
 
         // Assert
         await Assert.That(result.IsStatusCode(400)).IsTrue();
@@ -111,7 +110,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         user.Allow("vacation");
 
         // Act
-        var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo.png", StringValues.Empty, thumbnail: false);
+        var result = await mediator.Send(new ServeImageQuery("photo.png", "", false));
 
         // Assert
         await Assert.That(result.IsStatusCode(200)).IsTrue();
@@ -126,7 +125,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         user.Allow("vacation");
 
         // Act
-        var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo.avif", "image/avif,image/jpeg", thumbnail: false);
+        var result = await mediator.Send(new ServeImageQuery("photo.avif", "image/avif,image/jpeg", false));
 
         // Assert
         await Assert.That(result.IsStatusCode(200)).IsTrue();
@@ -142,7 +141,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         user.Allow("vacation");
 
         // Act
-        var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", StringValues.Empty, thumbnail: true);
+        var result = await mediator.Send(new ServeImageQuery("photo", "", true));
 
         // Assert
         await Assert.That(result.IsStatusCode(200)).IsTrue();
@@ -157,7 +156,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         user.Allow("vacation");
 
         // Act
-        var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", StringValues.Empty, thumbnail: true);
+        var result = await mediator.Send(new ServeImageQuery("photo", "", true));
 
         // Assert
         await Assert.That(result.IsStatusCode(404)).IsTrue();
@@ -170,7 +169,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         user.Allow("vacation");
 
         // Act
-        var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "missing", StringValues.Empty, thumbnail: true);
+        var result = await mediator.Send(new ServeImageQuery("missing", "", true));
 
         // Assert
         await Assert.That(result.IsStatusCode(404)).IsTrue();
@@ -185,7 +184,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         user.Allow("vacation");
 
         // Act
-        var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", "image/webp,image/png", thumbnail: true);
+        var result = await mediator.Send(new ServeImageQuery("photo", "image/webp,image/png", true));
 
         // Assert
         await Assert.That(result.IsStatusCode(406)).IsTrue();
@@ -199,7 +198,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         user.Allow("vacation");
 
         // Act
-        var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", "image/tiff", thumbnail: false);
+        var result = await mediator.Send(new ServeImageQuery("photo", "image/tiff", false));
 
         // Assert
         await Assert.That(result.IsStatusCode(406)).IsTrue();
@@ -214,7 +213,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         user.Allow("vacation");
 
         // Act
-        var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", "image/jpeg,image/png", thumbnail: false);
+        var result = await mediator.Send(new ServeImageQuery("photo", "image/jpeg,image/png", false));
 
         // Assert
         await Assert.That(result.IsStatusCode(200)).IsTrue();
@@ -231,7 +230,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         user.Allow("vacation");
 
         // Act
-        var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", "image/jpeg,image/png", thumbnail: true);
+        var result = await mediator.Send(new ServeImageQuery("photo", "image/jpeg,image/png", true));
 
         // Assert
         await Assert.That(result.IsStatusCode(200)).IsTrue();

@@ -62,3 +62,6 @@ Files should be placed by feature instead of by type.
 C# unit tests use TUnit, skill exists for this.
 All unit tests should have Arrange, Act, Assert comments
 When possible and where it makes sense use parameterized unit tests
+
+## Mediator queries and commands
+All query and command objects (types implementing `IBaseQuery` or `IBaseCommand` from `Mediator.Abstractions`) must have an explicit binding source attribute on every constructor parameter: `[FromQuery]`, `[FromRoute]`, `[FromBody]`, `[FromHeader]`, or `[FromServices]` from `Microsoft.AspNetCore.Mvc`. This is enforced by `StaticAnalysis`.

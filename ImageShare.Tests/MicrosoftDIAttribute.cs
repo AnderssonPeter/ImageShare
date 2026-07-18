@@ -1,6 +1,7 @@
 ﻿using ImageShare.Authentication;
 using ImageShare.Browsing;
 using ImageShare.ImageConversion;
+using Mediator;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -27,6 +28,7 @@ public class MicrosoftDIAttribute : DependencyInjectionDataSourceAttribute<IServ
         contentTypeProvider.Mappings[".avif"] = "image/avif";
 
         return new ServiceCollection()
+            .AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped)
             .AddScoped<InMemoryFileProvider>()
             .AddScoped<ISyncWritableFileProvider>(sp => sp.GetRequiredService<InMemoryFileProvider>())
             .AddScoped<IWritableFileProvider>(sp => sp.GetRequiredService<InMemoryFileProvider>())
