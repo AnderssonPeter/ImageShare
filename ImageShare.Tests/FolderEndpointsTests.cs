@@ -54,18 +54,26 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetEntries_Unauthenticated_ReturnsUnauthorized()
     {
+        // Arrange
         var user = new TestUser { IsAuthenticated = false };
+
+        // Act
         var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 401)).IsTrue();
     }
 
     [Test]
     public async Task GetEntries_PathTraversal_ReturnsBadRequest()
     {
+        // Arrange
         var user = new TestUser();
+
+        // Act
         var result = BrowsingEndpoints.GetEntries(fileProvider, "../etc", user, Page, PageSize);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 400)).IsTrue();
     }
 
@@ -75,22 +83,30 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Arguments(1, 501)]
     public async Task GetEntries_InvalidPagination_ReturnsBadRequest(int page, int pageSize)
     {
+        // Arrange
         var user = new TestUser();
+
+        // Act
         var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, page, pageSize);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 400)).IsTrue();
     }
 
     [Test]
     public async Task GetEntries_Root_FiltersFoldersByAccess()
     {
+        // Arrange
         AddDirectory("allowed-folder");
+        AddFile("allowed-folder/real.txt");
         AddDirectory("blocked-folder");
         AddFile("file.txt");
-
         var user = new TestUser().Allow("allowed-folder");
+
+        // Act
         var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize);
 
+        // Assert
         var paginated = GetResult(result);
         await Assert.That(paginated.Items).IsNotNull();
         await Assert.That(paginated.Items.Count).IsEqualTo(1);
@@ -107,13 +123,17 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetEntries_Root_ExcludesFiles()
     {
+        // Arrange
         AddFile("photo.jpg");
         AddFile("document.pdf");
         AddDirectory("images");
-
+        AddFile("images/real.png");
         var user = new TestUser().Allow("images");
+
+        // Act
         var paginated = GetResult(BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize));
 
+        // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(1);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("images");
         await Assert.That(paginated.Items[0].Type).IsEqualTo(EntryType.Folder);
@@ -122,12 +142,15 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetEntries_Root_AllFoldersBlocked_ReturnsEmpty()
     {
+        // Arrange
         AddDirectory("secret");
         AddFile("public.txt");
-
         var user = new TestUser();
+
+        // Act
         var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize);
 
+        // Assert
         var paginated = GetResult(result);
         await Assert.That(paginated.Items.Count).IsEqualTo(0);
         await Assert.That(paginated.TotalCount).IsEqualTo(0);
@@ -136,24 +159,30 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetEntries_BlockedSubfolder_ReturnsNotFound()
     {
+        // Arrange
         AddDirectory("secret/nested");
-
         var user = new TestUser();
+
+        // Act
         var result = BrowsingEndpoints.GetEntries(fileProvider, "secret/nested", user, Page, PageSize);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 404)).IsTrue();
     }
 
     [Test]
     public async Task GetEntries_Subfolder_DoesNotFilterByAccess()
     {
+        // Arrange
         AddFile("allowed/sub-file.txt");
         AddFile("allowed/sub-secret/x");
         AddFile("allowed/sub-public/x");
-
         var user = new TestUser().Allow("allowed");
+
+        // Act
         var result = BrowsingEndpoints.GetEntries(fileProvider, "allowed", user, Page, PageSize);
 
+        // Assert
         var paginated = GetResult(result);
         await Assert.That(paginated.Items.Count).IsEqualTo(3);
         await Assert.That(paginated.TotalCount).IsEqualTo(3);
@@ -167,9 +196,13 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetEntries_EmptyDirectory_ReturnsEmpty()
     {
+        // Arrange
         var user = new TestUser();
+
+        // Act
         var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize);
 
+        // Assert
         var paginated = GetResult(result);
         await Assert.That(paginated.Items.Count).IsEqualTo(0);
         await Assert.That(paginated.TotalCount).IsEqualTo(0);
@@ -178,13 +211,16 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetEntries_EmptyFolder_ExcludedFromListing()
     {
+        // Arrange
         AddDirectory("empty-folder");
         AddDirectory("populated-folder");
         AddFile("populated-folder/file.png");
-
         var user = new TestUser().Allow("populated-folder").Allow("empty-folder");
+
+        // Act
         var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize);
 
+        // Assert
         var paginated = GetResult(result);
         await Assert.That(paginated.Items.Count).IsEqualTo(1);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("populated-folder");
@@ -193,12 +229,16 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetEntries_FolderWithOnlyThumbprintFiles_Excluded()
     {
+        // Arrange
         AddDirectory("normal-folder");
+        AddFile("normal-folder/real.png");
         AddFile("thumb-only-folder/photo.thumb.jpg");
-
         var user = new TestUser().Allow("normal-folder").Allow("thumb-only-folder");
+
+        // Act
         var paginated = GetResult(BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize));
 
+        // Assert
         await Assert.That(paginated.Items.Count).IsEqualTo(1);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("normal-folder");
     }
@@ -206,13 +246,16 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetEntries_Subfolder_EmptyDirectory_Hidden()
     {
+        // Arrange
         AddDirectory("parent/visible-folder");
         AddFile("parent/visible-folder/file.jpg");
         AddDirectory("parent/empty-folder");
-
         var user = new TestUser().Allow("parent");
+
+        // Act
         var paginated = GetResult(BrowsingEndpoints.GetEntries(fileProvider, "parent", user, Page, PageSize));
 
+        // Assert
         await Assert.That(paginated.Items.Count).IsEqualTo(1);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("visible-folder");
     }
@@ -220,12 +263,16 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetEntries_SortsFoldersBeforeFiles()
     {
+        // Arrange
         AddFile("sub/a.txt");
         AddDirectory("sub/z-folder");
-
+        AddFile("sub/z-folder/real.txt");
         var user = new TestUser().Allow("sub");
+
+        // Act
         var result = BrowsingEndpoints.GetEntries(fileProvider, "sub", user, Page, PageSize);
 
+        // Assert
         var paginated = GetResult(result);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("z-folder");
         await Assert.That(paginated.Items[0].Type).IsEqualTo(EntryType.Folder);
@@ -236,14 +283,19 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetEntries_SortsAlphabeticallyWithinType()
     {
+        // Arrange
         AddDirectory("sub/b-folder");
+        AddFile("sub/b-folder/real.txt");
         AddDirectory("sub/a-folder");
+        AddFile("sub/a-folder/real.txt");
         AddFile("sub/z-file.txt");
         AddFile("sub/a-file.txt");
-
         var user = new TestUser().Allow("sub");
+
+        // Act
         var result = BrowsingEndpoints.GetEntries(fileProvider, "sub", user, Page, PageSize);
 
+        // Assert
         var paginated = GetResult(result);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("a-folder");
         await Assert.That(paginated.Items[1].Name).IsEqualTo("b-folder");
@@ -254,12 +306,15 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetEntries_Subfolder_StripsFileExtensions()
     {
+        // Arrange
         AddFile("sub/image.avif");
         AddFile("sub/readme.txt");
-
         var user = new TestUser().Allow("sub");
+
+        // Act
         var paginated = GetResult(BrowsingEndpoints.GetEntries(fileProvider, "sub", user, Page, PageSize));
 
+        // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(2);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("image");
         await Assert.That(paginated.Items[0].Type).IsEqualTo(EntryType.File);
@@ -269,14 +324,17 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetEntries_DeduplicatesSameNameDifferentFormats()
     {
+        // Arrange
         AddFile("sub/photo.jpg");
         AddFile("sub/photo.avif");
         AddFile("sub/photo.png");
         AddFile("sub/other.webp");
-
         var user = new TestUser().Allow("sub");
+
+        // Act
         var paginated = GetResult(BrowsingEndpoints.GetEntries(fileProvider, "sub", user, Page, PageSize));
 
+        // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(2);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("other");
         await Assert.That(paginated.Items[1].Name).IsEqualTo("photo");
@@ -285,6 +343,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetEntries_Pagination_ReturnsRequestedPage()
     {
+        // Arrange
         for (var i = 1; i <= 5; i++)
         {
             AddFile($"sub/{i}.txt");
@@ -292,20 +351,23 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
 
         var user = new TestUser().Allow("sub");
 
+        // Act
         var page1 = GetResult(BrowsingEndpoints.GetEntries(fileProvider, "sub", user, page: 1, pageSize: 2));
+        var page2 = GetResult(BrowsingEndpoints.GetEntries(fileProvider, "sub", user, page: 2, pageSize: 2));
+        var page3 = GetResult(BrowsingEndpoints.GetEntries(fileProvider, "sub", user, page: 3, pageSize: 2));
+
+        // Assert
         await Assert.That(page1.Items.Count).IsEqualTo(2);
         await Assert.That(page1.TotalCount).IsEqualTo(5);
         await Assert.That(page1.Page).IsEqualTo(1);
         await Assert.That(page1.Items[0].Name).IsEqualTo("1");
         await Assert.That(page1.Items[1].Name).IsEqualTo("2");
 
-        var page2 = GetResult(BrowsingEndpoints.GetEntries(fileProvider, "sub", user, page: 2, pageSize: 2));
         await Assert.That(page2.Items.Count).IsEqualTo(2);
         await Assert.That(page2.Page).IsEqualTo(2);
         await Assert.That(page2.Items[0].Name).IsEqualTo("3");
         await Assert.That(page2.Items[1].Name).IsEqualTo("4");
 
-        var page3 = GetResult(BrowsingEndpoints.GetEntries(fileProvider, "sub", user, page: 3, pageSize: 2));
         await Assert.That(page3.Items.Count).IsEqualTo(1);
         await Assert.That(page3.Page).IsEqualTo(3);
         await Assert.That(page3.Items[0].Name).IsEqualTo("5");
@@ -314,11 +376,14 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetEntries_PageBeyondTotal_ReturnsEmptyItems()
     {
+        // Arrange
         AddFile("sub/only.txt");
-
         var user = new TestUser().Allow("sub");
+
+        // Act
         var result = BrowsingEndpoints.GetEntries(fileProvider, "sub", user, page: 5, pageSize: 10);
 
+        // Assert
         var paginated = GetResult(result);
         await Assert.That(paginated.Items.Count).IsEqualTo(0);
         await Assert.That(paginated.TotalCount).IsEqualTo(1);
@@ -328,14 +393,17 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetEntries_ExcludesThumbprintFiles()
     {
+        // Arrange
         AddFile("sub/photo.avif");
         AddFile("sub/photo.thumb.jpg");
         AddFile("sub/image.png");
         AddFile("sub/image.thumb.png");
-
         var user = new TestUser().Allow("sub");
+
+        // Act
         var paginated = GetResult(BrowsingEndpoints.GetEntries(fileProvider, "sub", user, Page, PageSize));
 
+        // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(2);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("image");
         await Assert.That(paginated.Items[1].Name).IsEqualTo("photo");
@@ -344,49 +412,69 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetRandomThumbnail_Unauthenticated_ReturnsUnauthorized()
     {
+        // Arrange
         var user = new TestUser { IsAuthenticated = false };
+
+        // Act
         var result = ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, "photos", "");
 
+        // Assert
         await Assert.That(IsStatusCode(result, 401)).IsTrue();
     }
 
     [Test]
     public async Task GetRandomThumbnail_PathTraversal_ReturnsBadRequest()
     {
+        // Arrange
         var user = new TestUser();
+
+        // Act
         var result = ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, "../etc", "");
 
+        // Assert
         await Assert.That(IsStatusCode(result, 400)).IsTrue();
     }
 
     [Test]
     public async Task GetRandomThumbnail_BlockedFolder_ReturnsForbidden()
     {
+        // Arrange
         AddImageFile("secret/photo.avif", MagickFormat.Avif);
         var user = new TestUser();
+
+        // Act
         var result = ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, "secret", "");
 
+        // Assert
         await Assert.That(IsStatusCode(result, 403)).IsTrue();
     }
 
     [Test]
     public async Task GetRandomThumbnail_NoImageFiles_ReturnsNotFound()
     {
+        // Arrange
         AddFile("empty/readme.txt");
         var user = new TestUser().Allow("empty");
+
+        // Act
         var result = ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, "empty", "");
 
+        // Assert
         await Assert.That(IsStatusCode(result, 404)).IsTrue();
     }
 
     [Test]
     public async Task GetRandomThumbnail_ReturnsThumbnail()
     {
+        // Arrange
         AddImageFile("vacation/photo.avif", MagickFormat.Avif);
         AddFile("vacation/photo.thumb.jpg", CreateThumbnail());
         var user = new TestUser().Allow("vacation");
+
+        // Act
         var result = ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, "vacation", "");
 
+        // Assert
         await Assert.That(IsStatusCode(result, 200)).IsTrue();
         var fileResult = GetFileResult(result);
         await Assert.That(fileResult.ContentType).IsEqualTo("image/jpeg");
@@ -395,24 +483,29 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetRandomThumbnail_PicksRandomly()
     {
+        // Arrange
         AddImageFile("vacation/a.avif", MagickFormat.Avif);
         AddImageFile("vacation/b.jpg", MagickFormat.Jpeg);
-        AddFile("vacation/a.thumb.jpg", CreateThumbnail());
-        AddFile("vacation/b.thumb.jpg", CreateThumbnail());
+        var thumbnailA = CreateThumbnail(MagickColors.DodgerBlue);
+        var thumbnailB = CreateThumbnail(MagickColors.Crimson);
+        AddFile("vacation/a.thumb.jpg", thumbnailA);
+        AddFile("vacation/b.thumb.jpg", thumbnailB);
         var user = new TestUser().Allow("vacation");
-
         var gotA = false;
         var gotB = false;
+
+        // Act
         for (var i = 0; i < 50; i++)
         {
             var result = ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, "vacation", "");
             await Assert.That(IsStatusCode(result, 200)).IsTrue();
             var fileResult = GetFileResult(result);
-            if (fileResult.FileDownloadName == null)
+            var served = ReadAllBytes(fileResult.FileStream);
+            if (served.SequenceEqual(thumbnailA))
             {
                 gotA = true;
             }
-            else
+            else if (served.SequenceEqual(thumbnailB))
             {
                 gotB = true;
             }
@@ -423,6 +516,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
             }
         }
 
+        // Assert
         await Assert.That(gotA).IsTrue();
         await Assert.That(gotB).IsTrue();
     }
@@ -430,18 +524,31 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Test]
     public async Task GetRandomThumbnail_NoThumbnailsAvailable_ReturnsNotFound()
     {
+        // Arrange
         AddImageFile("vacation/photo.avif", MagickFormat.Avif);
         var user = new TestUser().Allow("vacation");
+
+        // Act
         var result = ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, "vacation", "");
 
+        // Assert
         await Assert.That(IsStatusCode(result, 404)).IsTrue();
     }
 
-    private static byte[] CreateThumbnail()
+    private static byte[] CreateThumbnail() => CreateThumbnail(MagickColors.DodgerBlue);
+
+    private static byte[] CreateThumbnail(IMagickColor<byte> color)
     {
-        using var image = new MagickImage(MagickColors.DodgerBlue, 50, 50);
+        using var image = new MagickImage(color, 50, 50);
         image.Format = MagickFormat.Jpeg;
         return image.ToByteArray();
+    }
+
+    private static byte[] ReadAllBytes(Stream stream)
+    {
+        using var memoryStream = new MemoryStream();
+        stream.CopyTo(memoryStream);
+        return memoryStream.ToArray();
     }
 
     private static bool IsStatusCode(IResult result, int statusCode)

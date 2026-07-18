@@ -46,10 +46,13 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     [Test]
     public async Task ConvertImage_ConvertsToAllOtherFormats(CancellationToken cancellationToken)
     {
+        // Arrange
         AddFile("photo.avif");
 
+        // Act
         await _job.ConvertImageAsync("photo.avif", cancellationToken);
 
+        // Assert
         await Assert.That(fileProvider.GetFileInfo("photo.webp").Exists).IsTrue();
         await Assert.That(fileProvider.GetFileInfo("photo.jpg").Exists).IsTrue();
         await Assert.That(fileProvider.GetFileInfo("photo.png").Exists).IsTrue();
@@ -61,20 +64,26 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     [Test]
     public async Task ConvertImage_DoesNotCreateSourceFormat(CancellationToken cancellationToken)
     {
+        // Arrange
         AddFile("photo.avif");
 
+        // Act
         await _job.ConvertImageAsync("photo.avif", cancellationToken);
 
+        // Assert
         await Assert.That(fileProvider.GetFileInfo("photo.thumb.avif").Exists).IsFalse();
     }
 
     [Test]
     public async Task ConvertImage_ConvertsJpegSources(CancellationToken cancellationToken)
     {
+        // Arrange
         AddFile("photo.jpg", MagickFormat.Jpeg);
 
+        // Act
         await _job.ConvertImageAsync("photo.jpg", cancellationToken);
 
+        // Assert
         await Assert.That(fileProvider.GetFileInfo("photo.avif").Exists).IsTrue();
         await Assert.That(fileProvider.GetFileInfo("photo.webp").Exists).IsTrue();
         await Assert.That(fileProvider.GetFileInfo("photo.png").Exists).IsTrue();
@@ -83,12 +92,15 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     [Test]
     public async Task ConvertImage_SkipsExistingFiles(CancellationToken cancellationToken)
     {
+        // Arrange
         AddFile("photo.avif");
         var expectedContent = CreateTestImage(format: MagickFormat.WebP);
         fileProvider.Write("photo.webp", expectedContent);
 
+        // Act
         await _job.ConvertImageAsync("photo.avif", cancellationToken);
 
+        // Assert
         var existingContent = FileProviderExtensions.ReadAsBytes(fileProvider.GetFileInfo("photo.webp"));
         await Assert.That(existingContent).IsEquivalentTo(expectedContent);
     }
@@ -96,42 +108,53 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     [Test]
     public async Task IsThumbprintFile_ReturnsTrueForThumbFiles()
     {
+        // Act
         var result = ImageConverterJob.IsThumbprintFile("photo.thumb.jpg");
 
+        // Assert
         await Assert.That(result).IsTrue();
     }
 
     [Test]
     public async Task IsThumbprintFile_ReturnsFalseForNormalFiles()
     {
+        // Act
         var result = ImageConverterJob.IsThumbprintFile("photo.avif");
 
+        // Assert
         await Assert.That(result).IsFalse();
     }
 
     [Test]
     public async Task IsImageFile_ReturnsTrueForSupportedFormats()
     {
+        // Act
         var result = _job.IsImageFile("photo.avif");
 
+        // Assert
         await Assert.That(result).IsTrue();
     }
 
     [Test]
     public async Task IsImageFile_ReturnsFalseForUnsupportedFormats()
     {
+        // Act
         var result = _job.IsImageFile("photo.bmp");
 
+        // Assert
         await Assert.That(result).IsFalse();
     }
 
     [Test]
     public async Task ConvertImage_ThumbnailIsSmallerThanOriginal(CancellationToken cancellationToken)
     {
+        // Arrange
         AddFile("large.avif", width: 800, height: 600);
 
+        // Act
         await _job.ConvertImageAsync("large.avif", cancellationToken);
 
+        // Assert
         var thumbnailData = FileProviderExtensions.ReadAsBytes(fileProvider.GetFileInfo("large.thumb.webp"));
         var (thumbnailWidth, thumbnailHeight) = Dimensions(thumbnailData);
         await Assert.That(thumbnailWidth).IsLessThanOrEqualTo(DefaultConverterOptions.ThumbnailMaxWidth);
@@ -141,10 +164,13 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     [Test]
     public async Task ConvertImage_FullResolutionIsNotResized(CancellationToken cancellationToken)
     {
+        // Arrange
         AddFile("large.avif", width: 800, height: 600);
 
+        // Act
         await _job.ConvertImageAsync("large.avif", cancellationToken);
 
+        // Assert
         var fullData = FileProviderExtensions.ReadAsBytes(fileProvider.GetFileInfo("large.webp"));
         var (fullWidth, fullHeight) = Dimensions(fullData);
         await Assert.That(fullWidth).IsEqualTo(800);
@@ -158,11 +184,14 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     [Test]
     public async Task ScanAndConvertAsync_ConvertsAllSourceImages(CancellationToken cancellationToken)
     {
+        // Arrange
         AddFile("photo.avif");
         AddFile("subdir/other.jpg", MagickFormat.Jpeg);
 
+        // Act
         await _job.ScanAndConvertAsync(cancellationToken);
 
+        // Assert
         await Assert.That(fileProvider.GetFileInfo("photo.webp").Exists).IsTrue();
         await Assert.That(fileProvider.GetFileInfo("photo.jpg").Exists).IsTrue();
         await Assert.That(fileProvider.GetFileInfo("photo.png").Exists).IsTrue();

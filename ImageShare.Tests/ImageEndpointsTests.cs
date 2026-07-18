@@ -44,125 +44,167 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     [Test]
     public async Task IsFormatAccepted_EmptyHeader_ReturnsTrue()
     {
+        // Act
         var result = ImageEndpoints.IsFormatAccepted(StringValues.Empty, "image/jpeg");
 
+        // Assert
         await Assert.That(result).IsTrue();
     }
 
     [Test]
     public async Task IsFormatAccepted_ExactMatch_ReturnsTrue()
     {
+        // Act
         var result = ImageEndpoints.IsFormatAccepted("image/avif", "image/avif");
 
+        // Assert
         await Assert.That(result).IsTrue();
     }
 
     [Test]
     public async Task IsFormatAccepted_WildcardSubtype_ReturnsTrue()
     {
+        // Act
         var result = ImageEndpoints.IsFormatAccepted("image/*", "image/avif");
 
+        // Assert
         await Assert.That(result).IsTrue();
     }
 
     [Test]
     public async Task IsFormatAccepted_WildcardAny_ReturnsTrue()
     {
+        // Act
         var result = ImageEndpoints.IsFormatAccepted("*/*", "image/avif");
 
+        // Assert
         await Assert.That(result).IsTrue();
     }
 
     [Test]
     public async Task IsFormatAccepted_NoMatch_ReturnsFalse()
     {
+        // Act
         var result = ImageEndpoints.IsFormatAccepted("image/png,image/webp", "image/avif");
 
+        // Assert
         await Assert.That(result).IsFalse();
     }
 
     [Test]
     public async Task IsFormatAccepted_MultipleValues_MatchesAny()
     {
+        // Act
         var result = ImageEndpoints.IsFormatAccepted("image/png,image/avif", "image/avif");
 
+        // Assert
         await Assert.That(result).IsTrue();
     }
 
     [Test]
     public async Task IsFormatAccepted_IgnoresQualityParameter()
     {
+        // Act
         var result = ImageEndpoints.IsFormatAccepted("image/webp;q=0.8,image/avif;q=1.0", "image/avif");
 
+        // Assert
         await Assert.That(result).IsTrue();
     }
 
     [Test]
     public async Task ServeImage_Unauthenticated_ReturnsUnauthorized()
     {
+        // Arrange
         AddFile("photo.png", MagickFormat.Png);
         var user = new TestUser { IsAuthenticated = false };
+
+        // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo.png", StringValues.Empty, thumbnail: false);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 401)).IsTrue();
     }
 
     [Test]
     public async Task ServeImage_BlockedFolder_ReturnsForbidden()
     {
+        // Arrange
         AddFile("secret/photo.png", MagickFormat.Png);
         var user = new TestUser();
+
+        // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "secret/photo.png", StringValues.Empty, thumbnail: false);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 403)).IsTrue();
     }
 
     [Test]
     public async Task ServeImage_BlockedSubfolder_ReturnsForbidden()
     {
+        // Arrange
         AddFile("secret/nested/photo.png", MagickFormat.Png);
         var user = new TestUser();
+
+        // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "secret/nested/photo.png", StringValues.Empty, thumbnail: false);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 403)).IsTrue();
     }
 
     [Test]
     public async Task ServeImage_NonExistentFile_ReturnsNotFound()
     {
+        // Arrange
         var user = new TestUser().Allow("vacation");
+
+        // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "missing.avif", StringValues.Empty, thumbnail: false);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 404)).IsTrue();
     }
 
     [Test]
     public async Task ServeImage_PathTraversal_ReturnsBadRequest()
     {
+        // Arrange
         var user = new TestUser().Allow("vacation");
+
+        // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "../etc", StringValues.Empty, thumbnail: false);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 400)).IsTrue();
     }
 
     [Test]
     public async Task ServeImage_ThumbprintFile_ReturnsBadRequest()
     {
+        // Arrange
         AddFile("photo.avif", MagickFormat.Avif);
         AddThumbnailFile("photo.avif");
         var user = new TestUser().Allow("vacation");
+
+        // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo.thumb.jpg", StringValues.Empty, thumbnail: false);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 400)).IsTrue();
     }
 
     [Test]
     public async Task ServeImage_NoAcceptHeader_ServesOriginal()
     {
+        // Arrange
         AddFile("photo.png", MagickFormat.Png);
         var user = new TestUser().Allow("vacation");
+
+        // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo.png", StringValues.Empty, thumbnail: false);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 200)).IsTrue();
         await Assert.That(GetContentType(result)).IsEqualTo("image/png");
     }
@@ -170,10 +212,14 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     [Test]
     public async Task ServeImage_FormatAccepted_ServesOriginal()
     {
+        // Arrange
         AddFile("photo.avif", MagickFormat.Avif);
         var user = new TestUser().Allow("vacation");
+
+        // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo.avif", "image/avif,image/jpeg", thumbnail: false);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 200)).IsTrue();
         await Assert.That(GetContentType(result)).IsEqualTo("image/avif");
     }
@@ -181,11 +227,15 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     [Test]
     public async Task ServeImage_ThumbTrue_ServesThumbprint()
     {
+        // Arrange
         AddFile("photo.avif", MagickFormat.Avif);
         AddThumbnailFile("photo.avif");
         var user = new TestUser().Allow("vacation");
+
+        // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", StringValues.Empty, thumbnail: true);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 200)).IsTrue();
         await Assert.That(GetContentType(result)).IsEqualTo("image/jpeg");
     }
@@ -193,56 +243,75 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     [Test]
     public async Task ServeImage_ThumbTrue_NoThumbprint_ReturnsNotFound()
     {
+        // Arrange
         AddFile("photo.avif", MagickFormat.Avif);
         var user = new TestUser().Allow("vacation");
+
+        // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", StringValues.Empty, thumbnail: true);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 404)).IsTrue();
     }
 
     [Test]
     public async Task ServeImage_ThumbTrue_NoImage_ReturnsNotFound()
     {
+        // Arrange
         var user = new TestUser().Allow("vacation");
+
+        // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "missing", StringValues.Empty, thumbnail: true);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 404)).IsTrue();
     }
 
     [Test]
     public async Task ServeImage_ThumbTrue_ThumbprintNotAccepted_Returns406()
     {
+        // Arrange
         AddFile("photo.avif", MagickFormat.Avif);
         AddThumbnailFile("photo.avif");
         var user = new TestUser().Allow("vacation");
+
+        // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", "image/webp,image/png", thumbnail: true);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 406)).IsTrue();
     }
 
     [Test]
     public async Task ServeImage_NoAcceptedFormats_Returns406()
     {
+        // Arrange
         AddFile("photo.avif", MagickFormat.Avif);
         var user = new TestUser().Allow("vacation");
+
+        // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", "image/tiff", thumbnail: false);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 406)).IsTrue();
     }
 
     [Test]
     public async Task ServeImage_ServesSmallestFileFirst()
     {
+        // Arrange
         using var small = new MagickImage(MagickColors.DodgerBlue, 10, 10);
         small.Format = MagickFormat.Png;
         fileProvider.Write("photo.png", small.ToByteArray());
         using var large = new MagickImage(MagickColors.DodgerBlue, 100, 100);
         large.Format = MagickFormat.Jpeg;
         fileProvider.Write("photo.jpg", large.ToByteArray());
-
         var user = new TestUser().Allow("vacation");
+
+        // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", "image/jpeg,image/png", thumbnail: false);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 200)).IsTrue();
         await Assert.That(GetContentType(result)).IsEqualTo("image/png");
     }
@@ -250,6 +319,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     [Test]
     public async Task ServeImage_ThumbTrue_ServesSmallestThumbprintFirst()
     {
+        // Arrange
         fileProvider.Write("photo.avif", CreateTestImage(MagickFormat.Avif));
         using var smallThumb = new MagickImage(MagickColors.DodgerBlue, 10, 10);
         smallThumb.Format = MagickFormat.Jpeg;
@@ -257,10 +327,12 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         using var largeThumb = new MagickImage(MagickColors.DodgerBlue, 100, 100);
         largeThumb.Format = MagickFormat.Png;
         fileProvider.Write("photo.thumb.png", largeThumb.ToByteArray());
-
         var user = new TestUser().Allow("vacation");
+
+        // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", "image/jpeg,image/png", thumbnail: true);
 
+        // Assert
         await Assert.That(IsStatusCode(result, 200)).IsTrue();
         await Assert.That(GetContentType(result)).IsEqualTo("image/jpeg");
     }

@@ -1,19 +1,23 @@
-﻿using System.Diagnostics;
-
-namespace ImageShare.Browsing;
+﻿namespace ImageShare.Browsing;
 
 internal static class PathHelper
 {
+    public static void EnsureSafePath(string path)
+    {
+        if (path.Contains("..", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("Path contains .., not allowed", nameof(path));
+        }
+    }
+
 #pragma warning disable RS0030
     public static string Combine(string path1, string path2)
     {
-        if (path1.Contains("..", StringComparison.Ordinal) || path2.Contains("..", StringComparison.Ordinal))
-        {
-            ThrowPathTraversal(path1, path2);
-        }
-
+        EnsureSafePath(path1);
+        EnsureSafePath(path2);
         return Path.Combine(path1, path2);
     }
+
 #pragma warning restore RS0030
 
     public static string GetFirstSegment(string path)
@@ -23,8 +27,4 @@ internal static class PathHelper
     }
 
     public static bool IsInFolder(string path) => path.Contains('/');
-
-    [DebuggerHidden, StackTraceHidden]
-    private static void ThrowPathTraversal(string path1, string path2)
-        => throw new ArgumentException("Path traversal detected ('..' not allowed)", nameof(path1));
 }

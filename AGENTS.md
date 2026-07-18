@@ -1,4 +1,4 @@
-<!-- context7 -->
+﻿<!-- context7 -->
 Use Context7 MCP to fetch current documentation whenever the user asks about a library, framework, SDK, API, CLI tool, or cloud service -- even well-known ones like React, Next.js, Prisma, Express, Tailwind, Django, or Spring Boot. This includes API syntax, configuration, version migration, library-specific debugging, setup instructions, and CLI tool usage. Use even when you think you know the answer -- your training data may not reflect recent changes. Prefer this over web search for library docs.
 
 Do not use for: refactoring, writing scripts from scratch, debugging business logic, code review, or general programming concepts.
@@ -47,3 +47,11 @@ When writing code that interacts with the file system:
 	* When reading and writing `IWritableFileProvider`
 
 `ISyncWritableFileProvider and `IWritableFileProvider` both inherit `IFileProvider` so there is no need to use both in the same class, if you need to write and read then use `IWritableFileProvider` but if you only need to read then use `IFileProvider`.
+
+## File placement
+Files should be placed by feature instead of by type.
+
+## Unit tests
+C# unit tests use TUnit, skill exists for this.
+All unit tests should have Arrange, Act, Assert comments
+When possible and where it makes sense use parameterized unit tests

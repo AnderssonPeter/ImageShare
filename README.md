@@ -9,14 +9,15 @@
 [ ] Add api key authentication
   [ ] This should not replace the other auth all three should work
   [ ] The api keys should be stored in the settings file, with a `ImageShareFilter`
-[ ] Modify the script that starts the open code container, fix the todos in it!
+[X] Modify the script that starts the open code container, fix the todos in it!
 [ ] Allow opencode to access tmp folder by default
-[ ] What is rg cli tool? install in container?
-[ ] Add nuget mcp server
-[ ] Enable nuget mcp server
-[ ] Enable microsoft docs mcp server
-[ ] Add instructions to group files by funcitionality not type
-[ ] Add Arrange, Act, Assert comments to unit tests
+[X] What is rg cli tool? install in container?
+[X] Add nuget mcp server
+[X] Enable microsoft docs mcp server
+[X] Add instructions to group files by funcitionality not type
+[/] Add Arrange, Act, Assert comments to unit tests
+[ ] Convert unit tests to parameterized unit tests where it makes sense
+[ ] Add TestUser to DI
 [ ] Folder endpoint should only return files that have a image file extension
 [ ] Add endpoint to download multiple images, from multiple folders recursively
 [ ] Add endpoint to get random image from a list of folder recursively

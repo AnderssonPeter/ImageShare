@@ -51,10 +51,7 @@ public static class ImageEndpoints
             return TypedResults.Unauthorized();
         }
 
-        if (relativePath.Contains("..", StringComparison.Ordinal))
-        {
-            return TypedResults.BadRequest();
-        }
+        PathHelper.EnsureSafePath(relativePath);
 
         if (PathHelper.IsInFolder(relativePath) && !user.CanAccessFolder(PathHelper.GetFirstSegment(relativePath)))
         {
@@ -184,17 +181,9 @@ public static class ImageEndpoints
             return TypedResults.Unauthorized();
         }
 
-        if (relativePath.Contains("..", StringComparison.Ordinal))
-        {
-            return TypedResults.BadRequest();
-        }
+        PathHelper.EnsureSafePath(relativePath);
 
-        if (!PathHelper.IsInFolder(relativePath))
-        {
-            return TypedResults.BadRequest();
-        }
-
-        if (!user.CanAccessFolder(PathHelper.GetFirstSegment(relativePath)))
+        if (!string.IsNullOrEmpty(relativePath) && !user.CanAccessFolder(PathHelper.GetFirstSegment(relativePath)))
         {
             return TypedResults.Forbid();
         }

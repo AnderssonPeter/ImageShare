@@ -1,0 +1,36 @@
+﻿# Default: treat all files as text and normalize to LF on checkout.
+# This keeps the working tree in sync with .editorconfig's `end_of_line = lf`.
+* text=auto eol=lf
+
+# Explicitly enforce LF for source files (matches .editorconfig).
+*.cs     text eol=lf
+*.json   text eol=lf
+*.csproj text eol=lf
+*.slnx   text eol=lf
+*.props  text eol=lf
+*.targets text eol=lf
+*.md     text eol=lf
+*.txt    text eol=lf
+*.sh     text eol=lf
+*.editorconfig text eol=lf
+*.gitignore    text eol=lf
+*.gitattributes text eol=lf
+.dockerignore  text eol=lf
+
+# Binary files: never normalize line endings or diff as text.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.bmp  binary
+*.webp binary
+*.avif binary
+*.ico  binary
+*.tiff binary
+*.tif  binary
+*.pdf  binary
+*.zip  binary
+*.dll  binary
+*.exe  binary
+*.so   binary
+*.dylib binary

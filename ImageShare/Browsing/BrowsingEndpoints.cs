@@ -36,10 +36,7 @@ public static class BrowsingEndpoints
             return TypedResults.BadRequest();
         }
 
-        if (relativePath.Contains("..", StringComparison.Ordinal))
-        {
-            return TypedResults.BadRequest();
-        }
+        PathHelper.EnsureSafePath(relativePath);
 
         if (!string.IsNullOrEmpty(relativePath) && !user.CanAccessFolder(PathHelper.GetFirstSegment(relativePath)))
         {
@@ -128,6 +125,11 @@ public static class BrowsingEndpoints
                 return true;
             }
 
+            if (IsHiddenFile(item.Name))
+            {
+                continue;
+            }
+
             if (!ImageConverterJob.IsThumbprintFile(item.Name))
             {
                 return true;
@@ -136,4 +138,6 @@ public static class BrowsingEndpoints
 
         return false;
     }
+
+    private static bool IsHiddenFile(string name) => name.StartsWith('.');
 }
