@@ -2,6 +2,7 @@
 using ImageShare.ImageConversion;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 
 namespace ImageShare.Browsing;
 
@@ -15,16 +16,16 @@ public static class BrowsingEndpoints
     {
         var group = endpoints.MapGroup("/folders").RequireAuthorization();
 
-        group.MapGet("/", (IFileProvider fileProvider, User user, int page = DefaultPage, int pageSize = DefaultPageSize) =>
-            GetEntries(fileProvider, string.Empty, user, page, pageSize));
+        group.MapGet("/", (IFileProvider fileProvider, IOptions<ImageFormatOptions> imageFormats, User user, int page = DefaultPage, int pageSize = DefaultPageSize) =>
+            GetEntries(fileProvider, imageFormats.Value, string.Empty, user, page, pageSize));
 
-        group.MapGet("/{**path}", (IFileProvider fileProvider, User user, string path, int page = DefaultPage, int pageSize = DefaultPageSize) =>
-            GetEntries(fileProvider, path, user, page, pageSize));
+        group.MapGet("/{**path}", (IFileProvider fileProvider, IOptions<ImageFormatOptions> imageFormats, User user, string path, int page = DefaultPage, int pageSize = DefaultPageSize) =>
+            GetEntries(fileProvider, imageFormats.Value, path, user, page, pageSize));
 
         return endpoints;
     }
 
-    internal static Results<Ok<PaginatedResult<FolderEntry>>, UnauthorizedHttpResult, BadRequest, NotFound> GetEntries(IFileProvider fileProvider, string relativePath, IUser user, int page, int pageSize)
+    internal static Results<Ok<PaginatedResult<FolderEntry>>, UnauthorizedHttpResult, BadRequest, NotFound> GetEntries(IFileProvider fileProvider, ImageFormatOptions imageFormats, string relativePath, IUser user, int page, int pageSize)
     {
         if (!user.IsAuthenticated)
         {
@@ -43,19 +44,18 @@ public static class BrowsingEndpoints
             return TypedResults.NotFound();
         }
 
-        var contents = fileProvider.GetDirectoryContents(relativePath);
-
         var isRoot = string.IsNullOrEmpty(relativePath);
-        var entries = CollectEntries(fileProvider, relativePath, contents, isRoot, user);
+        var entries = CollectEntries(fileProvider, imageFormats, relativePath, isRoot, user);
 
         return TypedResults.Ok(PaginatedResult<FolderEntry>.Paginate(entries, page, pageSize));
     }
 
-    private static List<FolderEntry> CollectEntries(IFileProvider fileProvider, string relativePath, IDirectoryContents contents, bool isRoot, IUser user)
+    private static List<FolderEntry> CollectEntries(IFileProvider fileProvider, ImageFormatOptions imageFormats, string relativePath, bool isRoot, IUser user)
     {
         var entries = new List<FolderEntry>();
         var seenFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+        var contents = fileProvider.GetDirectoryContents(relativePath);
         foreach (var item in contents)
         {
             var name = item.Name;
@@ -69,7 +69,7 @@ public static class BrowsingEndpoints
 
                 var folderPath = string.IsNullOrEmpty(relativePath) ? name : $"{relativePath}/{name}";
                 var folderContents = fileProvider.GetDirectoryContents(folderPath);
-                if (!HasVisibleContent(folderContents))
+                if (!HasVisibleContent(fileProvider, imageFormats, folderPath, folderContents))
                 {
                     continue;
                 }
@@ -111,7 +111,7 @@ public static class BrowsingEndpoints
         return entries;
     }
 
-    private static bool HasVisibleContent(IDirectoryContents folderContents)
+    private static bool HasVisibleContent(IFileProvider fileProvider, ImageFormatOptions imageFormats, string folderPath, IDirectoryContents folderContents)
     {
         foreach (var item in folderContents)
         {
@@ -122,7 +122,14 @@ public static class BrowsingEndpoints
 
             if (item.IsDirectory)
             {
-                return true;
+                var nestedPath = string.IsNullOrEmpty(folderPath) ? item.Name : $"{folderPath}/{item.Name}";
+                var nestedContents = fileProvider.GetDirectoryContents(nestedPath);
+                if (HasVisibleContent(fileProvider, imageFormats, nestedPath, nestedContents))
+                {
+                    return true;
+                }
+
+                continue;
             }
 
             if (IsHiddenFile(item.Name))
@@ -130,13 +137,24 @@ public static class BrowsingEndpoints
                 continue;
             }
 
-            if (!ImageConverterJob.IsThumbprintFile(item.Name))
+            if (ImageConverterJob.IsThumbprintFile(item.Name))
+            {
+                continue;
+            }
+
+            if (IsImageFile(item.Name, imageFormats))
             {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private static bool IsImageFile(string path, ImageFormatOptions imageFormats)
+    {
+        var extension = Path.GetExtension(path).TrimStart('.');
+        return imageFormats.SupportedFormats.Contains(extension, StringComparer.OrdinalIgnoreCase);
     }
 
     private static bool IsHiddenFile(string name) => name.StartsWith('.');

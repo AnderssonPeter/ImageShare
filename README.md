@@ -25,11 +25,11 @@
 [X] In unit tests move AddDir (rename to AddDirectory), AddFile, AddImageFile, AddThumbFile, Unwrap and other common methods to extension methods
 [X] Add CreateThumbnail, IsStatusCode, CreateTestImage, to a base class for unit tests
 [X] Move the code for `dotnet r startup` to a powershell file, check if the Redirect logic is needed, if not then remove if it's needed make sure its compatible with both linux and windows
-[ ] Create a user mock class that can be reused in all unit tests instead of having one per test file
-  [ ] The mock class should be added to DI and resolved using DI (the tests should not call new on it)
-[ ] HasVisibleContent
-  [ ] should not return true when it finds a directory, it has to run recursively on sub directories
-  [ ] Thumbprints should not be included in the calculation, only images with the correct file extension should be included
+[X] Create a user mock class that can be reused in all unit tests instead of having one per test file
+  [X] The mock class should be added to DI and resolved using DI (the tests should not call new on it)
+[X] HasVisibleContent
+  [X] should not return true when it finds a directory, it has to run recursively on sub directories
+  [X] Thumbprints should not be included in the calculation, only images with the correct file extension should be included
 [ ] BE
   [X] Add run script
     [X] Add dotnet format

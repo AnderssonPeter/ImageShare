@@ -19,7 +19,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
         user.IsAuthenticated = false;
 
         // Act
-        var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, string.Empty, user, Page, PageSize);
 
         // Assert
         await Assert.That(result.IsStatusCode(401)).IsTrue();
@@ -31,7 +31,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     [Arguments("/")]
     [Arguments("/etc/passwd")]
     public async Task GetEntries_UnsafePath_ThrowsArgumentException(string path) =>
-        await Assert.That(() => BrowsingEndpoints.GetEntries(fileProvider, path, user, Page, PageSize)).Throws<ArgumentException>();
+        await Assert.That(() => BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, path, user, Page, PageSize)).Throws<ArgumentException>();
 
     [Test]
     [Arguments(0, 10)]
@@ -41,7 +41,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     {
         // Arrange
         // Act
-        var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, page, pageSize);
+        var result = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, string.Empty, user, page, pageSize);
 
         // Assert
         await Assert.That(result.IsStatusCode(400)).IsTrue();
@@ -52,13 +52,13 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     {
         // Arrange
         fileProvider.AddDirectory("allowed-folder");
-        fileProvider.AddFile("allowed-folder/real.txt");
+        fileProvider.AddFile("allowed-folder/real.png");
         fileProvider.AddDirectory("blocked-folder");
         fileProvider.AddFile("file.txt");
         user.Allow("allowed-folder");
 
         // Act
-        var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, string.Empty, user, Page, PageSize);
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -85,7 +85,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
         user.Allow("images");
 
         // Act
-        var paginated = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize).GetFolderEntriesResult();
+        var paginated = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, string.Empty, user, Page, PageSize).GetFolderEntriesResult();
 
         // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(1);
@@ -101,7 +101,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
         fileProvider.AddFile("public.txt");
 
         // Act
-        var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, string.Empty, user, Page, PageSize);
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -116,7 +116,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
         fileProvider.AddDirectory("secret/nested");
 
         // Act
-        var result = BrowsingEndpoints.GetEntries(fileProvider, "secret/nested", user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, "secret/nested", user, Page, PageSize);
 
         // Assert
         await Assert.That(result.IsStatusCode(404)).IsTrue();
@@ -126,13 +126,13 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     public async Task GetEntries_Subfolder_DoesNotFilterByAccess()
     {
         // Arrange
-        fileProvider.AddFile("allowed/sub-file.txt");
-        fileProvider.AddFile("allowed/sub-secret/x");
-        fileProvider.AddFile("allowed/sub-public/x");
+        fileProvider.AddFile("allowed/sub-file.png");
+        fileProvider.AddFile("allowed/sub-secret/real.png");
+        fileProvider.AddFile("allowed/sub-public/real.png");
         user.Allow("allowed");
 
         // Act
-        var result = BrowsingEndpoints.GetEntries(fileProvider, "allowed", user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, "allowed", user, Page, PageSize);
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -150,7 +150,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     {
         // Arrange
         // Act
-        var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, string.Empty, user, Page, PageSize);
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -168,7 +168,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
         user.Allow("populated-folder").Allow("empty-folder");
 
         // Act
-        var result = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, string.Empty, user, Page, PageSize);
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -186,7 +186,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
         user.Allow("normal-folder").Allow("thumb-only-folder");
 
         // Act
-        var paginated = BrowsingEndpoints.GetEntries(fileProvider, string.Empty, user, Page, PageSize).GetFolderEntriesResult();
+        var paginated = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, string.Empty, user, Page, PageSize).GetFolderEntriesResult();
 
         // Assert
         await Assert.That(paginated.Items.Count).IsEqualTo(1);
@@ -203,7 +203,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
         user.Allow("parent");
 
         // Act
-        var paginated = BrowsingEndpoints.GetEntries(fileProvider, "parent", user, Page, PageSize).GetFolderEntriesResult();
+        var paginated = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, "parent", user, Page, PageSize).GetFolderEntriesResult();
 
         // Assert
         await Assert.That(paginated.Items.Count).IsEqualTo(1);
@@ -214,13 +214,13 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     public async Task GetEntries_SortsFoldersBeforeFiles()
     {
         // Arrange
-        fileProvider.AddFile("sub/a.txt");
+        fileProvider.AddFile("sub/a.png");
         fileProvider.AddDirectory("sub/z-folder");
-        fileProvider.AddFile("sub/z-folder/real.txt");
+        fileProvider.AddFile("sub/z-folder/real.png");
         user.Allow("sub");
 
         // Act
-        var result = BrowsingEndpoints.GetEntries(fileProvider, "sub", user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, "sub", user, Page, PageSize);
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -235,15 +235,15 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     {
         // Arrange
         fileProvider.AddDirectory("sub/b-folder");
-        fileProvider.AddFile("sub/b-folder/real.txt");
+        fileProvider.AddFile("sub/b-folder/real.png");
         fileProvider.AddDirectory("sub/a-folder");
-        fileProvider.AddFile("sub/a-folder/real.txt");
-        fileProvider.AddFile("sub/z-file.txt");
-        fileProvider.AddFile("sub/a-file.txt");
+        fileProvider.AddFile("sub/a-folder/real.png");
+        fileProvider.AddFile("sub/z-file.png");
+        fileProvider.AddFile("sub/a-file.png");
         user.Allow("sub");
 
         // Act
-        var result = BrowsingEndpoints.GetEntries(fileProvider, "sub", user, Page, PageSize);
+        var result = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, "sub", user, Page, PageSize);
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -262,7 +262,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
         user.Allow("sub");
 
         // Act
-        var paginated = BrowsingEndpoints.GetEntries(fileProvider, "sub", user, Page, PageSize).GetFolderEntriesResult();
+        var paginated = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, "sub", user, Page, PageSize).GetFolderEntriesResult();
 
         // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(2);
@@ -282,7 +282,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
         user.Allow("sub");
 
         // Act
-        var paginated = BrowsingEndpoints.GetEntries(fileProvider, "sub", user, Page, PageSize).GetFolderEntriesResult();
+        var paginated = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, "sub", user, Page, PageSize).GetFolderEntriesResult();
 
         // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(2);
@@ -302,9 +302,9 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
         user.Allow("sub");
 
         // Act
-        var page1 = BrowsingEndpoints.GetEntries(fileProvider, "sub", user, page: 1, pageSize: 2).GetFolderEntriesResult();
-        var page2 = BrowsingEndpoints.GetEntries(fileProvider, "sub", user, page: 2, pageSize: 2).GetFolderEntriesResult();
-        var page3 = BrowsingEndpoints.GetEntries(fileProvider, "sub", user, page: 3, pageSize: 2).GetFolderEntriesResult();
+        var page1 = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, "sub", user, page: 1, pageSize: 2).GetFolderEntriesResult();
+        var page2 = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, "sub", user, page: 2, pageSize: 2).GetFolderEntriesResult();
+        var page3 = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, "sub", user, page: 3, pageSize: 2).GetFolderEntriesResult();
 
         // Assert
         await Assert.That(page1.Items.Count).IsEqualTo(2);
@@ -331,7 +331,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
         user.Allow("sub");
 
         // Act
-        var result = BrowsingEndpoints.GetEntries(fileProvider, "sub", user, page: 5, pageSize: 10);
+        var result = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, "sub", user, page: 5, pageSize: 10);
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -351,7 +351,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
         user.Allow("sub");
 
         // Act
-        var paginated = BrowsingEndpoints.GetEntries(fileProvider, "sub", user, Page, PageSize).GetFolderEntriesResult();
+        var paginated = BrowsingEndpoints.GetEntries(fileProvider, imageFormats.Value, "sub", user, Page, PageSize).GetFolderEntriesResult();
 
         // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(2);

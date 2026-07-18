@@ -10,6 +10,6 @@
     "test": "dotnet run --project ImageShare.Tests/ImageShare.Tests.csproj",
     "build": "dotnet build",
     "startup": "pwsh ./scripts/startup.ps1",
-    "ci": "dotnet r format:check && dotnet r build && dotnet r test && dotnet r startup"
+    "ci": "dotnet build-server shutdown && dotnet r format:check && dotnet r build && dotnet r test && dotnet r startup"
   }
 }
