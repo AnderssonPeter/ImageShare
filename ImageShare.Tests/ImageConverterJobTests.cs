@@ -8,26 +8,13 @@ using Mirality.FileProviders;
 namespace ImageShare.Tests;
 
 [MicrosoftDI]
-public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, ImageConverter converter, IOptions<ImageFormatOptions> imageFormats, ILoggerFactory loggerFactory)
+public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, ImageConverter converter, IOptions<ImageFormatOptions> imageFormats, ILoggerFactory loggerFactory, TestImageFactory imageFactory)
 {
     private readonly ImageConverterJob _job = new(
             fileProvider,
             converter,
             imageFormats,
             loggerFactory.CreateLogger<ImageConverterJob>());
-
-    private static byte[] CreateTestImage(int width = 100, int height = 100, MagickFormat format = MagickFormat.Avif)
-    {
-        using var image = new MagickImage(MagickColors.DodgerBlue, (uint)width, (uint)height);
-        image.Format = format;
-        return image.ToByteArray();
-    }
-
-    private void AddFile(string path, MagickFormat format = MagickFormat.Avif, int width = 100, int height = 100)
-    {
-        fileProvider.Create(Path.GetDirectoryName(path) ?? "");
-        fileProvider.Write(path, CreateTestImage(width, height, format));
-    }
 
     private static readonly ImageConverterOptions DefaultConverterOptions = new()
     {
@@ -37,17 +24,11 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
         ThumbnailMaxHeight = 200,
     };
 
-    private static (int Width, int Height) Dimensions(byte[] data)
-    {
-        using var image = new MagickImage(data);
-        return ((int)image.Width, (int)image.Height);
-    }
-
     [Test]
     public async Task ConvertImage_ConvertsToAllOtherFormats(CancellationToken cancellationToken)
     {
         // Arrange
-        AddFile("photo.avif");
+        fileProvider.AddFile("photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
 
         // Act
         await _job.ConvertImageAsync("photo.avif", cancellationToken);
@@ -65,7 +46,7 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     public async Task ConvertImage_DoesNotCreateSourceFormat(CancellationToken cancellationToken)
     {
         // Arrange
-        AddFile("photo.avif");
+        fileProvider.AddFile("photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
 
         // Act
         await _job.ConvertImageAsync("photo.avif", cancellationToken);
@@ -78,7 +59,7 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     public async Task ConvertImage_ConvertsJpegSources(CancellationToken cancellationToken)
     {
         // Arrange
-        AddFile("photo.jpg", MagickFormat.Jpeg);
+        fileProvider.AddFile("photo.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
 
         // Act
         await _job.ConvertImageAsync("photo.jpg", cancellationToken);
@@ -93,8 +74,8 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     public async Task ConvertImage_SkipsExistingFiles(CancellationToken cancellationToken)
     {
         // Arrange
-        AddFile("photo.avif");
-        var expectedContent = CreateTestImage(format: MagickFormat.WebP);
+        fileProvider.AddFile("photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        var expectedContent = imageFactory.CreateTestImage(format: MagickFormat.WebP);
         fileProvider.Write("photo.webp", expectedContent);
 
         // Act
@@ -144,14 +125,14 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     public async Task ConvertImage_ThumbnailIsSmallerThanOriginal(CancellationToken cancellationToken)
     {
         // Arrange
-        AddFile("large.avif", width: 800, height: 600);
+        fileProvider.AddFile("large.avif", imageFactory.CreateTestImage(800, 600, MagickFormat.Avif));
 
         // Act
         await _job.ConvertImageAsync("large.avif", cancellationToken);
 
         // Assert
         var thumbnailData = FileProviderExtensions.ReadAsBytes(fileProvider.GetFileInfo("large.thumb.webp"));
-        var (thumbnailWidth, thumbnailHeight) = Dimensions(thumbnailData);
+        var (thumbnailWidth, thumbnailHeight) = imageFactory.GetDimensions(thumbnailData);
         await Assert.That(thumbnailWidth).IsLessThanOrEqualTo(DefaultConverterOptions.ThumbnailMaxWidth);
         await Assert.That(thumbnailHeight).IsLessThanOrEqualTo(DefaultConverterOptions.ThumbnailMaxHeight);
     }
@@ -160,14 +141,14 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     public async Task ConvertImage_FullResolutionIsNotResized(CancellationToken cancellationToken)
     {
         // Arrange
-        AddFile("large.avif", width: 800, height: 600);
+        fileProvider.AddFile("large.avif", imageFactory.CreateTestImage(800, 600, MagickFormat.Avif));
 
         // Act
         await _job.ConvertImageAsync("large.avif", cancellationToken);
 
         // Assert
         var fullData = FileProviderExtensions.ReadAsBytes(fileProvider.GetFileInfo("large.webp"));
-        var (fullWidth, fullHeight) = Dimensions(fullData);
+        var (fullWidth, fullHeight) = imageFactory.GetDimensions(fullData);
         await Assert.That(fullWidth).IsEqualTo(800);
         await Assert.That(fullHeight).IsEqualTo(600);
     }
@@ -180,8 +161,9 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     public async Task ScanAndConvertAsync_ConvertsAllSourceImages(CancellationToken cancellationToken)
     {
         // Arrange
-        AddFile("photo.avif");
-        AddFile("subdir/other.jpg", MagickFormat.Jpeg);
+        fileProvider.AddFile("photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.CreateDirectory("subdir");
+        fileProvider.AddFile("subdir/other.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
 
         // Act
         await _job.ScanAndConvertAsync(cancellationToken);

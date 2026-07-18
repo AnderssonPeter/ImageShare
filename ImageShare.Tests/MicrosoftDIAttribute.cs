@@ -49,6 +49,7 @@ public class MicrosoftDIAttribute : DependencyInjectionDataSourceAttribute<IServ
             .AddSingleton<ImageConverter>()
             .AddSingleton<ImageShareFilterService>()
             .AddTransient<ImageConverterJob>()
+            .AddSingleton<TestImageFactory>()
             .AddScoped<TestUser>()
             .AddScoped<IUser>(sp => sp.GetRequiredService<TestUser>())
             .BuildServiceProvider();

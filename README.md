@@ -22,8 +22,9 @@
 [ ] Folder endpoint should only return files that have a image file extension
 [ ] Add endpoint to download multiple images, from multiple folders recursively
 [ ] Add endpoint to get random image from a list of folder recursively
-[ ] In unit tests move AddDir (rename to AddDirectory), AddFile, AddImageFile, AddThumbFile, Unwrap and other common methods to extension methods
-[ ] Add CreateThumbnail, IsStatusCode, CreateTestImage, to a base class for unit tests
+[X] In unit tests move AddDir (rename to AddDirectory), AddFile, AddImageFile, AddThumbFile, Unwrap and other common methods to extension methods
+[X] Add CreateThumbnail, IsStatusCode, CreateTestImage, to a base class for unit tests
+[X] Move the code for `dotnet r startup` to a powershell file, check if the Redirect logic is needed, if not then remove if it's needed make sure its compatible with both linux and windows
 [ ] Create a user mock class that can be reused in all unit tests instead of having one per test file
   [ ] The mock class should be added to DI and resolved using DI (the tests should not call new on it)
 [ ] HasVisibleContent
@@ -88,6 +89,8 @@
   [ ] Add static analysis unit test that ensures that all minimal endpoints parameters has [FromQuery], [FromRoute], [FromBody], [FromHeader] or [FromServices] attributes
   [ ] Fork and add cancellationToken to ReadAsBytesAsync
 [ ] FE
+  [ ] Add mcp server for tanstack
+  [ ] Add mcp server for shadcn
   [ ] Client Generation
   [ ] editorconfig
   [ ] Add linting

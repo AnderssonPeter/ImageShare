@@ -9,7 +9,7 @@
     "format:check": "dotnet format ImageShare.slnx --verify-no-changes",
     "test": "dotnet run --project ImageShare.Tests/ImageShare.Tests.csproj",
     "build": "dotnet build",
-    "startup": "$p = Start-Process dotnet -ArgumentList 'run','--project','ImageShare/ImageShare.csproj','--launch-profile','http' -PassThru -NoNewWindow; for ($i=0; $i -lt 30; $i++) { Start-Sleep 1; try { Invoke-WebRequest http://localhost:5034 -TimeoutSec 2 -UseBasicParsing | Out-Null; Write-Host 'Startup verified'; $p.Kill(); exit 0 } catch {} }; Write-Host 'Startup failed'; $p.Kill(); exit 1",
+    "startup": "pwsh ./scripts/startup.ps1",
     "ci": "dotnet r format:check && dotnet r build && dotnet r test && dotnet r startup"
   }
 }
