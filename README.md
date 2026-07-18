@@ -15,9 +15,10 @@
 [X] Add nuget mcp server
 [X] Enable microsoft docs mcp server
 [X] Add instructions to group files by funcitionality not type
-[/] Add Arrange, Act, Assert comments to unit tests
-[ ] Convert unit tests to parameterized unit tests where it makes sense
-[ ] Add TestUser to DI
+[X] Add Arrange, Act, Assert comments to unit tests
+[X] Convert unit tests to parameterized unit tests where it makes sense
+[X] Add TestUser to DI
+[ ] Disallow root paths
 [ ] Folder endpoint should only return files that have a image file extension
 [ ] Add endpoint to download multiple images, from multiple folders recursively
 [ ] Add endpoint to get random image from a list of folder recursively

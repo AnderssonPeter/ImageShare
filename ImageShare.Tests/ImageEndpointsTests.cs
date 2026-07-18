@@ -1,5 +1,4 @@
 ﻿using ImageMagick;
-using ImageShare.Authentication;
 using ImageShare.Browsing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -11,23 +10,8 @@ using Mirality.FileProviders;
 namespace ImageShare.Tests;
 
 [MicrosoftDI]
-public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IContentTypeProvider contentTypeProvider, IOptions<ImageFormatOptions> imageFormats)
+public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IContentTypeProvider contentTypeProvider, IOptions<ImageFormatOptions> imageFormats, TestUser user)
 {
-    private sealed class TestUser : IUser
-    {
-        public bool IsAuthenticated { get; init; } = true;
-        public string Name { get; init; } = "test";
-        private readonly HashSet<string> _allowedFolders = [];
-
-        public TestUser Allow(string folder)
-        {
-            _allowedFolders.Add(folder);
-            return this;
-        }
-
-        public bool CanAccessFolder(string folder) => _allowedFolders.Contains(folder);
-    }
-
     private static byte[] CreateTestImage(MagickFormat format)
     {
         using var image = new MagickImage(MagickColors.DodgerBlue, 100, 100);
@@ -42,73 +26,20 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         fileProvider.Write($"{Path.GetFileNameWithoutExtension(originalName)}.thumb.jpg", CreateTestImage(MagickFormat.Jpeg));
 
     [Test]
-    public async Task IsFormatAccepted_EmptyHeader_ReturnsTrue()
+    [Arguments("", "image/jpeg", true)]
+    [Arguments("image/avif", "image/avif", true)]
+    [Arguments("image/*", "image/avif", true)]
+    [Arguments("*/*", "image/avif", true)]
+    [Arguments("image/png,image/webp", "image/avif", false)]
+    [Arguments("image/png,image/avif", "image/avif", true)]
+    [Arguments("image/webp;q=0.8,image/avif;q=1.0", "image/avif", true)]
+    public async Task IsFormatAccepted_MatchesExpectedBehavior(StringValues header, string format, bool expected)
     {
         // Act
-        var result = ImageEndpoints.IsFormatAccepted(StringValues.Empty, "image/jpeg");
+        var result = ImageEndpoints.IsFormatAccepted(header, format);
 
         // Assert
-        await Assert.That(result).IsTrue();
-    }
-
-    [Test]
-    public async Task IsFormatAccepted_ExactMatch_ReturnsTrue()
-    {
-        // Act
-        var result = ImageEndpoints.IsFormatAccepted("image/avif", "image/avif");
-
-        // Assert
-        await Assert.That(result).IsTrue();
-    }
-
-    [Test]
-    public async Task IsFormatAccepted_WildcardSubtype_ReturnsTrue()
-    {
-        // Act
-        var result = ImageEndpoints.IsFormatAccepted("image/*", "image/avif");
-
-        // Assert
-        await Assert.That(result).IsTrue();
-    }
-
-    [Test]
-    public async Task IsFormatAccepted_WildcardAny_ReturnsTrue()
-    {
-        // Act
-        var result = ImageEndpoints.IsFormatAccepted("*/*", "image/avif");
-
-        // Assert
-        await Assert.That(result).IsTrue();
-    }
-
-    [Test]
-    public async Task IsFormatAccepted_NoMatch_ReturnsFalse()
-    {
-        // Act
-        var result = ImageEndpoints.IsFormatAccepted("image/png,image/webp", "image/avif");
-
-        // Assert
-        await Assert.That(result).IsFalse();
-    }
-
-    [Test]
-    public async Task IsFormatAccepted_MultipleValues_MatchesAny()
-    {
-        // Act
-        var result = ImageEndpoints.IsFormatAccepted("image/png,image/avif", "image/avif");
-
-        // Assert
-        await Assert.That(result).IsTrue();
-    }
-
-    [Test]
-    public async Task IsFormatAccepted_IgnoresQualityParameter()
-    {
-        // Act
-        var result = ImageEndpoints.IsFormatAccepted("image/webp;q=0.8,image/avif;q=1.0", "image/avif");
-
-        // Assert
-        await Assert.That(result).IsTrue();
+        await Assert.That(result).IsEqualTo(expected);
     }
 
     [Test]
@@ -116,7 +47,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     {
         // Arrange
         AddFile("photo.png", MagickFormat.Png);
-        var user = new TestUser { IsAuthenticated = false };
+        user.IsAuthenticated = false;
 
         // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo.png", StringValues.Empty, thumbnail: false);
@@ -130,7 +61,6 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     {
         // Arrange
         AddFile("secret/photo.png", MagickFormat.Png);
-        var user = new TestUser();
 
         // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "secret/photo.png", StringValues.Empty, thumbnail: false);
@@ -144,7 +74,6 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     {
         // Arrange
         AddFile("secret/nested/photo.png", MagickFormat.Png);
-        var user = new TestUser();
 
         // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "secret/nested/photo.png", StringValues.Empty, thumbnail: false);
@@ -157,7 +86,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     public async Task ServeImage_NonExistentFile_ReturnsNotFound()
     {
         // Arrange
-        var user = new TestUser().Allow("vacation");
+        user.Allow("vacation");
 
         // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "missing.avif", StringValues.Empty, thumbnail: false);
@@ -167,17 +96,8 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     }
 
     [Test]
-    public async Task ServeImage_PathTraversal_ReturnsBadRequest()
-    {
-        // Arrange
-        var user = new TestUser().Allow("vacation");
-
-        // Act
-        var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "../etc", StringValues.Empty, thumbnail: false);
-
-        // Assert
-        await Assert.That(IsStatusCode(result, 400)).IsTrue();
-    }
+    public async Task ServeImage_PathTraversal_ThrowsArgumentException() =>
+        await Assert.That(() => ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "../etc", StringValues.Empty, thumbnail: false)).Throws<ArgumentException>();
 
     [Test]
     public async Task ServeImage_ThumbprintFile_ReturnsBadRequest()
@@ -185,7 +105,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         // Arrange
         AddFile("photo.avif", MagickFormat.Avif);
         AddThumbnailFile("photo.avif");
-        var user = new TestUser().Allow("vacation");
+        user.Allow("vacation");
 
         // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo.thumb.jpg", StringValues.Empty, thumbnail: false);
@@ -199,7 +119,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     {
         // Arrange
         AddFile("photo.png", MagickFormat.Png);
-        var user = new TestUser().Allow("vacation");
+        user.Allow("vacation");
 
         // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo.png", StringValues.Empty, thumbnail: false);
@@ -214,7 +134,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     {
         // Arrange
         AddFile("photo.avif", MagickFormat.Avif);
-        var user = new TestUser().Allow("vacation");
+        user.Allow("vacation");
 
         // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo.avif", "image/avif,image/jpeg", thumbnail: false);
@@ -230,7 +150,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         // Arrange
         AddFile("photo.avif", MagickFormat.Avif);
         AddThumbnailFile("photo.avif");
-        var user = new TestUser().Allow("vacation");
+        user.Allow("vacation");
 
         // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", StringValues.Empty, thumbnail: true);
@@ -245,7 +165,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     {
         // Arrange
         AddFile("photo.avif", MagickFormat.Avif);
-        var user = new TestUser().Allow("vacation");
+        user.Allow("vacation");
 
         // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", StringValues.Empty, thumbnail: true);
@@ -258,7 +178,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     public async Task ServeImage_ThumbTrue_NoImage_ReturnsNotFound()
     {
         // Arrange
-        var user = new TestUser().Allow("vacation");
+        user.Allow("vacation");
 
         // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "missing", StringValues.Empty, thumbnail: true);
@@ -273,7 +193,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         // Arrange
         AddFile("photo.avif", MagickFormat.Avif);
         AddThumbnailFile("photo.avif");
-        var user = new TestUser().Allow("vacation");
+        user.Allow("vacation");
 
         // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", "image/webp,image/png", thumbnail: true);
@@ -287,7 +207,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     {
         // Arrange
         AddFile("photo.avif", MagickFormat.Avif);
-        var user = new TestUser().Allow("vacation");
+        user.Allow("vacation");
 
         // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", "image/tiff", thumbnail: false);
@@ -306,7 +226,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         using var large = new MagickImage(MagickColors.DodgerBlue, 100, 100);
         large.Format = MagickFormat.Jpeg;
         fileProvider.Write("photo.jpg", large.ToByteArray());
-        var user = new TestUser().Allow("vacation");
+        user.Allow("vacation");
 
         // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", "image/jpeg,image/png", thumbnail: false);
@@ -327,7 +247,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
         using var largeThumb = new MagickImage(MagickColors.DodgerBlue, 100, 100);
         largeThumb.Format = MagickFormat.Png;
         fileProvider.Write("photo.thumb.png", largeThumb.ToByteArray());
-        var user = new TestUser().Allow("vacation");
+        user.Allow("vacation");
 
         // Act
         var result = ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "photo", "image/jpeg,image/png", thumbnail: true);

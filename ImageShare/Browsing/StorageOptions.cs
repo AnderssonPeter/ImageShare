@@ -7,5 +7,5 @@ namespace ImageShare.Browsing;
 public sealed class StorageOptions
 {
     [Required]
-    public string BasePath { get; set; } = "/images";
+    public string BasePath { get; set; } = "images";
 }

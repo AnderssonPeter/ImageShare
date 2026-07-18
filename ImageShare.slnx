@@ -6,6 +6,7 @@
     <File Path="dotnet-tools.json" />
     <File Path="global.json" />
     <File Path="README.md" />
+    <File Path="AGENTS.md" />
   </Folder>
   <Project Path="ImageShare.Tests/ImageShare.Tests.csproj" />
   <Project Path="ImageShare/ImageShare.csproj" />

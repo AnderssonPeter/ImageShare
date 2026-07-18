@@ -106,12 +106,10 @@ public class ImageShareFilterServiceTests(ImageShareFilterService service)
     }
 
     [Test]
-    public async Task GetImageShareFilterRegex_NullInput_ThrowsArgumentException() =>
-        await Assert.That(() => service.GetImageShareFilterRegex(null!)).Throws<ArgumentException>();
-
-    [Test]
-    public async Task GetImageShareFilterRegex_EmptyInput_ThrowsArgumentException() =>
-        await Assert.That(() => service.GetImageShareFilterRegex("")).Throws<ArgumentException>();
+    [Arguments(null)]
+    [Arguments("")]
+    public async Task GetImageShareFilterRegex_NullOrEmptyInput_ThrowsArgumentException(string? input) =>
+        await Assert.That(() => service.GetImageShareFilterRegex(input!)).Throws<ArgumentException>();
 
     [Test]
     [Arguments(" ")]

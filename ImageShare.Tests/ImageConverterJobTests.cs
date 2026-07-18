@@ -106,43 +106,38 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     }
 
     [Test]
-    public async Task IsThumbprintFile_ReturnsTrueForThumbFiles()
+    [Arguments("photo.thumb.jpg", true)]
+    [Arguments("photo.thumb.png", true)]
+    [Arguments("photo.thumb.avif", true)]
+    [Arguments("photo.avif", false)]
+    [Arguments("photo.jpg", false)]
+    [Arguments("thumb.jpg", false)]
+    [Arguments("photo.txt", false)]
+    public async Task IsThumbprintFile_ReturnsExpectedResult(string path, bool expected)
     {
         // Act
-        var result = ImageConverterJob.IsThumbprintFile("photo.thumb.jpg");
+        var result = ImageConverterJob.IsThumbprintFile(path);
 
         // Assert
-        await Assert.That(result).IsTrue();
+        await Assert.That(result).IsEqualTo(expected);
     }
 
     [Test]
-    public async Task IsThumbprintFile_ReturnsFalseForNormalFiles()
+    [Arguments("photo.avif", true)]
+    [Arguments("photo.webp", true)]
+    [Arguments("photo.jpg", true)]
+    [Arguments("photo.png", true)]
+    [Arguments("photo.bmp", false)]
+    [Arguments("photo.tiff", false)]
+    [Arguments("photo.txt", false)]
+    [Arguments("photo", false)]
+    public async Task IsImageFile_ReturnsExpectedResult(string path, bool expected)
     {
         // Act
-        var result = ImageConverterJob.IsThumbprintFile("photo.avif");
+        var result = _job.IsImageFile(path);
 
         // Assert
-        await Assert.That(result).IsFalse();
-    }
-
-    [Test]
-    public async Task IsImageFile_ReturnsTrueForSupportedFormats()
-    {
-        // Act
-        var result = _job.IsImageFile("photo.avif");
-
-        // Assert
-        await Assert.That(result).IsTrue();
-    }
-
-    [Test]
-    public async Task IsImageFile_ReturnsFalseForUnsupportedFormats()
-    {
-        // Act
-        var result = _job.IsImageFile("photo.bmp");
-
-        // Assert
-        await Assert.That(result).IsFalse();
+        await Assert.That(result).IsEqualTo(expected);
     }
 
     [Test]

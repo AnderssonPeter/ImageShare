@@ -16,9 +16,16 @@ Use Microsoft learn to fetch current documentation about microsoft packages, sdk
 Use even when you think you know the answer -- your training data may not reflect recent changes. Prefer this over web search for Microsoft docs.
 <!-- microsoft-learn -->
 
+## General
+When there are multiple solutions to a problem ask the user what solution to pick.
+When you detect that I have made changes that you don't recognition don't just undo them, instead create a new plan how to resolve your task while keeping them in place. 
+
 ## Verification
 
 Before considering a task complete, run `dotnet r ci` to verify all changes pass CI checks.
+The first time doing this in a session run `dotnet tool restore`
+
+If `format:check` fails run `dotnet r format` to correct the errors.
 
 ## Naming
 
