@@ -96,8 +96,12 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IConten
     }
 
     [Test]
-    public async Task ServeImage_PathTraversal_ThrowsArgumentException() =>
-        await Assert.That(() => ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, "../etc", StringValues.Empty, thumbnail: false)).Throws<ArgumentException>();
+    [Arguments("../etc")]
+    [Arguments("/etc")]
+    [Arguments("/")]
+    [Arguments("/etc/passwd")]
+    public async Task ServeImage_UnsafePath_ThrowsArgumentException(string path) =>
+        await Assert.That(() => ImageEndpoints.ServeImage(fileProvider, imageFormats.Value, contentTypeProvider, user, path, StringValues.Empty, thumbnail: false)).Throws<ArgumentException>();
 
     [Test]
     public async Task ServeImage_ThumbprintFile_ReturnsBadRequest()

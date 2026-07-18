@@ -49,8 +49,12 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     }
 
     [Test]
-    public async Task GetEntries_PathTraversal_ThrowsArgumentException() =>
-        await Assert.That(() => BrowsingEndpoints.GetEntries(fileProvider, "../etc", user, Page, PageSize)).Throws<ArgumentException>();
+    [Arguments("../etc")]
+    [Arguments("/etc")]
+    [Arguments("/")]
+    [Arguments("/etc/passwd")]
+    public async Task GetEntries_UnsafePath_ThrowsArgumentException(string path) =>
+        await Assert.That(() => BrowsingEndpoints.GetEntries(fileProvider, path, user, Page, PageSize)).Throws<ArgumentException>();
 
     [Test]
     [Arguments(0, 10)]
@@ -392,8 +396,12 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IConte
     }
 
     [Test]
-    public async Task GetRandomThumbnail_PathTraversal_ThrowsArgumentException() =>
-        await Assert.That(() => ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, "../etc", "")).Throws<ArgumentException>();
+    [Arguments("../etc")]
+    [Arguments("/etc")]
+    [Arguments("/")]
+    [Arguments("/etc/passwd")]
+    public async Task GetRandomThumbnail_UnsafePath_ThrowsArgumentException(string path) =>
+        await Assert.That(() => ImageEndpoints.GetRandomThumbnail(fileProvider, imageFormats.Value, contentTypeProvider, user, path, "")).Throws<ArgumentException>();
 
     [Test]
     public async Task GetRandomThumbnail_BlockedFolder_ReturnsForbidden()

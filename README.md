@@ -18,7 +18,7 @@
 [X] Add Arrange, Act, Assert comments to unit tests
 [X] Convert unit tests to parameterized unit tests where it makes sense
 [X] Add TestUser to DI
-[ ] Disallow root paths
+[X] Disallow root paths
 [ ] Folder endpoint should only return files that have a image file extension
 [ ] Add endpoint to download multiple images, from multiple folders recursively
 [ ] Add endpoint to get random image from a list of folder recursively

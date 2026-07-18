@@ -8,6 +8,11 @@ internal static class PathHelper
         {
             throw new ArgumentException("Path contains .., not allowed", nameof(path));
         }
+
+        if (Path.IsPathRooted(path))
+        {
+            throw new ArgumentException("Path is rooted, not allowed", nameof(path));
+        }
     }
 
 #pragma warning disable RS0030
