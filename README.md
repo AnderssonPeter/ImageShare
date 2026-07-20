@@ -2,13 +2,14 @@
 [X] Add nuget mcp
 [X] Enable dotnet and typescript LSP
 [X] Add powershell to docker
-[ ] Add Auth endpoint where you can provide a filter (same as `User.ImageShareFilter` and a end date, and returns a signed jwt token
-  [ ] Add a auth endpoint that accepts the jwt token from above as sign in
-  [ ] This should not replace the other auth both should work
-  [ ] To create the jwt token an admin role should be required
-[ ] Add api key authentication
-  [ ] This should not replace the other auth all three should work
-  [ ] The api keys should be stored in the settings file, with a `ImageShareFilter`
+[X] Add Auth endpoint where you can provide a filter (same as `User.ImageShareFilter` and a end date, and returns a signed jwt token
+  [X] The endpoint that generates a JWT should verify that the user has a admin role (what the role is named should be configured in appsettings, the admin role can only exist when authing from open id connect)
+  [X] Add a auth endpoint that accepts the jwt token from above as sign in
+  [X] To create the jwt token an admin role should be required
+[X] Add api key authentication
+  [X] This should not replace the other auth all three should work
+  [X] The api keys should be stored in the settings file, with a `ImageShareFilter`
+[/] Do not use magic string, check if they are defined in some other class or create a const, Example "image_share_filter", "name", "display_name"
 [X] Modify the script that starts the open code container, fix the todos in it!
 [ ] Allow opencode to access tmp folder by default
 [X] What is rg cli tool? install in container?
@@ -41,8 +42,8 @@
   [X] Linting
   [X] Scalar
   [X] Add user class
-  [ ] Don't use _ for private fields
-    [ ] Configure .editorconfig accordingly
+  [/] Don't use _ for private fields
+    [/] Configure .editorconfig accordingly
   [ ] Try not to create helper classes or service classes, create extension methods or classes that handle the logic
     [ ] BrowsingHelpers.IsImageFile/IsHiddenFile could be added to a `RelativePath` class, that is converted from string.
     [ ] `PathHelper` could also be merged into `RelativePath`

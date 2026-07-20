@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
+using System.Security.Claims;
 using ImageShare.Browsing;
 using ImageShare.Errors;
+using Microsoft.Extensions.Options;
 
 namespace ImageShare.Authentication;
 
@@ -9,6 +11,7 @@ public class User : IUser
     private readonly ImageShareFilterService _imageShareFilterService;
 
     public required bool IsAuthenticated { get; init; }
+    public required bool IsAdmin { get; init; }
     public required string Name { get; init; }
     private string ImageShareFilter { get; init; }
 
@@ -23,6 +26,14 @@ public class User : IUser
         }
     }
 
+    public void EnsureAdmin()
+    {
+        if (!IsAdmin)
+        {
+            throw new ForbiddenException("Administrator access is required for this operation.");
+        }
+    }
+
     public void EnsureCanAccessFolder(RelativePath path)
     {
         if (!CanAccessFolder(path.RootFolder))
@@ -31,15 +42,20 @@ public class User : IUser
         }
     }
 
-    public User(IHttpContextAccessor httpContextAccessor, ImageShareFilterService imageShareFilterService)
+    public User(
+        IHttpContextAccessor httpContextAccessor,
+        ImageShareFilterService imageShareFilterService,
+        IOptions<OidcSettings> oidcSettings)
     {
         _imageShareFilterService = imageShareFilterService;
+        var adminRole = oidcSettings.Value.AdminRole;
 
         var context = httpContextAccessor.HttpContext ?? throw new UnreachableException("Failed to get http context");
 
         if (context.User.Identity?.IsAuthenticated != true)
         {
             IsAuthenticated = false;
+            IsAdmin = false;
             Name = "";
             ImageShareFilter = "";
             return;
@@ -52,7 +68,13 @@ public class User : IUser
 
         var imageShareFilter = context.User.Claims.Single(c => c.Type.Equals("image_share_filter")).Value;
 
+        var isAdmin = context.User.Claims
+            .Where(c => c.Type.Equals("role", StringComparison.OrdinalIgnoreCase) ||
+                        c.Type.Equals(ClaimTypes.Role, StringComparison.OrdinalIgnoreCase))
+            .Any(c => c.Value.Equals(adminRole, StringComparison.OrdinalIgnoreCase));
+
         IsAuthenticated = true;
+        IsAdmin = isAdmin;
         Name = name;
         ImageShareFilter = imageShareFilter;
     }

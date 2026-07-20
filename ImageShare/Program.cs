@@ -33,9 +33,11 @@ builder.Services.AddCustomErrors();
 builder.Services.AddOpenIdConnectAuthentication(builder.Configuration);
 builder.Services.AddImageShareFilter();
 builder.Services.AddUser();
+builder.Services.AddJwtTokenService();
 builder.Services.AddImageConversion();
 builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
 builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuthenticationBehavior<,>));
+builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AdminBehavior<,>));
 builder.Services.AddSingleton<ImageShare.Browsing.ImageEnumerator>();
 builder.Services.AddOptions<StorageOptions>().BindConfiguration("Storage").Validated();
 builder.Services.AddOptions<ImageFormatOptions>().BindConfiguration("ImageFormats").Validated();
@@ -90,6 +92,7 @@ app.UseAuthorization();
 
 app.MapHealthEndpoints();
 app.MapAuthEndpoints();
+app.MapTokenEndpoints();
 app.MapFolderEndpoints();
 app.MapImageEndpoints();
 

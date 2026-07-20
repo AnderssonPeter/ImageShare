@@ -10,6 +10,7 @@ public class StatusCodeSelectorTests
     [
         (new NotAuthenticatedException(), StatusCodes.Status401Unauthorized),
         (new BadRequestException("bad input"), StatusCodes.Status400BadRequest),
+        (new ForbiddenException("not admin"), StatusCodes.Status403Forbidden),
         (new FolderAccessDeniedException(RelativePath.Root), StatusCodes.Status403Forbidden),
         (new NotFoundException("missing"), StatusCodes.Status404NotFound),
         (new NotAcceptableException("not accepted"), StatusCodes.Status406NotAcceptable),

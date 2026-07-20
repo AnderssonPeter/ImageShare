@@ -7,6 +7,7 @@ namespace ImageShare.Tests;
 public sealed class TestUser : IUser
 {
     public bool IsAuthenticated { get; set; } = true;
+    public bool IsAdmin { get; set; }
     public string Name { get; set; } = "test";
     private readonly HashSet<string> _allowedFolders = [];
 
@@ -23,6 +24,14 @@ public sealed class TestUser : IUser
         if (!IsAuthenticated)
         {
             throw new NotAuthenticatedException();
+        }
+    }
+
+    public void EnsureAdmin()
+    {
+        if (!IsAdmin)
+        {
+            throw new ForbiddenException("Administrator access is required for this operation.");
         }
     }
 

@@ -34,6 +34,7 @@ public static class ErrorExtensions
     {
         NotAuthenticatedException => StatusCodes.Status401Unauthorized,
         BadRequestException => StatusCodes.Status400BadRequest,
+        ForbiddenException => StatusCodes.Status403Forbidden,
         FolderAccessDeniedException => StatusCodes.Status403Forbidden,
         NotFoundException => StatusCodes.Status404NotFound,
         NotAcceptableException => StatusCodes.Status406NotAcceptable,

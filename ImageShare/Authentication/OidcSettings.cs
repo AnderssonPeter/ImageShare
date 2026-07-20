@@ -17,4 +17,7 @@ public class OidcSettings
     public string ClientSecret { get; set; } = "";
 
     public string ResponseType { get; set; } = OpenIdConnectResponseType.Code;
+
+    [Required]
+    public string AdminRole { get; set; } = "admin";
 }

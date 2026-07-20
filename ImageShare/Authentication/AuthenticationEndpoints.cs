@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using Mediator;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -27,6 +28,22 @@ public static class AuthenticationEndpoints
             user.EnsureAuthenticated();
             return TypedResults.Ok(user);
         }).RequireAuthorization().ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        return endpoints;
+    }
+
+    public static IEndpointRouteBuilder MapTokenEndpoints(this IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapGet("/token/generate", async (IMediator mediator, [AsParameters] GenerateTokenQuery request) =>
+            await mediator.Send(request))
+            .RequireAuthorization()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
+
+        endpoints.MapGet("/login/jwt/{token}", async (IMediator mediator, [AsParameters] LoginWithJwtCommand request) =>
+            await mediator.Send(request))
+            .ProducesProblem(StatusCodes.Status400BadRequest);
 
         return endpoints;
     }
