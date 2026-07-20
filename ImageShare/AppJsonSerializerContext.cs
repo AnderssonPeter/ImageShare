@@ -11,6 +11,7 @@ namespace ImageShare;
 [JsonSerializable(typeof(PaginatedResult<FolderEntry>))]
 [JsonSerializable(typeof(StorageOptions))]
 [JsonSerializable(typeof(StringValues))]
+[JsonSerializable(typeof(RelativePath))]
 // register ALL types of serialisable DTOs
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower)]
 internal partial class AppJsonSerializerContext : JsonSerializerContext;

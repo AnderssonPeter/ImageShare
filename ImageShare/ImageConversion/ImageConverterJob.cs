@@ -49,8 +49,8 @@ internal sealed class ImageConverterJob(
     {
         _logger.LogInformation("Starting image conversion scan");
 
-        var imageFiles = _imageEnumerator.EnumerateImages("", recursive: true)
-            .Select(file => file.Path.Value);
+        var imageFiles = _imageEnumerator.EnumerateImages(RelativePath.Root, recursive: true)
+            .Select(file => file.Path);
 
         foreach (var file in imageFiles)
         {
@@ -72,12 +72,11 @@ internal sealed class ImageConverterJob(
         _logger.LogInformation("Image conversion scan complete");
     }
 
-    internal async Task ConvertImageAsync(string imagePath, CancellationToken cancellationToken)
+    internal async Task ConvertImageAsync(RelativePath imagePath, CancellationToken cancellationToken)
     {
-        var path = new RelativePath(imagePath);
-        var sourceFormat = ImageConverter.ParseFormat(path.Extension!);
-        var directory = new RelativePath(path.Directory);
-        var name = path.FileNameWithoutExtension;
+        var sourceFormat = ImageConverter.ParseFormat(imagePath.Extension!);
+        var directory = imagePath.Directory;
+        var name = imagePath.FileNameWithoutExtension;
 
         var imageData = await _fileProvider.GetFileInfo(imagePath).ReadAsBytesAsync();
 
@@ -91,6 +90,7 @@ internal sealed class ImageConverterJob(
 
             var targetExtension = format.ToLowerInvariant() switch
             {
+                "jpg" => ".jpg",
                 "jpeg" => ".jpg",
                 _ => $".{format.ToLowerInvariant()}",
             };

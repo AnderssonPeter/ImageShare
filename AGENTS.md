@@ -23,9 +23,9 @@ When you detect that I have made changes that you don't recognition don't just u
 ## Verification
 
 Before considering a task complete, run `dotnet r ci` to verify all changes pass CI checks.
-The first time doing this in a session run `dotnet tool restore`
+Run `dotnet tool restore` once at the start of a new session before using `dotnet r`.
 
-If `format:check` fails run `dotnet r format` to correct the errors.
+If `format:check` fails (often due to file encoding on newly created files), run `dotnet r format` to correct the errors, then re-run `dotnet r ci`.
 
 ## Naming
 

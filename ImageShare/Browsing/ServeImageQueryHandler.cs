@@ -22,19 +22,24 @@ internal sealed class ServeImageQueryHandler(
             return new(TypedResults.Unauthorized());
         }
 
-        var relativePath = new RelativePath(request.Path);
-
-        if (relativePath.IsInFolder && !user.CanAccessFolder(relativePath.FirstSegment))
+        if (request.Path.IsInFolder)
         {
-            return new(TypedResults.Forbid());
+            try
+            {
+                user.EnsureCanAccessFolder(request.Path);
+            }
+            catch (FolderAccessDeniedException)
+            {
+                return new(TypedResults.Forbid());
+            }
         }
 
-        if (relativePath.IsThumbnail)
+        if (request.Path.IsThumbnail)
         {
             return new(TypedResults.BadRequest());
         }
 
-        var candidates = imageEnumerator.FindMatchingFiles(relativePath.Directory, relativePath.FileNameWithoutExtension, request.Thumbnail);
+        var candidates = imageEnumerator.FindMatchingFiles(request.Path.Directory, request.Path.FileNameWithoutExtension, request.Thumbnail);
 
         if (candidates.Count == 0)
         {

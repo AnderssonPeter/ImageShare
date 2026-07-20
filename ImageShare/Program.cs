@@ -4,16 +4,31 @@ using ImageShare.Browsing;
 using ImageShare.Health;
 using ImageShare.ImageConversion;
 using Mediator;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi;
 using Mirality.FileProviders;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddSchemaTransformer(async (schema, context, cancellationToken) =>
+    {
+        if (context.JsonTypeInfo.Type == typeof(RelativePath))
+        {
+            schema.Type = JsonSchemaType.String;
+            schema.Properties = null;
+            schema.Required = null;
+        }
+
+        await Task.CompletedTask;
+    });
+});
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default));
 builder.Services.AddOpenIdConnectAuthentication(builder.Configuration);
 builder.Services.AddImageShareFilter();

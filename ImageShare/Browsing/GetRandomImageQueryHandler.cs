@@ -4,6 +4,7 @@ using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 using System.Diagnostics;
 
 namespace ImageShare.Browsing;
@@ -23,7 +24,7 @@ internal sealed class GetRandomImageQueryHandler(
             return new(TypedResults.Unauthorized());
         }
 
-        var folders = BrowsingHelpers.NormalizeFolders(request.Folders);
+        var folders = NormalizeFolders(request.Folders);
         if (folders.Count == 0)
         {
             return new(TypedResults.BadRequest());
@@ -31,8 +32,11 @@ internal sealed class GetRandomImageQueryHandler(
 
         foreach (var folder in folders)
         {
-            var folderPath = new RelativePath(folder);
-            if (!user.CanAccessFolder(folderPath.FirstSegment))
+            try
+            {
+                user.EnsureCanAccessFolder(folder);
+            }
+            catch (FolderAccessDeniedException)
             {
                 return new(TypedResults.Forbid());
             }
@@ -73,4 +77,7 @@ internal sealed class GetRandomImageQueryHandler(
             _ => throw new UnreachableException("Failed to find a matching result type")
         });
     }
+
+    private static List<RelativePath> NormalizeFolders(StringValues folderValues) =>
+        [.. folderValues.Where(value => !string.IsNullOrEmpty(value)).Cast<string>().Select(value => new RelativePath(value))];
 }

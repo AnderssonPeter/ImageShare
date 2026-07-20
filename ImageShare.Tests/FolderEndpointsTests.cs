@@ -1,10 +1,9 @@
-﻿using ImageMagick;
+﻿using System.IO.Compression;
+using ImageMagick;
 using ImageShare.Browsing;
 using Mediator;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Mirality.FileProviders;
-using System.IO.Compression;
 
 namespace ImageShare.Tests;
 
@@ -21,7 +20,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.IsAuthenticated = false;
 
         // Act
-        var result = await mediator.Send(new GetEntriesQuery("", Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(RelativePath.Root, Page, PageSize));
 
         // Assert
         await Assert.That(result.IsStatusCode(401)).IsTrue();
@@ -33,7 +32,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
     [Arguments("/")]
     [Arguments("/etc/passwd")]
     public async Task GetEntries_UnsafePath_ThrowsArgumentException(string path) =>
-        await Assert.That(async () => await mediator.Send(new GetEntriesQuery(path, Page, PageSize))).Throws<ArgumentException>();
+        await Assert.That(async () => await mediator.Send(new GetEntriesQuery(new RelativePath(path), Page, PageSize))).Throws<ArgumentException>();
 
     [Test]
     [Arguments(0, 10)]
@@ -43,7 +42,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
     {
         // Arrange
         // Act
-        var result = await mediator.Send(new GetEntriesQuery("", page, pageSize));
+        var result = await mediator.Send(new GetEntriesQuery(RelativePath.Root, page, pageSize));
 
         // Assert
         await Assert.That(result.IsStatusCode(400)).IsTrue();
@@ -60,7 +59,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("allowed-folder");
 
         // Act
-        var result = await mediator.Send(new GetEntriesQuery("", Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(RelativePath.Root, Page, PageSize));
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -87,7 +86,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("images");
 
         // Act
-        var paginated = (await mediator.Send(new GetEntriesQuery("", Page, PageSize))).GetFolderEntriesResult();
+        var paginated = (await mediator.Send(new GetEntriesQuery(RelativePath.Root, Page, PageSize))).GetFolderEntriesResult();
 
         // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(1);
@@ -103,7 +102,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         fileProvider.AddFile("public.txt");
 
         // Act
-        var result = await mediator.Send(new GetEntriesQuery("", Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(RelativePath.Root, Page, PageSize));
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -118,7 +117,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         fileProvider.AddDirectory("secret/nested");
 
         // Act
-        var result = await mediator.Send(new GetEntriesQuery("secret/nested", Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(new RelativePath("secret/nested"), Page, PageSize));
 
         // Assert
         await Assert.That(result.IsStatusCode(404)).IsTrue();
@@ -134,7 +133,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("allowed");
 
         // Act
-        var result = await mediator.Send(new GetEntriesQuery("allowed", Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(new RelativePath("allowed"), Page, PageSize));
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -152,7 +151,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
     {
         // Arrange
         // Act
-        var result = await mediator.Send(new GetEntriesQuery("", Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(RelativePath.Root, Page, PageSize));
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -170,7 +169,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("populated-folder").Allow("empty-folder");
 
         // Act
-        var result = await mediator.Send(new GetEntriesQuery("", Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(RelativePath.Root, Page, PageSize));
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -188,7 +187,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("normal-folder").Allow("thumb-only-folder");
 
         // Act
-        var paginated = (await mediator.Send(new GetEntriesQuery("", Page, PageSize))).GetFolderEntriesResult();
+        var paginated = (await mediator.Send(new GetEntriesQuery(RelativePath.Root, Page, PageSize))).GetFolderEntriesResult();
 
         // Assert
         await Assert.That(paginated.Items.Count).IsEqualTo(1);
@@ -205,7 +204,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("parent");
 
         // Act
-        var paginated = (await mediator.Send(new GetEntriesQuery("parent", Page, PageSize))).GetFolderEntriesResult();
+        var paginated = (await mediator.Send(new GetEntriesQuery(new RelativePath("parent"), Page, PageSize))).GetFolderEntriesResult();
 
         // Assert
         await Assert.That(paginated.Items.Count).IsEqualTo(1);
@@ -222,7 +221,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("sub");
 
         // Act
-        var result = await mediator.Send(new GetEntriesQuery("sub", Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), Page, PageSize));
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -245,7 +244,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("sub");
 
         // Act
-        var result = await mediator.Send(new GetEntriesQuery("sub", Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), Page, PageSize));
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -264,7 +263,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("sub");
 
         // Act
-        var paginated = (await mediator.Send(new GetEntriesQuery("sub", Page, PageSize))).GetFolderEntriesResult();
+        var paginated = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), Page, PageSize))).GetFolderEntriesResult();
 
         // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(2);
@@ -284,7 +283,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("sub");
 
         // Act
-        var paginated = (await mediator.Send(new GetEntriesQuery("sub", Page, PageSize))).GetFolderEntriesResult();
+        var paginated = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), Page, PageSize))).GetFolderEntriesResult();
 
         // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(2);
@@ -304,9 +303,9 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("sub");
 
         // Act
-        var page1 = (await mediator.Send(new GetEntriesQuery("sub", 1, 2))).GetFolderEntriesResult();
-        var page2 = (await mediator.Send(new GetEntriesQuery("sub", 2, 2))).GetFolderEntriesResult();
-        var page3 = (await mediator.Send(new GetEntriesQuery("sub", 3, 2))).GetFolderEntriesResult();
+        var page1 = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), 1, 2))).GetFolderEntriesResult();
+        var page2 = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), 2, 2))).GetFolderEntriesResult();
+        var page3 = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), 3, 2))).GetFolderEntriesResult();
 
         // Assert
         await Assert.That(page1.Items.Count).IsEqualTo(2);
@@ -333,7 +332,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("sub");
 
         // Act
-        var result = await mediator.Send(new GetEntriesQuery("sub", 5, 10));
+        var result = await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), 5, 10));
 
         // Assert
         var paginated = result.GetFolderEntriesResult();
@@ -353,7 +352,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("sub");
 
         // Act
-        var paginated = (await mediator.Send(new GetEntriesQuery("sub", Page, PageSize))).GetFolderEntriesResult();
+        var paginated = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), Page, PageSize))).GetFolderEntriesResult();
 
         // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(2);
@@ -371,7 +370,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("sub");
 
         // Act
-        var paginated = (await mediator.Send(new GetEntriesQuery("sub", Page, PageSize))).GetFolderEntriesResult();
+        var paginated = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), Page, PageSize))).GetFolderEntriesResult();
 
         // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(1);
@@ -473,11 +472,11 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         fileProvider.AddFile("album/photo.thumb.jpg", imageFactory.CreateThumbnail());
         user.Allow("album");
 
-        var files = imageEnumerator.EnumerateImages("album", recursive: true).ToList();
+        var files = imageEnumerator.EnumerateImages(new RelativePath("album"), recursive: true).ToList();
 
         // Act
         using var memory = new MemoryStream();
-        await BrowsingHelpers.WriteZipAsync(files, memory, CancellationToken.None);
+        await DownloadImagesQueryHandler.WriteZipAsync(files, memory, CancellationToken.None);
         memory.Position = 0;
         using var archive = new ZipArchive(memory, ZipArchiveMode.Read);
 
@@ -498,13 +497,13 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         fileProvider.AddFile("album-b/b.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
         user.Allow("album-a").Allow("album-b");
 
-        var files = imageEnumerator.EnumerateImages("album-a", recursive: true)
-            .Concat(imageEnumerator.EnumerateImages("album-b", recursive: true))
+        var files = imageEnumerator.EnumerateImages(new RelativePath("album-a"), recursive: true)
+            .Concat(imageEnumerator.EnumerateImages(new RelativePath("album-b"), recursive: true))
             .ToList();
 
         // Act
         using var memory = new MemoryStream();
-        await BrowsingHelpers.WriteZipAsync(files, memory, CancellationToken.None);
+        await DownloadImagesQueryHandler.WriteZipAsync(files, memory, CancellationToken.None);
         memory.Position = 0;
         using var archive = new ZipArchive(memory, ZipArchiveMode.Read);
 
@@ -538,13 +537,13 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         fileProvider.AddFile("album/drawing.png", imageFactory.CreateTestImage(MagickFormat.Png));
         user.Allow("album");
 
-        var files = imageEnumerator.EnumerateImages("album", recursive: true)
+        var files = imageEnumerator.EnumerateImages(new RelativePath("album"), recursive: true)
             .Where(file => string.Equals(Path.GetExtension(file.Info.Name).TrimStart('.'), "jpg", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         // Act
         using var memory = new MemoryStream();
-        await BrowsingHelpers.WriteZipAsync(files, memory, CancellationToken.None);
+        await DownloadImagesQueryHandler.WriteZipAsync(files, memory, CancellationToken.None);
         memory.Position = 0;
         using var archive = new ZipArchive(memory, ZipArchiveMode.Read);
 
@@ -575,11 +574,11 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         var photo = imageFactory.CreateTestImage(MagickFormat.Avif);
         fileProvider.AddFile("vacation/photo.avif", photo);
         user.Allow("vacation");
-        var files = imageEnumerator.EnumerateImages("vacation", recursive: true).ToList();
+        var files = imageEnumerator.EnumerateImages(new RelativePath("vacation"), recursive: true).ToList();
 
         // Act
         using var memory = new MemoryStream();
-        await BrowsingHelpers.WriteZipAsync(files, memory, CancellationToken.None);
+        await DownloadImagesQueryHandler.WriteZipAsync(files, memory, CancellationToken.None);
         memory.Position = 0;
         using var archive = new ZipArchive(memory, ZipArchiveMode.Read);
 

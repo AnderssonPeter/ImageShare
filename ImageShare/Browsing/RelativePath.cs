@@ -1,11 +1,16 @@
-﻿using ImageShare.ImageConversion;
+﻿using System.Text.Json.Serialization;
+using ImageShare.ImageConversion;
 
 namespace ImageShare.Browsing;
 
+[JsonConverter(typeof(RelativePathJsonConverter))]
 public readonly struct RelativePath : IEquatable<RelativePath>
 {
+    public const string SafePathPattern = @"^(?!.*\.\.)[^/].*$";
+
     private readonly string? _value;
 
+    public static readonly RelativePath Root = new("");
     public RelativePath(string value)
     {
         EnsureSafe(value);
@@ -13,10 +18,10 @@ public readonly struct RelativePath : IEquatable<RelativePath>
     }
 
     public string Value => _value ?? "";
-    public bool IsEmpty => string.IsNullOrEmpty(_value);
+    public bool HasRootFolder => !string.IsNullOrEmpty(_value);
     public bool IsInFolder => _value is not null && _value.Contains('/');
 
-    public string FirstSegment
+    public string RootFolder
     {
         get
         {
@@ -27,7 +32,6 @@ public readonly struct RelativePath : IEquatable<RelativePath>
     }
 
     public string FileName => Path.GetFileName(Value);
-
     public string FileNameWithoutExtension => Path.GetFileNameWithoutExtension(Value);
 
     public string? Extension
@@ -41,7 +45,7 @@ public readonly struct RelativePath : IEquatable<RelativePath>
 
     public bool HasExtension => Extension is not null;
 
-    public string Directory => Path.GetDirectoryName(Value) ?? "";
+    public RelativePath Directory => new(Path.GetDirectoryName(Value) ?? "");
 
     public bool IsThumbnail => FileName.Contains(ImageConverterOptions.ThumbnailInfix, StringComparison.Ordinal);
 

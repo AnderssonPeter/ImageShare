@@ -26,21 +26,25 @@ internal sealed class GetEntriesQueryHandler(
             return new(TypedResults.BadRequest());
         }
 
-        var relativePath = new RelativePath(request.Path);
-
-        if (!relativePath.IsEmpty && !user.CanAccessFolder(relativePath.FirstSegment))
+        if (request.Path.HasRootFolder)
         {
-            return new(TypedResults.NotFound());
+            try
+            {
+                user.EnsureCanAccessFolder(request.Path);
+            }
+            catch (FolderAccessDeniedException)
+            {
+                return new(TypedResults.NotFound());
+            }
         }
 
-        var isRoot = relativePath.IsEmpty;
-        var entries = CollectEntries(imageEnumerator, relativePath, isRoot, user);
+        var entries = CollectEntries(imageEnumerator, request.Path, user);
 
         var result = TypedResults.Ok(PaginatedResult<FolderEntry>.Paginate(entries, request.Page, request.PageSize));
         return new(result);
     }
 
-    private static List<FolderEntry> CollectEntries(ImageEnumerator enumerator, RelativePath relativePath, bool isRoot, IUser currentUser)
+    private static List<FolderEntry> CollectEntries(ImageEnumerator enumerator, RelativePath relativePath, IUser currentUser)
     {
         var entries = new List<FolderEntry>();
         var seenFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -49,12 +53,12 @@ internal sealed class GetEntriesQueryHandler(
         {
             if (item.IsDirectory)
             {
-                if (isRoot && !currentUser.CanAccessFolder(item.Name))
+                if (!relativePath.HasRootFolder && !currentUser.CanAccessFolder(item.Name))
                 {
                     continue;
                 }
 
-                var folderPath = relativePath.IsEmpty ? new RelativePath(item.Name) : relativePath.Combine(item.Name);
+                var folderPath = relativePath.HasRootFolder ? relativePath.Combine(item.Name) : new RelativePath(item.Name);
                 if (!enumerator.HasVisibleContent(folderPath))
                 {
                     continue;
@@ -62,7 +66,7 @@ internal sealed class GetEntriesQueryHandler(
 
                 entries.Add(new FolderEntry { Name = item.Name, Type = EntryType.Folder });
             }
-            else if (!isRoot && TryGetVisibleFileName(enumerator, item.Name, seenFiles, out var fileName))
+            else if (relativePath.HasRootFolder && TryGetVisibleFileName(enumerator, item.Name, out var fileName) && seenFiles.Add(fileName))
             {
                 entries.Add(new FolderEntry { Name = fileName, Type = EntryType.File });
             }
@@ -73,10 +77,10 @@ internal sealed class GetEntriesQueryHandler(
         return entries;
     }
 
-    private static bool TryGetVisibleFileName(ImageEnumerator enumerator, string name, HashSet<string> seenFiles, out string fileName)
+    private static bool TryGetVisibleFileName(ImageEnumerator enumerator, string name, out string fileName)
     {
-        fileName = "";
         var filePath = new RelativePath(name);
+        fileName = "";
         if (filePath.IsThumbnail)
         {
             return false;
@@ -88,7 +92,7 @@ internal sealed class GetEntriesQueryHandler(
         }
 
         fileName = filePath.FileNameWithoutExtension;
-        return seenFiles.Add(fileName);
+        return true;
     }
 
     private static int CompareEntries(FolderEntry left, FolderEntry right)

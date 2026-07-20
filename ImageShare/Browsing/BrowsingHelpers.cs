@@ -1,6 +1,4 @@
-﻿using System.IO.Compression;
-using ImageShare.ImageConversion;
-using Microsoft.AspNetCore.Http.HttpResults;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
@@ -57,21 +55,6 @@ internal static class BrowsingHelpers
 
         return false;
     }
-
-    public static async Task WriteZipAsync(IEnumerable<(RelativePath Path, IFileInfo Info)> imageFiles, Stream output, CancellationToken cancellationToken)
-    {
-        await using var archive = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true);
-        foreach (var (path, info) in imageFiles)
-        {
-            var entry = archive.CreateEntry(path, CompressionLevel.NoCompression);
-            await using var entryStream = await entry.OpenAsync(cancellationToken);
-            await using var fileStream = info.CreateReadStream();
-            await fileStream.CopyToAsync(entryStream, cancellationToken);
-        }
-    }
-
-    public static List<string> NormalizeFolders(StringValues folderValues) =>
-        [.. folderValues.Where(value => !string.IsNullOrEmpty(value)).Cast<string>()];
 
     public static string? NormalizeFormat(StringValues formatValues) =>
         formatValues.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?

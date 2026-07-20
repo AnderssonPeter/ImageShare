@@ -31,7 +31,7 @@ public class RelativePathTests
     [Arguments("foo/bar/baz", "foo")]
     [Arguments("", "")]
     public async Task FirstSegment_ReturnsFirstSegment(string path, string expected) =>
-        await Assert.That(new RelativePath(path).FirstSegment).IsEqualTo(expected);
+        await Assert.That(new RelativePath(path).RootFolder).IsEqualTo(expected);
 
     [Test]
     [Arguments("foo/bar", true)]

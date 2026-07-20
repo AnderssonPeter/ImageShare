@@ -30,9 +30,8 @@ public sealed class ImageEnumerator(IFileProvider fileProvider, IOptions<ImageFo
 
     public string BuildThumbnailName(string baseName) => baseName + ImageConverterOptions.ThumbnailInfix;
 
-    public IEnumerable<(RelativePath Path, IFileInfo Info)> EnumerateImages(string directory, bool recursive = false, bool thumbnails = false)
+    public IEnumerable<(RelativePath Path, IFileInfo Info)> EnumerateImages(RelativePath directory, bool recursive = false, bool thumbnails = false)
     {
-        var basePath = new RelativePath(directory);
         foreach (var item in _fileProvider.GetDirectoryContents(directory))
         {
             if (!item.Exists)
@@ -40,7 +39,7 @@ public sealed class ImageEnumerator(IFileProvider fileProvider, IOptions<ImageFo
                 continue;
             }
 
-            var itemPath = basePath.IsEmpty ? new RelativePath(item.Name) : basePath.Combine(item.Name);
+            var itemPath = directory.Combine(item.Name);
 
             if (item.IsDirectory)
             {
@@ -60,8 +59,7 @@ public sealed class ImageEnumerator(IFileProvider fileProvider, IOptions<ImageFo
                 continue;
             }
 
-            var relativePath = new RelativePath(itemPath);
-            var isThumbnail = relativePath.IsThumbnail;
+            var isThumbnail = itemPath.IsThumbnail;
             if (thumbnails != isThumbnail)
             {
                 continue;
@@ -76,11 +74,11 @@ public sealed class ImageEnumerator(IFileProvider fileProvider, IOptions<ImageFo
         }
     }
 
-    public bool HasVisibleContent(string directory) => EnumerateImages(directory, recursive: true).Any();
+    public bool HasVisibleContent(RelativePath directory) => EnumerateImages(directory, recursive: true).Any();
 
-    public IDirectoryContents GetDirectoryContents(string path) => _fileProvider.GetDirectoryContents(path);
+    public IDirectoryContents GetDirectoryContents(RelativePath path) => _fileProvider.GetDirectoryContents(path);
 
-    public IReadOnlyList<IFileInfo> FindMatchingFiles(string directory, string baseName, bool thumbnail)
+    public IReadOnlyList<IFileInfo> FindMatchingFiles(RelativePath directory, string baseName, bool thumbnail)
     {
         var targetBaseName = thumbnail ? BuildThumbnailName(baseName) : baseName;
         return [.. EnumerateImages(directory, thumbnails: thumbnail)

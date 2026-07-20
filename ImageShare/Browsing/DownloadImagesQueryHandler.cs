@@ -1,6 +1,8 @@
-﻿using ImageShare.Authentication;
+﻿using System.IO.Compression;
+using ImageShare.Authentication;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
 
 namespace ImageShare.Browsing;
@@ -19,7 +21,7 @@ internal sealed class DownloadImagesQueryHandler(
             return new(TypedResults.Unauthorized());
         }
 
-        var folders = BrowsingHelpers.NormalizeFolders(request.Folders);
+        var folders = NormalizeFolders(request.Folders);
         if (folders.Count == 0)
         {
             return new(TypedResults.BadRequest());
@@ -33,8 +35,11 @@ internal sealed class DownloadImagesQueryHandler(
 
         foreach (var folder in folders)
         {
-            var folderPath = new RelativePath(folder);
-            if (!user.CanAccessFolder(folderPath.FirstSegment))
+            try
+            {
+                user.EnsureCanAccessFolder(folder);
+            }
+            catch (FolderAccessDeniedException)
             {
                 return new(TypedResults.Forbid());
             }
@@ -51,10 +56,25 @@ internal sealed class DownloadImagesQueryHandler(
         }
 
         var result = TypedResults.Stream(
-            async stream => await BrowsingHelpers.WriteZipAsync(imageFiles, stream, CancellationToken.None),
+            async stream => await WriteZipAsync(imageFiles, stream, CancellationToken.None),
             "application/zip",
             "images.zip");
 
         return new(result);
     }
+
+    internal static async Task WriteZipAsync(IEnumerable<(RelativePath Path, IFileInfo Info)> imageFiles, Stream output, CancellationToken cancellationToken)
+    {
+        await using var archive = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true);
+        foreach (var (path, info) in imageFiles)
+        {
+            var entry = archive.CreateEntry(path, CompressionLevel.NoCompression);
+            await using var entryStream = await entry.OpenAsync(cancellationToken);
+            await using var fileStream = info.CreateReadStream();
+            await fileStream.CopyToAsync(entryStream, cancellationToken);
+        }
+    }
+
+    private static List<RelativePath> NormalizeFolders(StringValues folderValues) =>
+        [.. folderValues.Where(value => !string.IsNullOrEmpty(value)).Cast<string>().Select(value => new RelativePath(value))];
 }
