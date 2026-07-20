@@ -1,5 +1,6 @@
 ﻿using System.IO.Compression;
 using ImageShare.Authentication;
+using ImageShare.Errors;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.FileProviders;
@@ -10,39 +11,27 @@ namespace ImageShare.Browsing;
 internal sealed class DownloadImagesQueryHandler(
     ImageEnumerator imageEnumerator,
     IUser user)
-    : IQueryHandler<DownloadImagesQuery, Results<PushStreamHttpResult, UnauthorizedHttpResult, BadRequest, ForbidHttpResult, NotFound>>
+    : IQueryHandler<DownloadImagesQuery, PushStreamHttpResult>
 {
-    public ValueTask<Results<PushStreamHttpResult, UnauthorizedHttpResult, BadRequest, ForbidHttpResult, NotFound>> Handle(
+    public ValueTask<PushStreamHttpResult> Handle(
         DownloadImagesQuery request,
         CancellationToken cancellationToken)
     {
-        if (!user.IsAuthenticated)
-        {
-            return new(TypedResults.Unauthorized());
-        }
-
         var folders = NormalizeFolders(request.Folders);
         if (folders.Count == 0)
         {
-            return new(TypedResults.BadRequest());
+            throw new BadRequestException("At least one folder must be specified.");
         }
 
         var format = BrowsingHelpers.NormalizeFormat(request.Format);
         if (format is not null && !imageEnumerator.IsSupportedFormat(format))
         {
-            return new(TypedResults.BadRequest());
+            throw new BadRequestException($"Format '{format}' is not supported.");
         }
 
         foreach (var folder in folders)
         {
-            try
-            {
-                user.EnsureCanAccessFolder(folder);
-            }
-            catch (FolderAccessDeniedException)
-            {
-                return new(TypedResults.Forbid());
-            }
+            user.EnsureCanAccessFolder(folder);
         }
 
         var imageFiles = folders
@@ -52,7 +41,7 @@ internal sealed class DownloadImagesQueryHandler(
 
         if (imageFiles.Count == 0)
         {
-            return new(TypedResults.NotFound());
+            throw new NotFoundException("No images were found matching the requested criteria.");
         }
 
         var result = TypedResults.Stream(

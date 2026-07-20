@@ -1,5 +1,6 @@
 ﻿using ImageMagick;
 using ImageShare.Browsing;
+using ImageShare.Errors;
 using Mediator;
 using Microsoft.Extensions.Primitives;
 using Mirality.FileProviders;
@@ -34,10 +35,8 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IMediat
         user.IsAuthenticated = false;
 
         // Act
-        var result = await mediator.Send(new ServeImageQuery(new RelativePath("photo.png"), "", false));
-
         // Assert
-        await Assert.That(result.IsStatusCode(401)).IsTrue();
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("photo.png"), "", false))).Throws<NotAuthenticatedException>();
     }
 
     [Test]
@@ -47,10 +46,8 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IMediat
         fileProvider.AddFile("secret/photo.png", imageFactory.CreateTestImage(MagickFormat.Png));
 
         // Act
-        var result = await mediator.Send(new ServeImageQuery(new RelativePath("secret/photo.png"), "", false));
-
         // Assert
-        await Assert.That(result.IsStatusCode(403)).IsTrue();
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("secret/photo.png"), "", false))).Throws<FolderAccessDeniedException>();
     }
 
     [Test]
@@ -60,10 +57,8 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IMediat
         fileProvider.AddFile("secret/nested/photo.png", imageFactory.CreateTestImage(MagickFormat.Png));
 
         // Act
-        var result = await mediator.Send(new ServeImageQuery(new RelativePath("secret/nested/photo.png"), "", false));
-
         // Assert
-        await Assert.That(result.IsStatusCode(403)).IsTrue();
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("secret/nested/photo.png"), "", false))).Throws<FolderAccessDeniedException>();
     }
 
     [Test]
@@ -73,10 +68,8 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IMediat
         user.Allow("vacation");
 
         // Act
-        var result = await mediator.Send(new ServeImageQuery(new RelativePath("missing.avif"), "", false));
-
         // Assert
-        await Assert.That(result.IsStatusCode(404)).IsTrue();
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("missing.avif"), "", false))).Throws<NotFoundException>();
     }
 
     [Test]
@@ -96,10 +89,8 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IMediat
         user.Allow("vacation");
 
         // Act
-        var result = await mediator.Send(new ServeImageQuery(new RelativePath("photo.thumb.jpg"), "", false));
-
         // Assert
-        await Assert.That(result.IsStatusCode(400)).IsTrue();
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("photo.thumb.jpg"), "", false))).Throws<BadRequestException>();
     }
 
     [Test]
@@ -156,10 +147,8 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IMediat
         user.Allow("vacation");
 
         // Act
-        var result = await mediator.Send(new ServeImageQuery(new RelativePath("photo"), "", true));
-
         // Assert
-        await Assert.That(result.IsStatusCode(404)).IsTrue();
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("photo"), "", true))).Throws<NotFoundException>();
     }
 
     [Test]
@@ -169,10 +158,8 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IMediat
         user.Allow("vacation");
 
         // Act
-        var result = await mediator.Send(new ServeImageQuery(new RelativePath("missing"), "", true));
-
         // Assert
-        await Assert.That(result.IsStatusCode(404)).IsTrue();
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("missing"), "", true))).Throws<NotFoundException>();
     }
 
     [Test]
@@ -184,10 +171,8 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IMediat
         user.Allow("vacation");
 
         // Act
-        var result = await mediator.Send(new ServeImageQuery(new RelativePath("photo"), "image/webp,image/png", true));
-
         // Assert
-        await Assert.That(result.IsStatusCode(406)).IsTrue();
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("photo"), "image/webp,image/png", true))).Throws<NotAcceptableException>();
     }
 
     [Test]
@@ -198,10 +183,8 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IMediat
         user.Allow("vacation");
 
         // Act
-        var result = await mediator.Send(new ServeImageQuery(new RelativePath("photo"), "image/tiff", false));
-
         // Assert
-        await Assert.That(result.IsStatusCode(406)).IsTrue();
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("photo"), "image/tiff", false))).Throws<NotAcceptableException>();
     }
 
     [Test]

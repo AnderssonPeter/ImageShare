@@ -1,11 +1,9 @@
 ﻿using ImageShare.Authentication;
-using ImageShare.ImageConversion;
+using ImageShare.Errors;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
-using System.Diagnostics;
 
 namespace ImageShare.Browsing;
 
@@ -13,33 +11,21 @@ internal sealed class GetRandomImageQueryHandler(
     ImageEnumerator imageEnumerator,
     IContentTypeProvider contentTypeProvider,
     IUser user)
-    : IQueryHandler<GetRandomImageQuery, Results<FileStreamHttpResult, UnauthorizedHttpResult, BadRequest, ForbidHttpResult, NotFound, StatusCodeHttpResult>>
+    : IQueryHandler<GetRandomImageQuery, FileStreamHttpResult>
 {
-    public ValueTask<Results<FileStreamHttpResult, UnauthorizedHttpResult, BadRequest, ForbidHttpResult, NotFound, StatusCodeHttpResult>> Handle(
+    public ValueTask<FileStreamHttpResult> Handle(
         GetRandomImageQuery request,
         CancellationToken cancellationToken)
     {
-        if (!user.IsAuthenticated)
-        {
-            return new(TypedResults.Unauthorized());
-        }
-
         var folders = NormalizeFolders(request.Folders);
         if (folders.Count == 0)
         {
-            return new(TypedResults.BadRequest());
+            throw new BadRequestException("At least one folder must be specified.");
         }
 
         foreach (var folder in folders)
         {
-            try
-            {
-                user.EnsureCanAccessFolder(folder);
-            }
-            catch (FolderAccessDeniedException)
-            {
-                return new(TypedResults.Forbid());
-            }
+            user.EnsureCanAccessFolder(folder);
         }
 
         var baseNames = folders
@@ -50,7 +36,7 @@ internal sealed class GetRandomImageQueryHandler(
 
         if (baseNames.Count == 0)
         {
-            return new(TypedResults.NotFound());
+            throw new NotFoundException("No images were found in the requested folders.");
         }
 
         var randomBaseName = baseNames[Random.Shared.Next(baseNames.Count)];
@@ -65,17 +51,10 @@ internal sealed class GetRandomImageQueryHandler(
 
         if (candidates.Count == 0)
         {
-            return new(TypedResults.NotFound());
+            throw new NotFoundException($"Image '{randomBaseName}' was not found.");
         }
 
-        var bestResult = BrowsingHelpers.ServeBestMatch(candidates, contentTypeProvider, request.Accept);
-
-        return new(bestResult.Result switch
-        {
-            FileStreamHttpResult file => (Results<FileStreamHttpResult, UnauthorizedHttpResult, BadRequest, ForbidHttpResult, NotFound, StatusCodeHttpResult>)file,
-            StatusCodeHttpResult status => status,
-            _ => throw new UnreachableException("Failed to find a matching result type")
-        });
+        return new(BrowsingHelpers.ServeBestMatch(candidates, contentTypeProvider, request.Accept));
     }
 
     private static List<RelativePath> NormalizeFolders(StringValues folderValues) =>

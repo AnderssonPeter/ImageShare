@@ -48,10 +48,16 @@
     [ ] `PathHelper` could also be merged into `RelativePath`
     [ ] BrowsingHelpers.HasVisibleContent Should be an extension method on IFileProvider
     [ ] Add XML comments to the newly created methods
-  [ ] Add custom exception mapper
-  [ ] Don't check if `IsAuthenticated` inside Command/QueryHandler, use a behavior and attribute for that!
-  [/] Merge EnumerateImageFiles and GetImageBaseNames and add parameter for recursive or not
-  [/] Do we need FindMatchingFilesRecursive can't we just rewrite FindMatchingFiles to handle it correctly?
+  [X] Add custom exception mapper
+    [X] Use custom exceptions for different types of errors
+    [X] Add EnsureAuthenticated on IUser
+  [X] Don't check if `IsAuthenticated` inside Command/QueryHandler, use a behavior and attribute for that!
+  [X] Merge EnumerateImageFiles and GetImageBaseNames and add parameter for recursive or not
+  [X] Do we need FindMatchingFilesRecursive can't we just rewrite FindMatchingFiles to handle it correctly?
+  [ ] There are multiple requests that don't work, create integration tests.
+  [ ] /folders without any folders listed dosen't work so its impossible to list the root folders.
+  [ ] /images/download fails due to some `System.InvalidOperationException: Synchronous operations are disallowed. Call WriteAsync or set AllowSynchronousIO to true instead.` error
+Path parameters are incorrectly sent from scalar, i don't know if its a bug in scalar or a bug in how we specified the path variable in openapi, the path parameter is url encoded so / is replaced by %2f
   [X] Add canAccessFolder method to user class
     [X] Move the regex generation logic into it's own class that caches regexes for each filter.
     [X] Add unit tests for canAccessFolder method

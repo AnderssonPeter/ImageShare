@@ -1,12 +1,11 @@
 ﻿using ImageShare;
 using ImageShare.Authentication;
 using ImageShare.Browsing;
+using ImageShare.Errors;
 using ImageShare.Health;
 using ImageShare.ImageConversion;
 using Mediator;
-using Microsoft.AspNetCore.OpenApi;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
@@ -30,11 +29,13 @@ builder.Services.AddOpenApi(options =>
     });
 });
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default));
+builder.Services.AddCustomErrors();
 builder.Services.AddOpenIdConnectAuthentication(builder.Configuration);
 builder.Services.AddImageShareFilter();
 builder.Services.AddUser();
 builder.Services.AddImageConversion();
 builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
+builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuthenticationBehavior<,>));
 builder.Services.AddSingleton<ImageShare.Browsing.ImageEnumerator>();
 builder.Services.AddOptions<StorageOptions>().BindConfiguration("Storage").Validated();
 builder.Services.AddOptions<ImageFormatOptions>().BindConfiguration("ImageFormats").Validated();
@@ -47,7 +48,10 @@ builder.Services.AddSingleton<IContentTypeProvider>(serviceProvider =>
 builder.Services.AddSingleton<IWritableFileProvider>(serviceProvider =>
 {
     var basePath = serviceProvider.GetRequiredService<IOptions<StorageOptions>>().Value.BasePath;
-    return new WritablePhysicalFileProvider(basePath, new PhysicalFileProvider(basePath));
+#pragma warning disable RS0030
+    var fullPath = Path.GetFullPath(basePath);
+#pragma warning restore RS0030
+    return new WritablePhysicalFileProvider(basePath, new PhysicalFileProvider(fullPath));
 });
 builder.Services.AddSingleton<IFileProvider>(serviceProvider =>
     serviceProvider.GetRequiredService<IWritableFileProvider>());
@@ -79,6 +83,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseCustomErrors();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

@@ -1,0 +1,22 @@
+﻿using Mediator;
+
+namespace ImageShare.Authentication;
+
+internal sealed class AuthenticationBehavior<TMessage, TResponse>(IUser user) : IPipelineBehavior<TMessage, TResponse>
+    where TMessage : IMessage
+{
+    private static readonly bool RequiresAuthentication = typeof(TMessage).IsDefined(typeof(RequireAuthenticationAttribute), true);
+
+    public ValueTask<TResponse> Handle(
+        TMessage message,
+        MessageHandlerDelegate<TMessage, TResponse> next,
+        CancellationToken cancellationToken)
+    {
+        if (RequiresAuthentication)
+        {
+            user.EnsureAuthenticated();
+        }
+
+        return next(message, cancellationToken);
+    }
+}

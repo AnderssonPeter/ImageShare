@@ -29,7 +29,7 @@ internal static class HttpResultTestExtensions
         ((Ok<PaginatedResult<FolderEntry>>)result.Unwrap()).Value!;
 
     public static FileStreamHttpResult GetFileResult(this IResult result) =>
-        (FileStreamHttpResult)((INestedHttpResult)result).Result;
+        (FileStreamHttpResult)result.Unwrap();
 
     public static string? GetContentType(this IResult result)
     {

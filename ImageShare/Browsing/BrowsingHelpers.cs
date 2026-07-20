@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
+﻿using ImageShare.Errors;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
@@ -7,7 +8,7 @@ namespace ImageShare.Browsing;
 
 internal static class BrowsingHelpers
 {
-    public static Results<FileStreamHttpResult, StatusCodeHttpResult> ServeBestMatch(
+    public static FileStreamHttpResult ServeBestMatch(
         IReadOnlyList<IFileInfo> candidates,
         IContentTypeProvider contentTypeProvider,
         StringValues acceptHeader)
@@ -23,7 +24,7 @@ internal static class BrowsingHelpers
             }
         }
 
-        return TypedResults.StatusCode(406);
+        throw new NotAcceptableException("None of the available image formats match the requested Accept header.");
     }
 
     public static bool IsFormatAccepted(StringValues acceptHeader, string mimeType)

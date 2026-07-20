@@ -10,10 +10,16 @@ public static class BrowsingEndpoints
         var group = endpoints.MapGroup("/folders").RequireAuthorization();
 
         group.MapGet("/", async (IMediator mediator, [AsParameters] GetEntriesQuery request) =>
-            await mediator.Send(request));
+            await mediator.Send(request))
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapGet("/{**path}", async (IMediator mediator, [AsParameters] GetEntriesQuery request) =>
-            await mediator.Send(request));
+            await mediator.Send(request))
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         return endpoints;
     }

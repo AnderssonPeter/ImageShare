@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using ImageShare.Browsing;
+using ImageShare.Errors;
 
 namespace ImageShare.Authentication;
 
@@ -13,6 +14,14 @@ public class User : IUser
 
     public bool CanAccessFolder(string folder) =>
         _imageShareFilterService.GetImageShareFilterRegex(ImageShareFilter).IsMatch(folder);
+
+    public void EnsureAuthenticated()
+    {
+        if (!IsAuthenticated)
+        {
+            throw new NotAuthenticatedException();
+        }
+    }
 
     public void EnsureCanAccessFolder(RelativePath path)
     {

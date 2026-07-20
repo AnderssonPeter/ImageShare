@@ -1,5 +1,6 @@
 ﻿using ImageShare.Authentication;
 using ImageShare.Browsing;
+using ImageShare.Errors;
 
 namespace ImageShare.Tests;
 
@@ -16,6 +17,15 @@ public sealed class TestUser : IUser
     }
 
     public bool CanAccessFolder(string folder) => _allowedFolders.Contains(folder);
+
+    public void EnsureAuthenticated()
+    {
+        if (!IsAuthenticated)
+        {
+            throw new NotAuthenticatedException();
+        }
+    }
+
     public void EnsureCanAccessFolder(RelativePath path)
     {
         if (!CanAccessFolder(path.RootFolder))

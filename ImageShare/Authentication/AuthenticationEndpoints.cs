@@ -22,15 +22,11 @@ public static class AuthenticationEndpoints
                 new AuthenticationProperties { RedirectUri = "/" },
                 new[] { CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme }));
 
-        endpoints.MapGet("/user", Results<Ok<IUser>, UnauthorizedHttpResult> (IUser user) =>
+        endpoints.MapGet("/user", Ok<IUser> (IUser user) =>
         {
-            if (!user.IsAuthenticated)
-            {
-                return TypedResults.Unauthorized();
-            }
-
+            user.EnsureAuthenticated();
             return TypedResults.Ok(user);
-        }).RequireAuthorization();
+        }).RequireAuthorization().ProducesProblem(StatusCodes.Status401Unauthorized);
 
         return endpoints;
     }

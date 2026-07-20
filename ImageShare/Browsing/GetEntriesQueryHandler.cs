@@ -1,4 +1,5 @@
 ﻿using ImageShare.Authentication;
+using ImageShare.Errors;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.FileProviders;
@@ -8,34 +9,22 @@ namespace ImageShare.Browsing;
 internal sealed class GetEntriesQueryHandler(
     ImageEnumerator imageEnumerator,
     IUser user)
-    : IQueryHandler<GetEntriesQuery, Results<Ok<PaginatedResult<FolderEntry>>, UnauthorizedHttpResult, BadRequest, NotFound>>
+    : IQueryHandler<GetEntriesQuery, Ok<PaginatedResult<FolderEntry>>>
 {
     private const int MaxPageSize = 500;
 
-    public ValueTask<Results<Ok<PaginatedResult<FolderEntry>>, UnauthorizedHttpResult, BadRequest, NotFound>> Handle(
+    public ValueTask<Ok<PaginatedResult<FolderEntry>>> Handle(
         GetEntriesQuery request,
         CancellationToken cancellationToken)
     {
-        if (!user.IsAuthenticated)
-        {
-            return new(TypedResults.Unauthorized());
-        }
-
         if (request.Page < 1 || request.PageSize < 1 || request.PageSize > MaxPageSize)
         {
-            return new(TypedResults.BadRequest());
+            throw new BadRequestException("Page must be at least 1 and PageSize must be between 1 and 500.");
         }
 
-        if (request.Path.HasRootFolder)
+        if (request.Path.HasRootFolder && !user.CanAccessFolder(request.Path.RootFolder))
         {
-            try
-            {
-                user.EnsureCanAccessFolder(request.Path);
-            }
-            catch (FolderAccessDeniedException)
-            {
-                return new(TypedResults.NotFound());
-            }
+            throw new NotFoundException($"Folder '{request.Path}' was not found.");
         }
 
         var entries = CollectEntries(imageEnumerator, request.Path, user);
