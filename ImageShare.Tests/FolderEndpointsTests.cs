@@ -9,7 +9,7 @@ using System.IO.Compression;
 namespace ImageShare.Tests;
 
 [MicrosoftDI]
-public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMediator mediator, IOptions<ImageFormatOptions> imageFormats, TestUser user, TestImageFactory imageFactory)
+public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMediator mediator, ImageEnumerator imageEnumerator, TestUser user, TestImageFactory imageFactory)
 {
     private const int Page = 1;
     private const int PageSize = 50;
@@ -446,6 +446,22 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
     }
 
     [Test]
+    public async Task DownloadImages_ValidFormat_ReturnsZipStream()
+    {
+        // Arrange
+        fileProvider.AddFile("vacation/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.AddFile("vacation/picture.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
+        user.Allow("vacation");
+
+        // Act
+        var result = await mediator.Send(new DownloadImagesQuery(new StringValues(["vacation"]), new StringValues(["avif"])));
+
+        // Assert
+        await Assert.That(result.IsStatusCode(200)).IsTrue();
+        await Assert.That(result.GetContentType()).IsEqualTo("application/zip");
+    }
+
+    [Test]
     public async Task DownloadImages_ZipContainsImagesRecursivelyExcludingThumbprintsAndNonImages()
     {
         // Arrange
@@ -457,7 +473,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         fileProvider.AddFile("album/photo.thumb.jpg", imageFactory.CreateThumbnail());
         user.Allow("album");
 
-        var files = BrowsingHelpers.EnumerateImageFiles(fileProvider, imageFormats.Value, "album").ToList();
+        var files = imageEnumerator.EnumerateImages("album", recursive: true).ToList();
 
         // Act
         using var memory = new MemoryStream();
@@ -482,8 +498,8 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         fileProvider.AddFile("album-b/b.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
         user.Allow("album-a").Allow("album-b");
 
-        var files = BrowsingHelpers.EnumerateImageFiles(fileProvider, imageFormats.Value, "album-a")
-            .Concat(BrowsingHelpers.EnumerateImageFiles(fileProvider, imageFormats.Value, "album-b"))
+        var files = imageEnumerator.EnumerateImages("album-a", recursive: true)
+            .Concat(imageEnumerator.EnumerateImages("album-b", recursive: true))
             .ToList();
 
         // Act
@@ -522,7 +538,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         fileProvider.AddFile("album/drawing.png", imageFactory.CreateTestImage(MagickFormat.Png));
         user.Allow("album");
 
-        var files = BrowsingHelpers.EnumerateImageFiles(fileProvider, imageFormats.Value, "album")
+        var files = imageEnumerator.EnumerateImages("album", recursive: true)
             .Where(file => string.Equals(Path.GetExtension(file.Info.Name).TrimStart('.'), "jpg", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
@@ -559,7 +575,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         var photo = imageFactory.CreateTestImage(MagickFormat.Avif);
         fileProvider.AddFile("vacation/photo.avif", photo);
         user.Allow("vacation");
-        var files = BrowsingHelpers.EnumerateImageFiles(fileProvider, imageFormats.Value, "vacation").ToList();
+        var files = imageEnumerator.EnumerateImages("vacation", recursive: true).ToList();
 
         // Act
         using var memory = new MemoryStream();

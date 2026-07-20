@@ -29,6 +29,7 @@ public class MicrosoftDIAttribute : DependencyInjectionDataSourceAttribute<IServ
 
         return new ServiceCollection()
             .AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped)
+            .AddScoped<ImageEnumerator>()
             .AddScoped<InMemoryFileProvider>()
             .AddScoped<ISyncWritableFileProvider>(sp => sp.GetRequiredService<InMemoryFileProvider>())
             .AddScoped<IWritableFileProvider>(sp => sp.GetRequiredService<InMemoryFileProvider>())

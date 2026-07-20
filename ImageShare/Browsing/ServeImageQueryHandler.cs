@@ -1,17 +1,14 @@
-﻿using System.Diagnostics;
-using ImageShare.Authentication;
-using ImageShare.ImageConversion;
+﻿using ImageShare.Authentication;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
 
 namespace ImageShare.Browsing;
 
 internal sealed class ServeImageQueryHandler(
-    IFileProvider fileProvider,
-    IOptions<ImageFormatOptions> imageFormats,
+    ImageEnumerator imageEnumerator,
     IContentTypeProvider contentTypeProvider,
     IUser user)
     : IQueryHandler<ServeImageQuery, Results<FileStreamHttpResult, UnauthorizedHttpResult, BadRequest, ForbidHttpResult, NotFound, StatusCodeHttpResult>>
@@ -25,22 +22,19 @@ internal sealed class ServeImageQueryHandler(
             return new(TypedResults.Unauthorized());
         }
 
-        PathHelper.EnsureSafePath(request.Path);
+        var relativePath = new RelativePath(request.Path);
 
-        if (!PathHelper.IsInFolder(request.Path) || !user.CanAccessFolder(PathHelper.GetFirstSegment(request.Path)))
+        if (relativePath.IsInFolder && !user.CanAccessFolder(relativePath.FirstSegment))
         {
             return new(TypedResults.Forbid());
         }
 
-        var baseName = Path.GetFileNameWithoutExtension(request.Path);
-
-        if (ImageConverterJob.IsThumbprintFile(baseName))
+        if (relativePath.IsThumbnail)
         {
             return new(TypedResults.BadRequest());
         }
 
-        var directory = Path.GetDirectoryName(request.Path) ?? "";
-        var candidates = BrowsingHelpers.FindMatchingFiles(fileProvider, imageFormats.Value, directory, baseName, request.Thumbnail);
+        var candidates = imageEnumerator.FindMatchingFiles(relativePath.Directory, relativePath.FileNameWithoutExtension, request.Thumbnail);
 
         if (candidates.Count == 0)
         {

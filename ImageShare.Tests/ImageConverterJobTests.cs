@@ -2,18 +2,17 @@
 using ImageShare.Browsing;
 using ImageShare.ImageConversion;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Mirality.FileProviders;
 
 namespace ImageShare.Tests;
 
 [MicrosoftDI]
-public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, ImageConverter converter, IOptions<ImageFormatOptions> imageFormats, ILoggerFactory loggerFactory, TestImageFactory imageFactory)
+public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, ImageEnumerator imageEnumerator, ImageConverter converter, ILoggerFactory loggerFactory, TestImageFactory imageFactory)
 {
     private readonly ImageConverterJob _job = new(
             fileProvider,
+            imageEnumerator,
             converter,
-            imageFormats,
             loggerFactory.CreateLogger<ImageConverterJob>());
 
     private static readonly ImageConverterOptions DefaultConverterOptions = new()
@@ -94,10 +93,10 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     [Arguments("photo.jpg", false)]
     [Arguments("thumb.jpg", false)]
     [Arguments("photo.txt", false)]
-    public async Task IsThumbprintFile_ReturnsExpectedResult(string path, bool expected)
+    public async Task IsThumbnailFile_ReturnsExpectedResult(string path, bool expected)
     {
         // Act
-        var result = ImageConverterJob.IsThumbprintFile(path);
+        var result = imageEnumerator.IsThumbnailFile(path);
 
         // Assert
         await Assert.That(result).IsEqualTo(expected);
@@ -115,7 +114,7 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     public async Task IsImageFile_ReturnsExpectedResult(string path, bool expected)
     {
         // Act
-        var result = _job.IsImageFile(path);
+        var result = imageEnumerator.IsImageFile(path);
 
         // Assert
         await Assert.That(result).IsEqualTo(expected);

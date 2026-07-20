@@ -1,15 +1,12 @@
 ﻿using ImageShare.Authentication;
-using ImageShare.ImageConversion;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Options;
 
 namespace ImageShare.Browsing;
 
 internal sealed class GetEntriesQueryHandler(
-    IFileProvider fileProvider,
-    IOptions<ImageFormatOptions> imageFormats,
+    ImageEnumerator imageEnumerator,
     IUser user)
     : IQueryHandler<GetEntriesQuery, Results<Ok<PaginatedResult<FolderEntry>>, UnauthorizedHttpResult, BadRequest, NotFound>>
 {
@@ -29,27 +26,26 @@ internal sealed class GetEntriesQueryHandler(
             return new(TypedResults.BadRequest());
         }
 
-        PathHelper.EnsureSafePath(request.Path);
+        var relativePath = new RelativePath(request.Path);
 
-        if (!string.IsNullOrEmpty(request.Path) && !user.CanAccessFolder(PathHelper.GetFirstSegment(request.Path)))
+        if (!relativePath.IsEmpty && !user.CanAccessFolder(relativePath.FirstSegment))
         {
             return new(TypedResults.NotFound());
         }
 
-        var isRoot = string.IsNullOrEmpty(request.Path);
-        var entries = CollectEntries(fileProvider, imageFormats.Value, request.Path, isRoot, user);
+        var isRoot = relativePath.IsEmpty;
+        var entries = CollectEntries(imageEnumerator, relativePath, isRoot, user);
 
         var result = TypedResults.Ok(PaginatedResult<FolderEntry>.Paginate(entries, request.Page, request.PageSize));
         return new(result);
     }
 
-    private static List<FolderEntry> CollectEntries(IFileProvider provider, ImageFormatOptions formats, string relativePath, bool isRoot, IUser currentUser)
+    private static List<FolderEntry> CollectEntries(ImageEnumerator enumerator, RelativePath relativePath, bool isRoot, IUser currentUser)
     {
         var entries = new List<FolderEntry>();
         var seenFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        var contents = provider.GetDirectoryContents(relativePath);
-        foreach (var item in contents)
+        foreach (var item in enumerator.GetDirectoryContents(relativePath))
         {
             if (item.IsDirectory)
             {
@@ -58,16 +54,15 @@ internal sealed class GetEntriesQueryHandler(
                     continue;
                 }
 
-                var folderPath = string.IsNullOrEmpty(relativePath) ? item.Name : $"{relativePath}/{item.Name}";
-                var folderContents = provider.GetDirectoryContents(folderPath);
-                if (!BrowsingHelpers.HasVisibleContent(provider, formats, folderPath, folderContents))
+                var folderPath = relativePath.IsEmpty ? new RelativePath(item.Name) : relativePath.Combine(item.Name);
+                if (!enumerator.HasVisibleContent(folderPath))
                 {
                     continue;
                 }
 
                 entries.Add(new FolderEntry { Name = item.Name, Type = EntryType.Folder });
             }
-            else if (!isRoot && TryGetVisibleFileName(item.Name, formats, seenFiles, out var fileName))
+            else if (!isRoot && TryGetVisibleFileName(enumerator, item.Name, seenFiles, out var fileName))
             {
                 entries.Add(new FolderEntry { Name = fileName, Type = EntryType.File });
             }
@@ -78,20 +73,21 @@ internal sealed class GetEntriesQueryHandler(
         return entries;
     }
 
-    private static bool TryGetVisibleFileName(string name, ImageFormatOptions formats, HashSet<string> seenFiles, out string fileName)
+    private static bool TryGetVisibleFileName(ImageEnumerator enumerator, string name, HashSet<string> seenFiles, out string fileName)
     {
         fileName = "";
-        if (ImageConverterJob.IsThumbprintFile(name))
+        var filePath = new RelativePath(name);
+        if (filePath.IsThumbnail)
         {
             return false;
         }
 
-        if (!BrowsingHelpers.IsImageFile(name, formats))
+        if (!enumerator.IsImageFile(name))
         {
             return false;
         }
 
-        fileName = Path.GetFileNameWithoutExtension(name);
+        fileName = filePath.FileNameWithoutExtension;
         return seenFiles.Add(fileName);
     }
 

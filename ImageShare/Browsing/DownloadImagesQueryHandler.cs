@@ -1,14 +1,12 @@
 ﻿using ImageShare.Authentication;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 
 namespace ImageShare.Browsing;
 
 internal sealed class DownloadImagesQueryHandler(
-    IFileProvider fileProvider,
-    IOptions<ImageFormatOptions> imageFormats,
+    ImageEnumerator imageEnumerator,
     IUser user)
     : IQueryHandler<DownloadImagesQuery, Results<PushStreamHttpResult, UnauthorizedHttpResult, BadRequest, ForbidHttpResult, NotFound>>
 {
@@ -28,23 +26,23 @@ internal sealed class DownloadImagesQueryHandler(
         }
 
         var format = BrowsingHelpers.NormalizeFormat(request.Format);
-        if (format is not null && !imageFormats.Value.SupportedFormats.Contains(format, StringComparer.OrdinalIgnoreCase))
+        if (format is not null && !imageEnumerator.IsSupportedFormat(format))
         {
             return new(TypedResults.BadRequest());
         }
 
         foreach (var folder in folders)
         {
-            PathHelper.EnsureSafePath(folder);
-            if (!user.CanAccessFolder(PathHelper.GetFirstSegment(folder)))
+            var folderPath = new RelativePath(folder);
+            if (!user.CanAccessFolder(folderPath.FirstSegment))
             {
                 return new(TypedResults.Forbid());
             }
         }
 
         var imageFiles = folders
-            .SelectMany(folder => BrowsingHelpers.EnumerateImageFiles(fileProvider, imageFormats.Value, folder))
-            .Where(file => format is null || string.Equals(Path.GetExtension(file.Info.Name).TrimStart('.'), format, StringComparison.OrdinalIgnoreCase))
+            .SelectMany(folder => imageEnumerator.EnumerateImages(folder, recursive: true))
+            .Where(file => format is null || string.Equals(file.Path.Extension, format, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         if (imageFiles.Count == 0)

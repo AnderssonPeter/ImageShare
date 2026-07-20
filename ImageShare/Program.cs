@@ -20,6 +20,7 @@ builder.Services.AddImageShareFilter();
 builder.Services.AddUser();
 builder.Services.AddImageConversion();
 builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
+builder.Services.AddSingleton<ImageShare.Browsing.ImageEnumerator>();
 builder.Services.AddOptions<StorageOptions>().BindConfiguration("Storage").Validated();
 builder.Services.AddOptions<ImageFormatOptions>().BindConfiguration("ImageFormats").Validated();
 builder.Services.AddSingleton<IContentTypeProvider>(serviceProvider =>
