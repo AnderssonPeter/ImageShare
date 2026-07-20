@@ -23,13 +23,13 @@ internal sealed class ApiKeyProvider(
 
         var claims = new List<Claim>
         {
-            new("name", matchingEntry.Name),
-            new("image_share_filter", matchingEntry.Filter),
+            new(ImageShareClaims.Name, matchingEntry.Name),
+            new(ImageShareClaims.ImageShareFilter, matchingEntry.Filter),
         };
 
         if (matchingEntry.IsAdmin)
         {
-            claims.Add(new Claim("role", _oidcSettings.AdminRole));
+            claims.Add(new Claim(ImageShareClaims.Role, _oidcSettings.AdminRole));
         }
 
         return Task.FromResult<IApiKey?>(new ApiKey(matchingEntry.Key, matchingEntry.Name, claims));

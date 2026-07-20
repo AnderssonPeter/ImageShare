@@ -87,13 +87,13 @@ public static class AuthenticationExtensions
         options.Scope.Add("openid");
         options.Scope.Add("profile");
         options.Scope.Add("email");
-        options.Scope.Add("image_share_filter");
-        options.Scope.Add("roles");
+        options.Scope.Add(ImageShareClaims.ImageShareFilter);
+        options.Scope.Add(ImageShareClaims.Roles);
         options.CallbackPath = "/signin-oidc";
         options.SignedOutCallbackPath = "/signout-callback-oidc";
         options.UsePkce = true;
-        options.ClaimActions.MapUniqueJsonKey("role", "role");
-        options.ClaimActions.MapUniqueJsonKey("role", "roles");
-        options.TokenValidationParameters.RoleClaimType = "role";
+        options.ClaimActions.MapUniqueJsonKey(ImageShareClaims.Role, ImageShareClaims.Role);
+        options.ClaimActions.MapUniqueJsonKey(ImageShareClaims.Role, ImageShareClaims.Roles);
+        options.TokenValidationParameters.RoleClaimType = ImageShareClaims.Role;
     }
 }

@@ -62,14 +62,14 @@ public class User : IUser
         }
 
         var name =
-            context.User.Claims.SingleOrDefault(c => c.Type.Equals("name", StringComparison.OrdinalIgnoreCase))?.Value ??
-            context.User.Claims.SingleOrDefault(c => c.Type.Equals("display_name", StringComparison.OrdinalIgnoreCase))?.Value ??
+            context.User.Claims.SingleOrDefault(c => c.Type.Equals(ImageShareClaims.Name, StringComparison.OrdinalIgnoreCase))?.Value ??
+            context.User.Claims.SingleOrDefault(c => c.Type.Equals(ImageShareClaims.DisplayName, StringComparison.OrdinalIgnoreCase))?.Value ??
             throw new InvalidOperationException("Failed to get username");
 
-        var imageShareFilter = context.User.Claims.Single(c => c.Type.Equals("image_share_filter")).Value;
+        var imageShareFilter = context.User.Claims.Single(c => c.Type.Equals(ImageShareClaims.ImageShareFilter, StringComparison.OrdinalIgnoreCase)).Value;
 
         var isAdmin = context.User.Claims
-            .Where(c => c.Type.Equals("role", StringComparison.OrdinalIgnoreCase) ||
+            .Where(c => c.Type.Equals(ImageShareClaims.Role, StringComparison.OrdinalIgnoreCase) ||
                         c.Type.Equals(ClaimTypes.Role, StringComparison.OrdinalIgnoreCase))
             .Any(c => c.Value.Equals(adminRole, StringComparison.OrdinalIgnoreCase));
 

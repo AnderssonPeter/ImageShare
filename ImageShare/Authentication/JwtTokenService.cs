@@ -23,7 +23,7 @@ public class JwtTokenService(IOptions<JwtSettings> jwtSettings)
             SigningCredentials = _signingCredentials,
             Claims = new Dictionary<string, object>(StringComparer.Ordinal)
             {
-                { "image_share_filter", imageShareFilter },
+                { ImageShareClaims.ImageShareFilter, imageShareFilter },
             },
         };
 

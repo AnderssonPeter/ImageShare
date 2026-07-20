@@ -48,7 +48,7 @@ public class JwtTokenServiceTests
 
         // Assert
         await Assert.That(principal).IsNotNull();
-        var filterClaim = principal.Claims.Single(c => c.Type.Equals("image_share_filter", StringComparison.OrdinalIgnoreCase));
+        var filterClaim = principal.Claims.Single(c => c.Type.Equals(ImageShareClaims.ImageShareFilter, StringComparison.OrdinalIgnoreCase));
         await Assert.That(filterClaim.Value).IsEqualTo(filter);
     }
 
