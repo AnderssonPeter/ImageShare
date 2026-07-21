@@ -7,7 +7,7 @@ namespace ImageShare.Browsing;
 
 [RequireAuthentication]
 public sealed record GetRandomImageQuery(
-    [FromQuery] string[] Folders,
+    [FromRoute] RelativePath Folder,
     [FromQuery] bool Thumbnail = false,
     [FromQuery] bool Recursive = false,
     [FromHeader(Name = "Accept")] string Accept = "")

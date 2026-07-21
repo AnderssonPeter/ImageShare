@@ -9,7 +9,7 @@ using Mirality.FileProviders;
 namespace ImageShare.Tests;
 
 [MicrosoftDI]
-public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMediator mediator, ImageEnumerator imageEnumerator, TestUser user, TestImageFactory imageFactory)
+public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMediator mediator, ImageEnumerator imageEnumerator, TestUser user, TestImageFactory imageFactory)
 {
     private const int Page = 1;
     private const int PageSize = 50;
@@ -389,15 +389,8 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(["vacation"], []))).Throws<NotAuthenticatedException>();
+        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(new RelativePath("vacation"), []))).Throws<NotAuthenticatedException>();
     }
-
-    [Test]
-    public async Task DownloadImages_NoFolders_ReturnsBadRequest() =>
-        // Arrange
-        // Act
-        // Assert
-        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery([], []))).Throws<BadRequestException>();
 
     [Test]
     public async Task DownloadImages_BlockedFolder_ReturnsForbidden()
@@ -407,7 +400,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(["secret"], []))).Throws<FolderAccessDeniedException>();
+        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(new RelativePath("secret"), []))).Throws<FolderAccessDeniedException>();
     }
 
     [Test]
@@ -419,7 +412,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(["empty"], []))).Throws<NotFoundException>();
+        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(new RelativePath("empty"), []))).Throws<NotFoundException>();
     }
 
     [Test]
@@ -430,7 +423,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("vacation");
 
         // Act
-        var result = await mediator.Send(new DownloadImagesQuery(["vacation"], []));
+        var result = await mediator.Send(new DownloadImagesQuery(new RelativePath("vacation"), []));
 
         // Assert
         await Assert.That(result.IsStatusCode(200)).IsTrue();
@@ -446,7 +439,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("vacation");
 
         // Act
-        var result = await mediator.Send(new DownloadImagesQuery(["vacation"], ["avif"]));
+        var result = await mediator.Send(new DownloadImagesQuery(new RelativePath("vacation"), ["avif"]));
 
         // Assert
         await Assert.That(result.IsStatusCode(200)).IsTrue();
@@ -483,31 +476,6 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
     }
 
     [Test]
-    public async Task DownloadImages_MultipleFolders_FlattensIntoSingleArchive()
-    {
-        // Arrange
-        fileProvider.AddFile("album-a/a.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
-        fileProvider.AddFile("album-b/b.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
-        user.Allow("album-a").Allow("album-b");
-
-        var files = imageEnumerator.EnumerateImages(new RelativePath("album-a"), recursive: true)
-            .Concat(imageEnumerator.EnumerateImages(new RelativePath("album-b"), recursive: true))
-            .ToList();
-
-        // Act
-        using var memory = new MemoryStream();
-        await DownloadImagesQueryHandler.WriteZipAsync(files, memory, CancellationToken.None);
-        memory.Position = 0;
-        using var archive = new ZipArchive(memory, ZipArchiveMode.Read);
-
-        // Assert
-        var entries = archive.Entries.Select(entry => entry.FullName).ToList();
-        await Assert.That(entries.Count).IsEqualTo(2);
-        await Assert.That(entries).Contains("album-a/a.avif");
-        await Assert.That(entries).Contains("album-b/b.jpg");
-    }
-
-    [Test]
     public async Task DownloadImages_TrailingSlashFolder_StripsFolderPrefixFromEntries()
     {
         // Arrange
@@ -516,7 +484,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("album");
 
         // Act
-        var result = await mediator.Send(new DownloadImagesQuery(["album/"], ["avif", "jpg"]));
+        var result = await mediator.Send(new DownloadImagesQuery(new RelativePath("album/"), ["avif", "jpg"]));
 
         // Assert
         await Assert.That(result.IsStatusCode(200)).IsTrue();
@@ -532,7 +500,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(["vacation"], ["gif"]))).Throws<BadRequestException>();
+        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(new RelativePath("vacation"), ["gif"]))).Throws<BadRequestException>();
     }
 
     [Test]
@@ -569,7 +537,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(["album"], ["jpg"]))).Throws<NotFoundException>();
+        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(new RelativePath("album"), ["jpg"]))).Throws<NotFoundException>();
     }
 
     [Test]
@@ -600,15 +568,8 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(["vacation"], Accept: ""))).Throws<NotAuthenticatedException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new RelativePath("vacation"), Accept: ""))).Throws<NotAuthenticatedException>();
     }
-
-    [Test]
-    public async Task GetRandomImage_NoFolders_ReturnsBadRequest() =>
-        // Arrange
-        // Act
-        // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery([], Accept: ""))).Throws<BadRequestException>();
 
     [Test]
     public async Task GetRandomImage_BlockedFolder_ReturnsForbidden()
@@ -618,7 +579,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(["secret"], Accept: ""))).Throws<FolderAccessDeniedException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new RelativePath("secret"), Accept: ""))).Throws<FolderAccessDeniedException>();
     }
 
     [Test]
@@ -630,7 +591,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(["empty"], Accept: ""))).Throws<NotFoundException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new RelativePath("empty"), Accept: ""))).Throws<NotFoundException>();
     }
 
     [Test]
@@ -641,7 +602,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("vacation");
 
         // Act
-        var result = await mediator.Send(new GetRandomImageQuery(["vacation"], Accept: ""));
+        var result = await mediator.Send(new GetRandomImageQuery(new RelativePath("vacation"), Accept: ""));
 
         // Assert
         await Assert.That(result.IsStatusCode(200)).IsTrue();
@@ -650,27 +611,27 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
     }
 
     [Test]
-    public async Task GetRandomImage_PicksRandomlyAcrossFoldersRecursively()
+    public async Task GetRandomImage_PicksRandomlyRecursively()
     {
         // Arrange
-        fileProvider.AddFile("album-a/a.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
-        fileProvider.AddFile("album-b/sub/b.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
-        user.Allow("album-a").Allow("album-b");
+        fileProvider.AddFile("photos/album-a/a.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.AddFile("photos/album-b/sub/b.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
+        user.Allow("photos");
         var gotA = false;
         var gotB = false;
 
         // Act
         for (var i = 0; i < 50; i++)
         {
-            var result = await mediator.Send(new GetRandomImageQuery(["album-a", "album-b"], Recursive: true));
+            var result = await mediator.Send(new GetRandomImageQuery(new RelativePath("photos"), Recursive: true));
             await Assert.That(result.IsStatusCode(200)).IsTrue();
             var fileResult = result.GetFileResult();
             var served = fileResult.FileStream.ReadAllBytes();
-            if (served.SequenceEqual(fileProvider.GetFileInfo("album-a/a.avif").ReadAllBytes()))
+            if (served.SequenceEqual(fileProvider.GetFileInfo("photos/album-a/a.avif").ReadAllBytes()))
             {
                 gotA = true;
             }
-            else if (served.SequenceEqual(fileProvider.GetFileInfo("album-b/sub/b.jpg").ReadAllBytes()))
+            else if (served.SequenceEqual(fileProvider.GetFileInfo("photos/album-b/sub/b.jpg").ReadAllBytes()))
             {
                 gotB = true;
             }
@@ -694,7 +655,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(["photos"], Thumbnail: true))).Throws<NotAuthenticatedException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new RelativePath("photos"), Thumbnail: true))).Throws<NotAuthenticatedException>();
     }
 
     [Test]
@@ -702,7 +663,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
     [Arguments("/etc")]
     [Arguments("/etc/passwd")]
     public async Task GetRandomImage_Thumbnail_UnsafePath_ThrowsArgumentException(string path) =>
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery([path], Thumbnail: true))).Throws<ArgumentException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new RelativePath(path), Thumbnail: true))).Throws<ArgumentException>();
 
     [Test]
     public async Task GetRandomImage_Thumbnail_BlockedFolder_ReturnsForbidden()
@@ -712,7 +673,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(["secret"], Thumbnail: true))).Throws<FolderAccessDeniedException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new RelativePath("secret"), Thumbnail: true))).Throws<FolderAccessDeniedException>();
     }
 
     [Test]
@@ -724,7 +685,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(["empty"], Thumbnail: true))).Throws<NotFoundException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new RelativePath("empty"), Thumbnail: true))).Throws<NotFoundException>();
     }
 
     [Test]
@@ -736,7 +697,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("vacation");
 
         // Act
-        var result = await mediator.Send(new GetRandomImageQuery(["vacation"], Thumbnail: true));
+        var result = await mediator.Send(new GetRandomImageQuery(new RelativePath("vacation"), Thumbnail: true));
 
         // Assert
         await Assert.That(result.IsStatusCode(200)).IsTrue();
@@ -761,7 +722,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         // Act
         for (var i = 0; i < 50; i++)
         {
-            var result = await mediator.Send(new GetRandomImageQuery(["vacation"], Thumbnail: true));
+            var result = await mediator.Send(new GetRandomImageQuery(new RelativePath("vacation"), Thumbnail: true));
             await Assert.That(result.IsStatusCode(200)).IsTrue();
             var fileResult = result.GetFileResult();
             var served = fileResult.FileStream.ReadAllBytes();
@@ -794,6 +755,215 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(["vacation"], Thumbnail: true))).Throws<NotFoundException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new RelativePath("vacation"), Thumbnail: true))).Throws<NotFoundException>();
+    }
+
+    [Test]
+    [Arguments("", "image/jpeg", true)]
+    [Arguments("image/avif", "image/avif", true)]
+    [Arguments("image/*", "image/avif", true)]
+    [Arguments("*/*", "image/avif", true)]
+    [Arguments("image/png,image/webp", "image/avif", false)]
+    [Arguments("image/png,image/avif", "image/avif", true)]
+    [Arguments("image/webp;q=0.8,image/avif;q=1.0", "image/avif", true)]
+    public async Task IsFormatAccepted_MatchesExpectedBehavior(StringValues header, string format, bool expected)
+    {
+        // Act
+        var result = header.Accepts(format);
+
+        // Assert
+        await Assert.That(result).IsEqualTo(expected);
+    }
+
+    [Test]
+    public async Task ServeImage_Unauthenticated_ReturnsUnauthorized()
+    {
+        // Arrange
+        fileProvider.AddFile("photo.png", imageFactory.CreateTestImage(MagickFormat.Png));
+        user.IsAuthenticated = false;
+
+        // Act
+        // Assert
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("photo.png"), "", false))).Throws<NotAuthenticatedException>();
+    }
+
+    [Test]
+    public async Task ServeImage_BlockedFolder_ReturnsForbidden()
+    {
+        // Arrange
+        fileProvider.AddFile("secret/photo.png", imageFactory.CreateTestImage(MagickFormat.Png));
+
+        // Act
+        // Assert
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("secret/photo.png"), "", false))).Throws<FolderAccessDeniedException>();
+    }
+
+    [Test]
+    public async Task ServeImage_BlockedSubfolder_ReturnsForbidden()
+    {
+        // Arrange
+        fileProvider.AddFile("secret/nested/photo.png", imageFactory.CreateTestImage(MagickFormat.Png));
+
+        // Act
+        // Assert
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("secret/nested/photo.png"), "", false))).Throws<FolderAccessDeniedException>();
+    }
+
+    [Test]
+    public async Task ServeImage_NonExistentFile_ReturnsNotFound()
+    {
+        // Arrange
+        user.Allow("vacation");
+
+        // Act
+        // Assert
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("missing.avif"), "", false))).Throws<NotFoundException>();
+    }
+
+    [Test]
+    [Arguments("../etc")]
+    [Arguments("/etc")]
+    [Arguments("/etc/passwd")]
+    public async Task ServeImage_UnsafePath_ThrowsArgumentException(string path) =>
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath(path), "", false))).Throws<ArgumentException>();
+
+    [Test]
+    public async Task ServeImage_ThumbprintFile_ReturnsBadRequest()
+    {
+        // Arrange
+        fileProvider.AddFile("photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.AddFile("photo.thumb.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
+        user.Allow("vacation");
+
+        // Act
+        // Assert
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("photo.thumb.jpg"), "", false))).Throws<BadRequestException>();
+    }
+
+    [Test]
+    public async Task ServeImage_NoAcceptHeader_ServesOriginal()
+    {
+        // Arrange
+        fileProvider.AddFile("photo.png", imageFactory.CreateTestImage(MagickFormat.Png));
+        user.Allow("vacation");
+
+        // Act
+        var result = await mediator.Send(new ServeImageQuery(new RelativePath("photo.png"), "", false));
+
+        // Assert
+        await Assert.That(result.IsStatusCode(200)).IsTrue();
+        await Assert.That(result.GetContentType()).IsEqualTo("image/png");
+    }
+
+    [Test]
+    public async Task ServeImage_FormatAccepted_ServesOriginal()
+    {
+        // Arrange
+        fileProvider.AddFile("photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        user.Allow("vacation");
+
+        // Act
+        var result = await mediator.Send(new ServeImageQuery(new RelativePath("photo.avif"), "image/avif,image/jpeg", false));
+
+        // Assert
+        await Assert.That(result.IsStatusCode(200)).IsTrue();
+        await Assert.That(result.GetContentType()).IsEqualTo("image/avif");
+    }
+
+    [Test]
+    public async Task ServeImage_ThumbTrue_ServesThumbprint()
+    {
+        // Arrange
+        fileProvider.AddFile("photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.AddFile("photo.thumb.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
+        user.Allow("vacation");
+
+        // Act
+        var result = await mediator.Send(new ServeImageQuery(new RelativePath("photo"), "", true));
+
+        // Assert
+        await Assert.That(result.IsStatusCode(200)).IsTrue();
+        await Assert.That(result.GetContentType()).IsEqualTo("image/jpeg");
+    }
+
+    [Test]
+    public async Task ServeImage_ThumbTrue_NoThumbprint_ReturnsNotFound()
+    {
+        // Arrange
+        fileProvider.AddFile("photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        user.Allow("vacation");
+
+        // Act
+        // Assert
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("photo"), "", true))).Throws<NotFoundException>();
+    }
+
+    [Test]
+    public async Task ServeImage_ThumbTrue_NoImage_ReturnsNotFound()
+    {
+        // Arrange
+        user.Allow("vacation");
+
+        // Act
+        // Assert
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("missing"), "", true))).Throws<NotFoundException>();
+    }
+
+    [Test]
+    public async Task ServeImage_ThumbTrue_ThumbprintNotAccepted_Returns406()
+    {
+        // Arrange
+        fileProvider.AddFile("photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.AddFile("photo.thumb.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
+        user.Allow("vacation");
+
+        // Act
+        // Assert
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("photo"), "image/webp,image/png", true))).Throws<NotAcceptableException>();
+    }
+
+    [Test]
+    public async Task ServeImage_NoAcceptedFormats_Returns406()
+    {
+        // Arrange
+        fileProvider.AddFile("photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        user.Allow("vacation");
+
+        // Act
+        // Assert
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("photo"), "image/tiff", false))).Throws<NotAcceptableException>();
+    }
+
+    [Test]
+    public async Task ServeImage_ServesSmallestFileFirst()
+    {
+        // Arrange
+        fileProvider.AddFile("photo.png", imageFactory.CreateTestImage(10, 10, MagickFormat.Png));
+        fileProvider.AddFile("photo.jpg", imageFactory.CreateTestImage(100, 100, MagickFormat.Jpeg));
+        user.Allow("vacation");
+
+        // Act
+        var result = await mediator.Send(new ServeImageQuery(new RelativePath("photo"), "image/jpeg,image/png", false));
+
+        // Assert
+        await Assert.That(result.IsStatusCode(200)).IsTrue();
+        await Assert.That(result.GetContentType()).IsEqualTo("image/png");
+    }
+
+    [Test]
+    public async Task ServeImage_ThumbTrue_ServesSmallestThumbprintFirst()
+    {
+        // Arrange
+        fileProvider.Write("photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.AddFile("photo.thumb.jpg", imageFactory.CreateTestImage(10, 10, MagickFormat.Jpeg));
+        fileProvider.AddFile("photo.thumb.png", imageFactory.CreateTestImage(100, 100, MagickFormat.Png));
+        user.Allow("vacation");
+
+        // Act
+        var result = await mediator.Send(new ServeImageQuery(new RelativePath("photo"), "image/jpeg,image/png", true));
+
+        // Assert
+        await Assert.That(result.IsStatusCode(200)).IsTrue();
+        await Assert.That(result.GetContentType()).IsEqualTo("image/jpeg");
     }
 }

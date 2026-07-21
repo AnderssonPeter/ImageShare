@@ -93,7 +93,6 @@ app.UseAuthorization();
 app.MapHealthEndpoints();
 app.MapAuthEndpoints();
 app.MapTokenEndpoints();
-app.MapFolderEndpoints();
-app.MapImageEndpoints();
+app.MapContentEndpoints();
 
 await app.RunAsync();

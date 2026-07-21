@@ -25,15 +25,15 @@ public class IntegrationTests
     }
 
     [Test]
-    public async Task FoldersRoot_WithoutPath_ReturnsEntries()
+    public async Task ContentRoot_WithoutPath_ReturnsEntries()
     {
         // Arrange
         using var app = new TestApp();
         app.Factory.FileProvider.AddDirectory("vacation");
-        app.Factory.FileProvider.AddFile("vacation/photo.png", imageFactory.CreateTestImage(MagickFormat.Png));
+        app.Factory.FileProvider.AddFile("vacation/photo.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
 
         // Act
-        var response = await app.Client.GetAsync("/folders");
+        var response = await app.Client.GetAsync("/content");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -45,7 +45,7 @@ public class IntegrationTests
     }
 
     [Test]
-    public async Task FoldersRoot_WithEmptyRoot_ReturnsEntries()
+    public async Task ContentRoot_WithTrailingSlash_ReturnsEntries()
     {
         // Arrange
         using var app = new TestApp();
@@ -53,7 +53,7 @@ public class IntegrationTests
         app.Factory.FileProvider.AddFile("album/photo.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
 
         // Act
-        var response = await app.Client.GetAsync("/folders/");
+        var response = await app.Client.GetAsync("/content/");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -64,15 +64,15 @@ public class IntegrationTests
     }
 
     [Test]
-    public async Task FoldersNested_WithPath_ReturnsEntries()
+    public async Task ContentNested_WithPath_ReturnsEntries()
     {
         // Arrange
         using var app = new TestApp();
-        app.Factory.FileProvider.AddFile("vacation/photo.png", imageFactory.CreateTestImage(MagickFormat.Png));
+        app.Factory.FileProvider.AddFile("vacation/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
         app.Factory.FileProvider.AddFile("vacation/picture.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
 
         // Act
-        var response = await app.Client.GetAsync("/folders/vacation");
+        var response = await app.Client.GetAsync("/content/vacation");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -82,7 +82,7 @@ public class IntegrationTests
     }
 
     [Test]
-    public async Task ImagesDownload_ReturnsZipStream()
+    public async Task ContentDownload_ReturnsZipStream()
     {
         // Arrange
         using var app = new TestApp();
@@ -90,7 +90,7 @@ public class IntegrationTests
         app.Factory.FileProvider.AddFile("vacation/photo.avif", photoData);
 
         // Act
-        var response = await app.Client.GetAsync("/images/download?folders=vacation");
+        var response = await app.Client.GetAsync("/content/download/vacation");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -104,55 +104,15 @@ public class IntegrationTests
     }
 
     [Test]
-    public async Task ImagesDownload_MultipleFolders_ReturnsZipWithAllImages()
-    {
-        // Arrange
-        using var app = new TestApp();
-        app.Factory.FileProvider.AddFile("album-a/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
-        app.Factory.FileProvider.AddFile("album-b/picture.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
-
-        // Act
-        var response = await app.Client.GetAsync("/images/download?folders=album-a&folders=album-b");
-
-        // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var zipBytes = await response.Content.ReadAsByteArrayAsync();
-        using var memoryStream = new MemoryStream(zipBytes);
-        using var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read);
-        await Assert.That(archive.Entries.Count).IsEqualTo(2);
-        var entryNames = archive.Entries.Select(entry => entry.FullName).ToList();
-        await Assert.That(entryNames).Contains("album-a/photo.avif");
-        await Assert.That(entryNames).Contains("album-b/picture.jpg");
-    }
-
-    [Test]
-    public async Task ImagesServe_RootPath_ReturnsImage()
-    {
-        // Arrange
-        using var app = new TestApp();
-        var photoData = imageFactory.CreateTestImage(MagickFormat.Png);
-        app.Factory.FileProvider.AddFile("photo.png", photoData);
-
-        // Act
-        var response = await app.Client.GetAsync("/images/photo.png");
-
-        // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        await Assert.That(response.Content.Headers.ContentType?.MediaType).IsEqualTo("image/png");
-        var servedBytes = await response.Content.ReadAsByteArrayAsync();
-        await Assert.That(servedBytes).IsEquivalentTo(photoData);
-    }
-
-    [Test]
-    public async Task ImagesServe_NestedPath_ReturnsImage()
+    public async Task ContentServe_RootPath_ReturnsImage()
     {
         // Arrange
         using var app = new TestApp();
         var photoData = imageFactory.CreateTestImage(MagickFormat.Avif);
-        app.Factory.FileProvider.AddFile("vacation/photo.avif", photoData);
+        app.Factory.FileProvider.AddFile("photo.avif", photoData);
 
         // Act
-        var response = await app.Client.GetAsync("/images/vacation/photo.avif");
+        var response = await app.Client.GetAsync("/content/image/photo.avif");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -162,7 +122,25 @@ public class IntegrationTests
     }
 
     [Test]
-    public async Task ImagesServe_NestedPathWithUrlEncoding_ReturnsImage()
+    public async Task ContentServe_NestedPath_ReturnsImage()
+    {
+        // Arrange
+        using var app = new TestApp();
+        var photoData = imageFactory.CreateTestImage(MagickFormat.Avif);
+        app.Factory.FileProvider.AddFile("vacation/photo.avif", photoData);
+
+        // Act
+        var response = await app.Client.GetAsync("/content/image/vacation/photo.avif");
+
+        // Assert
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        await Assert.That(response.Content.Headers.ContentType?.MediaType).IsEqualTo("image/avif");
+        var servedBytes = await response.Content.ReadAsByteArrayAsync();
+        await Assert.That(servedBytes).IsEquivalentTo(photoData);
+    }
+
+    [Test]
+    public async Task ContentServe_NestedPathWithUrlEncoding_ReturnsImage()
     {
         // Arrange
         using var app = new TestApp();
@@ -170,7 +148,7 @@ public class IntegrationTests
         app.Factory.FileProvider.AddFile("vacation/photo.avif", photoData);
 
         // Act — simulate Scalar URL-encoding the path separator
-        var response = await app.Client.GetAsync("/images/vacation%2Fphoto.avif");
+        var response = await app.Client.GetAsync("/content/image/vacation%2Fphoto.avif");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -180,7 +158,7 @@ public class IntegrationTests
     }
 
     [Test]
-    public async Task ImagesServe_DeeplyNestedPath_ReturnsImage()
+    public async Task ContentServe_DeeplyNestedPath_ReturnsImage()
     {
         // Arrange
         using var app = new TestApp();
@@ -188,7 +166,7 @@ public class IntegrationTests
         app.Factory.FileProvider.AddFile("album/2024/trip/photo.jpg", photoData);
 
         // Act
-        var response = await app.Client.GetAsync("/images/album/2024/trip/photo.jpg");
+        var response = await app.Client.GetAsync("/content/image/album/2024/trip/photo.jpg");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);

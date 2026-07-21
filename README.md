@@ -81,9 +81,9 @@
     [X] BrowserEndpoint should not list files in the root folder
   [X] Add a function to get a random thumbnail image in a folder
     [X] Move GetRandomThumbnail from BrowsingEndpoints to ImageEndpoints
-    [ ] No unit test should create a new InMemoryFileProvider and instead use the one provided by Dependency Injection
-    [ ] Unit tests should use IWritableFileProvider and IFileProvider instead of concrete implementations
-    [ ] Convert `/random-thumbnail/{**path}` to get `/random/{**path}` with a parameter to specify if you want a full image or thumbnail, and a parameter if to get recursively
+    [X] No unit test should create a new InMemoryFileProvider and instead use the one provided by Dependency Injection
+    [X] Unit tests should use IWritableFileProvider and IFileProvider instead of concrete implementations
+    [X] Convert `/random-thumbnail/{**path}` to get `/random/{**path}` with a parameter to specify if you want a full image or thumbnail, and a parameter if to get recursively
   [X] Don't list empty folders in BrowserEndpoint
   [X] Add endpoint to fetch images
     [X] Use IContentTypeProvider instead of FileExtensionContentTypeProvider and take it as a dependency instead of constructing your own, use the extension method IContentTypeProvider.GetContentType to simplify getting mime type
@@ -107,7 +107,6 @@
       [X] Rename the folder and all classes inside to something more appropriate, like ImageConversion, ImageConveter
     [X] Generate thumbnails for all formats and in all formats
     [X] Change from PhysicalFileProvider to WritablePhysicalFileProvider, register it as both IAsyncWritableFileProvider and IFileProvider, use IAsyncWritableFileProvider when creating new files.
-    [ ] use an enum for image formats instead of magic strings
   [X] Add static analysis unit test that ensures that all minimal endpoints parameters has [FromQuery], [FromRoute], [FromBody], [FromHeader] or [FromServices] attributes
   [X] Call OpenApi endpoint instead of root in startup.ps1
   [ ] Fork WritableFileProvider and add cancellationToken to ReadAsBytesAsync

@@ -16,33 +16,22 @@ internal sealed class GetRandomImageQueryHandler(
         GetRandomImageQuery request,
         CancellationToken cancellationToken)
     {
-        var folders = NormalizeFolders(request.Folders);
-        if (folders.Count == 0)
-        {
-            throw new BadRequestException("At least one folder must be specified.");
-        }
+        user.EnsureCanAccessFolder(request.Folder);
 
-        foreach (var folder in folders)
-        {
-            user.EnsureCanAccessFolder(folder);
-        }
-
-        var baseNames = folders
-            .SelectMany(folder => imageEnumerator.EnumerateImages(folder, request.Recursive))
+        var baseNames = imageEnumerator.EnumerateImages(request.Folder, request.Recursive)
             .Select(file => file.Path.FileNameWithoutExtension)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         if (baseNames.Count == 0)
         {
-            throw new NotFoundException("No images were found in the requested folders.");
+            throw new NotFoundException("No images were found in the requested folder.");
         }
 
         var randomBaseName = baseNames[Random.Shared.Next(baseNames.Count)];
         var targetName = request.Thumbnail ? imageEnumerator.BuildThumbnailName(randomBaseName) : randomBaseName;
 
-        var candidates = folders
-            .SelectMany(folder => imageEnumerator.EnumerateImages(folder, request.Recursive, thumbnails: request.Thumbnail))
+        var candidates = imageEnumerator.EnumerateImages(request.Folder, request.Recursive, thumbnails: request.Thumbnail)
             .Where(file => string.Equals(file.Path.FileNameWithoutExtension, targetName, StringComparison.OrdinalIgnoreCase))
             .Select(file => file.Info)
             .OrderBy(file => file.Length)
@@ -55,7 +44,4 @@ internal sealed class GetRandomImageQueryHandler(
 
         return new(new ImageCandidates(candidates, contentTypeProvider).ServeBest(request.Accept));
     }
-
-    private static List<RelativePath> NormalizeFolders(string[] folderValues) =>
-        [.. folderValues.Where(value => !string.IsNullOrEmpty(value)).Select(value => new RelativePath(value))];
 }

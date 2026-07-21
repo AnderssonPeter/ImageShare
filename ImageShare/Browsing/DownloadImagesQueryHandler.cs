@@ -16,25 +16,15 @@ internal sealed class DownloadImagesQueryHandler(
         DownloadImagesQuery request,
         CancellationToken cancellationToken)
     {
-        var folders = NormalizeFolders(request.Folders);
-        if (folders.Count == 0)
-        {
-            throw new BadRequestException("At least one folder must be specified.");
-        }
-
         var format = new RequestedFormat(request.Format);
         if (!format.IsSupportedBy(imageEnumerator.SupportedFormats))
         {
             throw new BadRequestException($"Format '{format.Value}' is not supported.");
         }
 
-        foreach (var folder in folders)
-        {
-            user.EnsureCanAccessFolder(folder);
-        }
+        user.EnsureCanAccessFolder(request.Folder);
 
-        var imageFiles = folders
-            .SelectMany(folder => imageEnumerator.EnumerateImages(folder, recursive: true))
+        var imageFiles = imageEnumerator.EnumerateImages(request.Folder, recursive: true)
             .Where(file => format.Matches(file.Path.Extension))
             .ToList();
 
@@ -43,10 +33,8 @@ internal sealed class DownloadImagesQueryHandler(
             throw new NotFoundException("No images were found matching the requested criteria.");
         }
 
-        RelativePath? stripPrefix = folders.Count == 1 ? folders[0] : null;
-
         var result = TypedResults.Stream(
-            async stream => await WriteZipAsync(imageFiles, stream, cancellationToken, stripPrefix),
+            async stream => await WriteZipAsync(imageFiles, stream, cancellationToken, request.Folder),
             "application/zip",
             "images.zip");
 
@@ -57,21 +45,18 @@ internal sealed class DownloadImagesQueryHandler(
         IEnumerable<(RelativePath Path, IFileInfo Info)> imageFiles,
         Stream output,
         CancellationToken cancellationToken,
-        RelativePath? stripPrefix = null)
+        RelativePath stripPrefix)
     {
+        var prefixWithSlash = stripPrefix.Value + "/";
         using var memoryStream = new MemoryStream();
         await using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, leaveOpen: true))
         {
             foreach (var (path, info) in imageFiles)
             {
                 var entryName = path.Value;
-                if (stripPrefix is { } prefix)
+                if (entryName.StartsWith(prefixWithSlash, StringComparison.Ordinal))
                 {
-                    var prefixWithSlash = prefix.Value + "/";
-                    if (entryName.StartsWith(prefixWithSlash, StringComparison.Ordinal))
-                    {
-                        entryName = entryName[prefixWithSlash.Length..];
-                    }
+                    entryName = entryName[prefixWithSlash.Length..];
                 }
 
                 var entry = archive.CreateEntry(entryName, CompressionLevel.NoCompression);
@@ -84,9 +69,4 @@ internal sealed class DownloadImagesQueryHandler(
         memoryStream.Position = 0;
         await memoryStream.CopyToAsync(output, cancellationToken);
     }
-
-    private static List<RelativePath> NormalizeFolders(string[] folderValues) =>
-        [.. folderValues
-            .Where(value => !string.IsNullOrEmpty(value))
-            .Select(value => new RelativePath(value))];
 }

@@ -7,6 +7,6 @@ namespace ImageShare.Browsing;
 
 [RequireAuthentication]
 public sealed record DownloadImagesQuery(
-    [FromQuery] string[] Folders,
+    [FromRoute] RelativePath Folder,
     [FromQuery] string[] Format = default!)
     : IQuery<PushStreamHttpResult>;
