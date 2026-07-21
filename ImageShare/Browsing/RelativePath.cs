@@ -61,7 +61,8 @@ public readonly struct RelativePath : IEquatable<RelativePath>
     {
         try
         {
-            path = new RelativePath(value ?? "");
+            var decoded = value is null ? "" : Uri.UnescapeDataString(value);
+            path = new RelativePath(decoded);
             return true;
         }
         catch (ArgumentException)

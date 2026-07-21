@@ -57,7 +57,6 @@ internal static class BrowsingHelpers
         return false;
     }
 
-    public static string? NormalizeFormat(StringValues formatValues) =>
-        formatValues.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?
+    public static string? NormalizeFormat(string[]? formatValues) => formatValues?.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?
             .Trim().TrimStart('.').ToLowerInvariant();
 }

@@ -9,6 +9,11 @@ internal sealed class GenerateTokenQueryHandler(JwtTokenService tokenService)
 {
     public ValueTask<Ok<string>> Handle(GenerateTokenQuery request, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            throw new BadRequestException("A name must be specified.");
+        }
+
         if (string.IsNullOrWhiteSpace(request.Filter))
         {
             throw new BadRequestException("A filter must be specified.");
@@ -19,7 +24,7 @@ internal sealed class GenerateTokenQueryHandler(JwtTokenService tokenService)
             throw new BadRequestException("The end date must be in the future.");
         }
 
-        var token = tokenService.CreateToken(request.Filter, request.EndDate);
+        var token = tokenService.CreateToken(request.Name, request.Filter, request.EndDate);
         return new(TypedResults.Ok(token));
     }
 }

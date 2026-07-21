@@ -30,7 +30,7 @@ builder.Services.AddOpenApi(options =>
 });
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default));
 builder.Services.AddCustomErrors();
-builder.Services.AddOpenIdConnectAuthentication(builder.Configuration);
+builder.Services.AddAuthentications();
 builder.Services.AddImageShareFilter();
 builder.Services.AddUser();
 builder.Services.AddJwtTokenService();

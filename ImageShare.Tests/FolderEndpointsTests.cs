@@ -379,7 +379,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(new StringValues(["vacation"]), new StringValues()))).Throws<NotAuthenticatedException>();
+        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(["vacation"], []))).Throws<NotAuthenticatedException>();
     }
 
     [Test]
@@ -387,7 +387,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         // Arrange
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(new StringValues(), new StringValues()))).Throws<BadRequestException>();
+        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery([], []))).Throws<BadRequestException>();
 
     [Test]
     public async Task DownloadImages_BlockedFolder_ReturnsForbidden()
@@ -397,7 +397,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(new StringValues(["secret"]), new StringValues()))).Throws<FolderAccessDeniedException>();
+        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(["secret"], []))).Throws<FolderAccessDeniedException>();
     }
 
     [Test]
@@ -409,7 +409,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(new StringValues(["empty"]), new StringValues()))).Throws<NotFoundException>();
+        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(["empty"], []))).Throws<NotFoundException>();
     }
 
     [Test]
@@ -420,7 +420,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("vacation");
 
         // Act
-        var result = await mediator.Send(new DownloadImagesQuery(new StringValues(["vacation"]), new StringValues()));
+        var result = await mediator.Send(new DownloadImagesQuery(["vacation"], []));
 
         // Assert
         await Assert.That(result.IsStatusCode(200)).IsTrue();
@@ -436,7 +436,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("vacation");
 
         // Act
-        var result = await mediator.Send(new DownloadImagesQuery(new StringValues(["vacation"]), new StringValues(["avif"])));
+        var result = await mediator.Send(new DownloadImagesQuery(["vacation"], ["avif"]));
 
         // Assert
         await Assert.That(result.IsStatusCode(200)).IsTrue();
@@ -506,7 +506,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(new StringValues(["vacation"]), new StringValues(["gif"])))).Throws<BadRequestException>();
+        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(["vacation"], ["gif"]))).Throws<BadRequestException>();
     }
 
     [Test]
@@ -543,7 +543,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(new StringValues(["album"]), new StringValues(["jpg"])))).Throws<NotFoundException>();
+        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(["album"], ["jpg"]))).Throws<NotFoundException>();
     }
 
     [Test]
@@ -574,7 +574,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new StringValues(["vacation"]), Accept: ""))).Throws<NotAuthenticatedException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(["vacation"], Accept: ""))).Throws<NotAuthenticatedException>();
     }
 
     [Test]
@@ -582,7 +582,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         // Arrange
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new StringValues(), Accept: ""))).Throws<BadRequestException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery([], Accept: ""))).Throws<BadRequestException>();
 
     [Test]
     public async Task GetRandomImage_BlockedFolder_ReturnsForbidden()
@@ -592,7 +592,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new StringValues(["secret"]), Accept: ""))).Throws<FolderAccessDeniedException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(["secret"], Accept: ""))).Throws<FolderAccessDeniedException>();
     }
 
     [Test]
@@ -604,7 +604,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new StringValues(["empty"]), Accept: ""))).Throws<NotFoundException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(["empty"], Accept: ""))).Throws<NotFoundException>();
     }
 
     [Test]
@@ -615,7 +615,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("vacation");
 
         // Act
-        var result = await mediator.Send(new GetRandomImageQuery(new StringValues(["vacation"]), Accept: ""));
+        var result = await mediator.Send(new GetRandomImageQuery(["vacation"], Accept: ""));
 
         // Assert
         await Assert.That(result.IsStatusCode(200)).IsTrue();
@@ -636,7 +636,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         // Act
         for (var i = 0; i < 50; i++)
         {
-            var result = await mediator.Send(new GetRandomImageQuery(new StringValues(["album-a", "album-b"]), Recursive: true));
+            var result = await mediator.Send(new GetRandomImageQuery(["album-a", "album-b"], Recursive: true));
             await Assert.That(result.IsStatusCode(200)).IsTrue();
             var fileResult = result.GetFileResult();
             var served = fileResult.FileStream.ReadAllBytes();
@@ -668,7 +668,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new StringValues(["photos"]), Thumbnail: true))).Throws<NotAuthenticatedException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(["photos"], Thumbnail: true))).Throws<NotAuthenticatedException>();
     }
 
     [Test]
@@ -677,7 +677,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
     [Arguments("/")]
     [Arguments("/etc/passwd")]
     public async Task GetRandomImage_Thumbnail_UnsafePath_ThrowsArgumentException(string path) =>
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new StringValues([path]), Thumbnail: true))).Throws<ArgumentException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery([path], Thumbnail: true))).Throws<ArgumentException>();
 
     [Test]
     public async Task GetRandomImage_Thumbnail_BlockedFolder_ReturnsForbidden()
@@ -687,7 +687,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new StringValues(["secret"]), Thumbnail: true))).Throws<FolderAccessDeniedException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(["secret"], Thumbnail: true))).Throws<FolderAccessDeniedException>();
     }
 
     [Test]
@@ -699,7 +699,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new StringValues(["empty"]), Thumbnail: true))).Throws<NotFoundException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(["empty"], Thumbnail: true))).Throws<NotFoundException>();
     }
 
     [Test]
@@ -711,7 +711,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         user.Allow("vacation");
 
         // Act
-        var result = await mediator.Send(new GetRandomImageQuery(new StringValues(["vacation"]), Thumbnail: true));
+        var result = await mediator.Send(new GetRandomImageQuery(["vacation"], Thumbnail: true));
 
         // Assert
         await Assert.That(result.IsStatusCode(200)).IsTrue();
@@ -736,7 +736,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
         // Act
         for (var i = 0; i < 50; i++)
         {
-            var result = await mediator.Send(new GetRandomImageQuery(new StringValues(["vacation"]), Thumbnail: true));
+            var result = await mediator.Send(new GetRandomImageQuery(["vacation"], Thumbnail: true));
             await Assert.That(result.IsStatusCode(200)).IsTrue();
             var fileResult = result.GetFileResult();
             var served = fileResult.FileStream.ReadAllBytes();
@@ -769,6 +769,6 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(new StringValues(["vacation"]), Thumbnail: true))).Throws<NotFoundException>();
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(["vacation"], Thumbnail: true))).Throws<NotFoundException>();
     }
 }

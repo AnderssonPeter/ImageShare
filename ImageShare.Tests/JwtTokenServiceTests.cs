@@ -23,11 +23,12 @@ public class JwtTokenServiceTests
     {
         // Arrange
         var service = CreateService();
+        var name = "alice";
         var filter = "vacation/*";
         var expiration = DateTime.UtcNow.AddHours(1);
 
         // Act
-        var token = service.CreateToken(filter, expiration);
+        var token = service.CreateToken(name, filter, expiration);
 
         // Assert
         await Assert.That(token).IsNotNull();
@@ -39,9 +40,10 @@ public class JwtTokenServiceTests
     {
         // Arrange
         var service = CreateService();
+        var name = "alice";
         var filter = "vacation/*";
         var expiration = DateTime.UtcNow.AddHours(1);
-        var token = service.CreateToken(filter, expiration);
+        var token = service.CreateToken(name, filter, expiration);
 
         // Act
         var principal = await service.ValidateTokenAsync(token);
@@ -50,6 +52,8 @@ public class JwtTokenServiceTests
         await Assert.That(principal).IsNotNull();
         var filterClaim = principal.Claims.Single(c => c.Type.Equals(ImageShareClaims.ImageShareFilter, StringComparison.OrdinalIgnoreCase));
         await Assert.That(filterClaim.Value).IsEqualTo(filter);
+        var nameClaim = principal.Claims.Single(c => c.Type.Equals(ImageShareClaims.Name, StringComparison.OrdinalIgnoreCase));
+        await Assert.That(nameClaim.Value).IsEqualTo(name);
     }
 
     [Test]
@@ -57,7 +61,7 @@ public class JwtTokenServiceTests
     {
         // Arrange
         var service = CreateService();
-        var token = service.CreateToken("vacation/*", DateTime.UtcNow.AddHours(-1));
+        var token = service.CreateToken("alice", "vacation/*", DateTime.UtcNow.AddHours(-1));
 
         // Act
         // Assert
@@ -69,7 +73,7 @@ public class JwtTokenServiceTests
     {
         // Arrange
         var service = CreateService();
-        var token = service.CreateToken("vacation/*", DateTime.UtcNow.AddHours(1));
+        var token = service.CreateToken("alice", "vacation/*", DateTime.UtcNow.AddHours(1));
         var tamperedToken = token[..^5] + "AAAAA";
 
         // Act
@@ -83,7 +87,7 @@ public class JwtTokenServiceTests
         // Arrange
         var createService = CreateService("first-signing-key-must-be-at-least-32-chars");
         var validateService = CreateService("second-signing-key-must-be-at-least-32-chars");
-        var token = createService.CreateToken("vacation/*", DateTime.UtcNow.AddHours(1));
+        var token = createService.CreateToken("alice", "vacation/*", DateTime.UtcNow.AddHours(1));
 
         // Act
         // Assert

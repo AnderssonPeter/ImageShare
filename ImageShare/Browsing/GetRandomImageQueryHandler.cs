@@ -3,7 +3,6 @@ using ImageShare.Errors;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.Primitives;
 
 namespace ImageShare.Browsing;
 
@@ -57,6 +56,6 @@ internal sealed class GetRandomImageQueryHandler(
         return new(BrowsingHelpers.ServeBestMatch(candidates, contentTypeProvider, request.Accept));
     }
 
-    private static List<RelativePath> NormalizeFolders(StringValues folderValues) =>
-        [.. folderValues.Where(value => !string.IsNullOrEmpty(value)).Cast<string>().Select(value => new RelativePath(value))];
+    private static List<RelativePath> NormalizeFolders(string[] folderValues) =>
+        [.. folderValues.Where(value => !string.IsNullOrEmpty(value)).Select(value => new RelativePath(value))];
 }

@@ -2,13 +2,12 @@
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Primitives;
 
 namespace ImageShare.Browsing;
 
 [RequireAuthentication]
 public sealed record GetRandomImageQuery(
-    [FromQuery] StringValues Folders,
+    [FromQuery] string[] Folders,
     [FromQuery] bool Thumbnail = false,
     [FromQuery] bool Recursive = false,
     [FromHeader(Name = "Accept")] string Accept = "")

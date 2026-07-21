@@ -4,7 +4,6 @@ using ImageShare.Errors;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Primitives;
 
 namespace ImageShare.Browsing;
 
@@ -45,7 +44,7 @@ internal sealed class DownloadImagesQueryHandler(
         }
 
         var result = TypedResults.Stream(
-            async stream => await WriteZipAsync(imageFiles, stream, CancellationToken.None),
+            async stream => await WriteZipAsync(imageFiles, stream, cancellationToken),
             "application/zip",
             "images.zip");
 
@@ -54,16 +53,22 @@ internal sealed class DownloadImagesQueryHandler(
 
     internal static async Task WriteZipAsync(IEnumerable<(RelativePath Path, IFileInfo Info)> imageFiles, Stream output, CancellationToken cancellationToken)
     {
-        await using var archive = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true);
-        foreach (var (path, info) in imageFiles)
+        using var memoryStream = new MemoryStream();
+        await using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, leaveOpen: true))
         {
-            var entry = archive.CreateEntry(path, CompressionLevel.NoCompression);
-            await using var entryStream = await entry.OpenAsync(cancellationToken);
-            await using var fileStream = info.CreateReadStream();
-            await fileStream.CopyToAsync(entryStream, cancellationToken);
+            foreach (var (path, info) in imageFiles)
+            {
+                var entry = archive.CreateEntry(path, CompressionLevel.NoCompression);
+                await using var entryStream = await entry.OpenAsync(cancellationToken);
+                await using var fileStream = info.CreateReadStream();
+                await fileStream.CopyToAsync(entryStream, cancellationToken);
+            }
         }
+
+        memoryStream.Position = 0;
+        await memoryStream.CopyToAsync(output, cancellationToken);
     }
 
-    private static List<RelativePath> NormalizeFolders(StringValues folderValues) =>
-        [.. folderValues.Where(value => !string.IsNullOrEmpty(value)).Cast<string>().Select(value => new RelativePath(value))];
+    private static List<RelativePath> NormalizeFolders(string[] folderValues) =>
+        [.. folderValues.Where(value => !string.IsNullOrEmpty(value)).Select(value => new RelativePath(value))];
 }

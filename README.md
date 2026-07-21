@@ -42,8 +42,8 @@
   [X] Linting
   [X] Scalar
   [X] Add user class
-  [/] Don't use _ for private fields
-    [/] Configure .editorconfig accordingly
+  [X] Don't use _ for private fields
+    [X] Configure .editorconfig accordingly
   [ ] Try not to create helper classes or service classes, create extension methods or classes that handle the logic
     [ ] BrowsingHelpers.IsImageFile/IsHiddenFile could be added to a `RelativePath` class, that is converted from string.
     [ ] `PathHelper` could also be merged into `RelativePath`
@@ -55,10 +55,13 @@
   [X] Don't check if `IsAuthenticated` inside Command/QueryHandler, use a behavior and attribute for that!
   [X] Merge EnumerateImageFiles and GetImageBaseNames and add parameter for recursive or not
   [X] Do we need FindMatchingFilesRecursive can't we just rewrite FindMatchingFiles to handle it correctly?
-  [ ] There are multiple requests that don't work, create integration tests.
-  [ ] /folders without any folders listed dosen't work so its impossible to list the root folders.
-  [ ] /images/download fails due to some `System.InvalidOperationException: Synchronous operations are disallowed. Call WriteAsync or set AllowSynchronousIO to true instead.` error
-Path parameters are incorrectly sent from scalar, i don't know if its a bug in scalar or a bug in how we specified the path variable in openapi, the path parameter is url encoded so / is replaced by %2f
+  [X] There are multiple requests that don't work, create integration tests.
+  [X] /folders without any folders listed dosen't work so its impossible to list the root folders.
+  [X] /images/download fails due to some `System.InvalidOperationException: Synchronous operations are disallowed. Call WriteAsync or set AllowSynchronousIO to true instead.` error
+  [X] Path parameters are incorrectly sent from scalar, i don't know if its a bug in scalar or a bug in how we specified the path variable in openapi, the path parameter is url encoded so / is replaced by %2f
+  [ ] When a path is provided that doesn't exist return 404
+  [ ] Image converter job doesn't seem to work
+  [ ] When you only download one folder, don't create a folder for it inside the zip
   [X] Add canAccessFolder method to user class
     [X] Move the regex generation logic into it's own class that caches regexes for each filter.
     [X] Add unit tests for canAccessFolder method

@@ -13,7 +13,7 @@ public class JwtTokenService(IOptions<JwtSettings> jwtSettings)
         new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSettings.Value.SigningKey)),
         SecurityAlgorithms.HmacSha256);
 
-    public string CreateToken(string imageShareFilter, DateTime expiration)
+    public string CreateToken(string name, string imageShareFilter, DateTime expiration)
     {
         var descriptor = new SecurityTokenDescriptor
         {
@@ -23,6 +23,7 @@ public class JwtTokenService(IOptions<JwtSettings> jwtSettings)
             SigningCredentials = _signingCredentials,
             Claims = new Dictionary<string, object>(StringComparer.Ordinal)
             {
+                { ImageShareClaims.Name, name },
                 { ImageShareClaims.ImageShareFilter, imageShareFilter },
             },
         };

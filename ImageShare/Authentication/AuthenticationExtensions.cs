@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.Extensions.Options;
 
 namespace ImageShare.Authentication;
 
@@ -22,7 +23,7 @@ public static class AuthenticationExtensions
     public static IServiceCollection AddJwtTokenService(this IServiceCollection services) =>
         services.AddSingleton<JwtTokenService>();
 
-    public static IServiceCollection AddOpenIdConnectAuthentication(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddAuthentications(this IServiceCollection services)
     {
         services.AddOptions<OidcSettings>()
             .BindConfiguration("OpenIdConnect")
@@ -36,53 +37,53 @@ public static class AuthenticationExtensions
             .BindConfiguration("Jwt")
             .Validated();
 
-        var oidcSettings = configuration.GetSection("OpenIdConnect").Get<OidcSettings>() ?? throw new InvalidDataException("Failed to get open id settings");
-
         services.AddAuthentication(options =>
         {
             options.DefaultScheme = DefaultScheme;
             options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
             options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         })
-        .AddPolicyScheme(DefaultScheme, null, options =>
-        {
-            options.ForwardDefaultSelector = context =>
-            {
-                if (context.Request.Headers.TryGetValue(ApiKeyHeaderName, out var headerApiKey) &&
-                    !string.IsNullOrEmpty(headerApiKey))
-                {
-                    return ApiKeyDefaults.AuthenticationScheme;
-                }
-
-                if (context.Request.Query.TryGetValue(ApiKeyHeaderName, out var queryApiKey) &&
-                    !string.IsNullOrEmpty(queryApiKey))
-                {
-                    return ApiKeyDefaults.AuthenticationScheme;
-                }
-
-                return CookieAuthenticationDefaults.AuthenticationScheme;
-            };
-        })
+        .AddPolicyScheme(DefaultScheme, null, ConfigurePolicyScheme)
         .AddCookie()
-        .AddOpenIdConnect(options => ConfigureOpenIdConnect(options, oidcSettings))
-        .AddApiKeyInHeaderOrQueryParams<ApiKeyProvider>(options =>
-        {
-            options.Realm = "ImageShare";
-            options.KeyName = ApiKeyHeaderName;
-            options.SuppressWWWAuthenticateHeader = true;
-        });
+        .AddOpenIdConnect(ConfigureOpenIdConnect)
+        .AddApiKeyInHeaderOrQueryParams<ApiKeyProvider>(ConfigureApiKey);
+
+        services.AddSingleton<IConfigureOptions<OpenIdConnectOptions>, OpenIdConnectOptionsConfigure>();
 
         services.AddAuthorization();
 
         return services;
     }
 
-    private static void ConfigureOpenIdConnect(OpenIdConnectOptions options, OidcSettings oidcSettings)
+    private static void ConfigurePolicyScheme(PolicySchemeOptions options)
     {
-        options.Authority = oidcSettings.Authority;
-        options.ClientId = oidcSettings.ClientId;
-        options.ClientSecret = oidcSettings.ClientSecret;
-        options.ResponseType = oidcSettings.ResponseType;
+        options.ForwardDefaultSelector = context =>
+        {
+            if (context.Request.Headers.TryGetValue(ApiKeyHeaderName, out var headerApiKey) &&
+                !string.IsNullOrEmpty(headerApiKey))
+            {
+                return ApiKeyDefaults.AuthenticationScheme;
+            }
+
+            if (context.Request.Query.TryGetValue(ApiKeyHeaderName, out var queryApiKey) &&
+                !string.IsNullOrEmpty(queryApiKey))
+            {
+                return ApiKeyDefaults.AuthenticationScheme;
+            }
+
+            return CookieAuthenticationDefaults.AuthenticationScheme;
+        };
+    }
+
+    private static void ConfigureApiKey(ApiKeyOptions options)
+    {
+        options.Realm = "ImageShare";
+        options.KeyName = ApiKeyHeaderName;
+        options.SuppressWWWAuthenticateHeader = true;
+    }
+
+    private static void ConfigureOpenIdConnect(OpenIdConnectOptions options)
+    {
         options.SaveTokens = false;
         options.Scope.Add("openid");
         options.Scope.Add("profile");
