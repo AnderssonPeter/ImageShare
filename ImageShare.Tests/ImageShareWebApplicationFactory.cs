@@ -67,6 +67,7 @@ public sealed class ImageShareWebApplicationFactory : WebApplicationFactory<Prog
             services.AddSingleton<ISyncWritableFileProvider>(sp => sp.GetRequiredService<InMemoryFileProvider>());
             services.AddSingleton<IWritableFileProvider>(sp => sp.GetRequiredService<InMemoryFileProvider>());
             services.AddSingleton<IFileProvider>(sp => sp.GetRequiredService<InMemoryFileProvider>());
+            services.RemoveAll<Microsoft.Extensions.Hosting.IHostedService>();
         });
     }
 }

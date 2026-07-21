@@ -42,7 +42,7 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     }
 
     [Test]
-    public async Task ConvertImage_DoesNotCreateSourceFormat(CancellationToken cancellationToken)
+    public async Task ConvertImage_CreatesSourceFormatThumbnail(CancellationToken cancellationToken)
     {
         // Arrange
         fileProvider.AddFile("photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
@@ -51,7 +51,8 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
         await job.ConvertImageAsync(new RelativePath("photo.avif"), cancellationToken);
 
         // Assert
-        await Assert.That(fileProvider.GetFileInfo("photo.thumb.avif").Exists).IsFalse();
+        await Assert.That(fileProvider.GetFileInfo("photo.avif").Exists).IsTrue();
+        await Assert.That(fileProvider.GetFileInfo("photo.thumb.avif").Exists).IsTrue();
     }
 
     [Test]

@@ -11,6 +11,7 @@ public static class ImageConversionExtensions
             .Validated();
 
         services.AddSingleton<ImageConverter>();
+        services.AddHostedService<ImageConverterJob>();
 
         return services;
     }

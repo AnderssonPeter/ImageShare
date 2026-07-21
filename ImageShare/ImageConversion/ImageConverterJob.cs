@@ -78,10 +78,7 @@ internal sealed class ImageConverterJob(
         foreach (var format in imageEnumerator.SupportedFormats)
         {
             var targetFormat = ImageConverter.ParseFormat(format);
-            if (targetFormat == sourceFormat)
-            {
-                continue;
-            }
+            var isSourceFormat = targetFormat == sourceFormat;
 
             var targetExtension = format.ToLowerInvariant() switch
             {
@@ -91,7 +88,7 @@ internal sealed class ImageConverterJob(
             };
 
             var fullPath = directory.Combine($"{name}{targetExtension}");
-            if (!fileProvider.GetFileInfo(fullPath).Exists)
+            if (!isSourceFormat && !fileProvider.GetFileInfo(fullPath).Exists)
             {
                 try
                 {
