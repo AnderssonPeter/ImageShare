@@ -5,7 +5,6 @@ namespace ImageShare.Authentication;
 
 internal sealed class OpenIdConnectOptionsConfigure(IOptions<OidcSettings> oidcSettings) : IConfigureNamedOptions<OpenIdConnectOptions>
 {
-    private readonly OidcSettings _settings = oidcSettings.Value;
 
     public void Configure(string? name, OpenIdConnectOptions options)
     {
@@ -14,10 +13,10 @@ internal sealed class OpenIdConnectOptionsConfigure(IOptions<OidcSettings> oidcS
             return;
         }
 
-        options.Authority = _settings.Authority;
-        options.ClientId = _settings.ClientId;
-        options.ClientSecret = _settings.ClientSecret;
-        options.ResponseType = _settings.ResponseType;
+        options.Authority = oidcSettings.Value.Authority;
+        options.ClientId = oidcSettings.Value.ClientId;
+        options.ClientSecret = oidcSettings.Value.ClientSecret;
+        options.ResponseType = oidcSettings.Value.ResponseType;
     }
 
     public void Configure(OpenIdConnectOptions options) => Configure(OpenIdConnectDefaults.AuthenticationScheme, options);

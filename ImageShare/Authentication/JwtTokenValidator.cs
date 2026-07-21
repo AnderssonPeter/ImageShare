@@ -8,17 +8,15 @@ namespace ImageShare.Authentication;
 
 public sealed class JwtTokenValidator(IOptions<JwtSettings> jwtSettings)
 {
-    private readonly JwtSettings _settings = jwtSettings.Value;
-
-    private readonly SymmetricSecurityKey _symmetricSecurityKey = new(System.Text.Encoding.UTF8.GetBytes(jwtSettings.Value.SigningKey));
+    private readonly SymmetricSecurityKey securityKey = new(System.Text.Encoding.UTF8.GetBytes(jwtSettings.Value.SigningKey));
 
     public async ValueTask<ClaimsPrincipal> ValidateTokenAsync(string token)
     {
         var validationParameters = new TokenValidationParameters
         {
-            IssuerSigningKey = _symmetricSecurityKey,
-            ValidIssuer = _settings.Issuer,
-            ValidAudience = _settings.Audience,
+            IssuerSigningKey = securityKey,
+            ValidIssuer = jwtSettings.Value.Issuer,
+            ValidAudience = jwtSettings.Value.Audience,
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,

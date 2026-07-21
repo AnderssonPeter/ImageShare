@@ -6,19 +6,17 @@ namespace ImageShare.Browsing;
 
 public sealed class ImageEnumerator(IFileProvider fileProvider, IOptions<ImageFormatOptions> imageFormats)
 {
-    private readonly IFileProvider _fileProvider = fileProvider;
-    private readonly ImageFormatOptions _imageFormats = imageFormats.Value;
 
-    public IReadOnlyList<string> SupportedFormats => _imageFormats.SupportedFormats;
+    public IReadOnlyList<string> SupportedFormats => imageFormats.Value.SupportedFormats;
 
     public bool IsImageFile(string path)
     {
         var relativePath = new RelativePath(path);
-        return relativePath.HasExtension && _imageFormats.SupportedFormats.Contains(relativePath.Extension, StringComparer.OrdinalIgnoreCase);
+        return relativePath.HasExtension && imageFormats.Value.SupportedFormats.Contains(relativePath.Extension, StringComparer.OrdinalIgnoreCase);
     }
 
     public bool IsSupportedFormat(string format) =>
-        _imageFormats.SupportedFormats.Contains(format, StringComparer.OrdinalIgnoreCase);
+        imageFormats.Value.SupportedFormats.Contains(format, StringComparer.OrdinalIgnoreCase);
 
     public bool IsHiddenFile(string name) => name.StartsWith('.');
 
@@ -32,7 +30,7 @@ public sealed class ImageEnumerator(IFileProvider fileProvider, IOptions<ImageFo
 
     public IEnumerable<(RelativePath Path, IFileInfo Info)> EnumerateImages(RelativePath directory, bool recursive = false, bool thumbnails = false)
     {
-        foreach (var item in _fileProvider.GetDirectoryContents(directory))
+        foreach (var item in fileProvider.GetDirectoryContents(directory))
         {
             if (!item.Exists)
             {
@@ -76,7 +74,7 @@ public sealed class ImageEnumerator(IFileProvider fileProvider, IOptions<ImageFo
 
     public bool HasVisibleContent(RelativePath directory) => EnumerateImages(directory, recursive: true).Any();
 
-    public IDirectoryContents GetDirectoryContents(RelativePath path) => _fileProvider.GetDirectoryContents(path);
+    public IDirectoryContents GetDirectoryContents(RelativePath path) => fileProvider.GetDirectoryContents(path);
 
     public IReadOnlyList<IFileInfo> FindMatchingFiles(RelativePath directory, string baseName, bool thumbnail)
     {

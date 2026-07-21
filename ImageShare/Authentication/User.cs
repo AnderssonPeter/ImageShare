@@ -8,7 +8,7 @@ namespace ImageShare.Authentication;
 
 public class User : IUser
 {
-    private readonly ImageShareFilterCompiler _imageShareFilterCompiler;
+    private readonly ImageShareFilterCompiler imageShareFilterCompiler;
 
     public required bool IsAuthenticated { get; init; }
     public required bool IsAdmin { get; init; }
@@ -16,7 +16,7 @@ public class User : IUser
     private string ImageShareFilter { get; init; }
 
     public bool CanAccessFolder(string folder) =>
-        _imageShareFilterCompiler.Compile(ImageShareFilter).IsMatch(folder);
+        imageShareFilterCompiler.Compile(ImageShareFilter).IsMatch(folder);
 
     public void EnsureAuthenticated()
     {
@@ -47,7 +47,7 @@ public class User : IUser
         ImageShareFilterCompiler imageShareFilterCompiler,
         IOptions<OidcSettings> oidcSettings)
     {
-        _imageShareFilterCompiler = imageShareFilterCompiler;
+        this.imageShareFilterCompiler = imageShareFilterCompiler;
         var adminRole = oidcSettings.Value.AdminRole;
 
         var context = httpContextAccessor.HttpContext ?? throw new UnreachableException("Failed to get http context");

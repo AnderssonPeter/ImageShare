@@ -5,8 +5,6 @@ namespace ImageShare.ImageConversion;
 
 public sealed class ImageConverter(IOptions<ImageConverterOptions> options)
 {
-    private readonly ImageConverterOptions _options = options.Value;
-
     public ReadOnlyMemory<byte> Convert(ReadOnlySpan<byte> imageData, MagickFormat format, uint quality, int? maxWidth = null, int? maxHeight = null)
     {
         using var image = new MagickImage(imageData);
@@ -38,10 +36,10 @@ public sealed class ImageConverter(IOptions<ImageConverterOptions> options)
     }
 
     public ReadOnlyMemory<byte> ConvertFull(ReadOnlySpan<byte> imageData, MagickFormat format) =>
-        Convert(imageData, format, _options.FullQuality);
+        Convert(imageData, format, options.Value.FullQuality);
 
     public ReadOnlyMemory<byte> ConvertThumbnail(ReadOnlySpan<byte> imageData, MagickFormat format) =>
-        Convert(imageData, format, _options.ThumbnailQuality, _options.ThumbnailMaxWidth, _options.ThumbnailMaxHeight);
+        Convert(imageData, format, options.Value.ThumbnailQuality, options.Value.ThumbnailMaxWidth, options.Value.ThumbnailMaxHeight);
 
     public static MagickFormat ParseFormat(string format)
     {

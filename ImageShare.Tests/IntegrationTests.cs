@@ -8,7 +8,7 @@ namespace ImageShare.Tests;
 
 public class IntegrationTests
 {
-    private static readonly TestImageFactory ImageFactory = new();
+    private static readonly TestImageFactory imageFactory = new();
 
     private sealed class TestApp : IDisposable
     {
@@ -30,7 +30,7 @@ public class IntegrationTests
         // Arrange
         using var app = new TestApp();
         app.Factory.FileProvider.AddDirectory("vacation");
-        app.Factory.FileProvider.AddFile("vacation/photo.png", ImageFactory.CreateTestImage(MagickFormat.Png));
+        app.Factory.FileProvider.AddFile("vacation/photo.png", imageFactory.CreateTestImage(MagickFormat.Png));
 
         // Act
         var response = await app.Client.GetAsync("/folders");
@@ -50,7 +50,7 @@ public class IntegrationTests
         // Arrange
         using var app = new TestApp();
         app.Factory.FileProvider.AddDirectory("album");
-        app.Factory.FileProvider.AddFile("album/photo.jpg", ImageFactory.CreateTestImage(MagickFormat.Jpeg));
+        app.Factory.FileProvider.AddFile("album/photo.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
 
         // Act
         var response = await app.Client.GetAsync("/folders/");
@@ -68,8 +68,8 @@ public class IntegrationTests
     {
         // Arrange
         using var app = new TestApp();
-        app.Factory.FileProvider.AddFile("vacation/photo.png", ImageFactory.CreateTestImage(MagickFormat.Png));
-        app.Factory.FileProvider.AddFile("vacation/picture.jpg", ImageFactory.CreateTestImage(MagickFormat.Jpeg));
+        app.Factory.FileProvider.AddFile("vacation/photo.png", imageFactory.CreateTestImage(MagickFormat.Png));
+        app.Factory.FileProvider.AddFile("vacation/picture.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
 
         // Act
         var response = await app.Client.GetAsync("/folders/vacation");
@@ -86,7 +86,7 @@ public class IntegrationTests
     {
         // Arrange
         using var app = new TestApp();
-        var photoData = ImageFactory.CreateTestImage(MagickFormat.Avif);
+        var photoData = imageFactory.CreateTestImage(MagickFormat.Avif);
         app.Factory.FileProvider.AddFile("vacation/photo.avif", photoData);
 
         // Act
@@ -108,8 +108,8 @@ public class IntegrationTests
     {
         // Arrange
         using var app = new TestApp();
-        app.Factory.FileProvider.AddFile("album-a/photo.avif", ImageFactory.CreateTestImage(MagickFormat.Avif));
-        app.Factory.FileProvider.AddFile("album-b/picture.jpg", ImageFactory.CreateTestImage(MagickFormat.Jpeg));
+        app.Factory.FileProvider.AddFile("album-a/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        app.Factory.FileProvider.AddFile("album-b/picture.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
 
         // Act
         var response = await app.Client.GetAsync("/images/download?folders=album-a&folders=album-b");
@@ -130,7 +130,7 @@ public class IntegrationTests
     {
         // Arrange
         using var app = new TestApp();
-        var photoData = ImageFactory.CreateTestImage(MagickFormat.Png);
+        var photoData = imageFactory.CreateTestImage(MagickFormat.Png);
         app.Factory.FileProvider.AddFile("photo.png", photoData);
 
         // Act
@@ -148,7 +148,7 @@ public class IntegrationTests
     {
         // Arrange
         using var app = new TestApp();
-        var photoData = ImageFactory.CreateTestImage(MagickFormat.Avif);
+        var photoData = imageFactory.CreateTestImage(MagickFormat.Avif);
         app.Factory.FileProvider.AddFile("vacation/photo.avif", photoData);
 
         // Act
@@ -166,7 +166,7 @@ public class IntegrationTests
     {
         // Arrange
         using var app = new TestApp();
-        var photoData = ImageFactory.CreateTestImage(MagickFormat.Avif);
+        var photoData = imageFactory.CreateTestImage(MagickFormat.Avif);
         app.Factory.FileProvider.AddFile("vacation/photo.avif", photoData);
 
         // Act — simulate Scalar URL-encoding the path separator
@@ -184,7 +184,7 @@ public class IntegrationTests
     {
         // Arrange
         using var app = new TestApp();
-        var photoData = ImageFactory.CreateTestImage(MagickFormat.Jpeg);
+        var photoData = imageFactory.CreateTestImage(MagickFormat.Jpeg);
         app.Factory.FileProvider.AddFile("album/2024/trip/photo.jpg", photoData);
 
         // Act

@@ -6,8 +6,7 @@ namespace ImageShare.Authentication;
 
 public sealed class JwtTokenIssuer(IOptions<JwtSettings> jwtSettings)
 {
-    private readonly JwtSettings _settings = jwtSettings.Value;
-    private readonly SigningCredentials _signingCredentials = new(
+    private readonly SigningCredentials signingCredentials = new(
         new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSettings.Value.SigningKey)),
         SecurityAlgorithms.HmacSha256);
 
@@ -15,10 +14,10 @@ public sealed class JwtTokenIssuer(IOptions<JwtSettings> jwtSettings)
     {
         var descriptor = new SecurityTokenDescriptor
         {
-            Issuer = _settings.Issuer,
-            Audience = _settings.Audience,
+            Issuer = jwtSettings.Value.Issuer,
+            Audience = jwtSettings.Value.Audience,
             Expires = expiration,
-            SigningCredentials = _signingCredentials,
+            SigningCredentials = signingCredentials,
             Claims = new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 { ImageShareClaims.Name, name },

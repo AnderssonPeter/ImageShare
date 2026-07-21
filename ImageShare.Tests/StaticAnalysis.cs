@@ -6,7 +6,7 @@ namespace ImageShare.Tests;
 
 public class StaticAnalysis
 {
-    private static readonly Type[] BindingAttributes =
+    private static readonly Type[] bindingAttributes =
     [
         typeof(FromQueryAttribute),
         typeof(FromRouteAttribute),
@@ -37,7 +37,7 @@ public class StaticAnalysis
         {
             foreach (var parameter in constructor.GetParameters())
             {
-                var hasBindingAttribute = BindingAttributes.Any(attr => parameter.IsDefined(attr, false));
+                var hasBindingAttribute = bindingAttributes.Any(attr => parameter.IsDefined(attr, false));
 
                 if (!hasBindingAttribute)
                 {

@@ -9,11 +9,6 @@ internal sealed class ImageConverterJob(
     ImageConverter converter,
     ILogger<ImageConverterJob> logger) : BackgroundService
 {
-    private readonly IWritableFileProvider _fileProvider = fileProvider;
-    private readonly ImageEnumerator _imageEnumerator = imageEnumerator;
-    private readonly ImageConverter _converter = converter;
-    private readonly ILogger<ImageConverterJob> _logger = logger;
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await ScanAndConvertAsync(stoppingToken);
@@ -26,7 +21,7 @@ internal sealed class ImageConverterJob(
 
     private async Task WatchForChangesAsync(CancellationToken cancellationToken)
     {
-        var changeToken = _fileProvider.Watch("**/*");
+        var changeToken = fileProvider.Watch("**/*");
 
         var reset = new SemaphoreSlim(0, 1);
         using var changeRegistration = changeToken.RegisterChangeCallback(_ => reset.Release(), null);
@@ -40,16 +35,16 @@ internal sealed class ImageConverterJob(
             }
             catch (OperationCanceledException ex)
             {
-                _logger.LogInformation(ex, "Image conversion scan canceled");
+                logger.LogInformation(ex, "Image conversion scan canceled");
             }
         }
     }
 
     internal async Task ScanAndConvertAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Starting image conversion scan");
+        logger.LogInformation("Starting image conversion scan");
 
-        var imageFiles = _imageEnumerator.EnumerateImages(RelativePath.Root, recursive: true)
+        var imageFiles = imageEnumerator.EnumerateImages(RelativePath.Root, recursive: true)
             .Select(file => file.Path);
 
         foreach (var file in imageFiles)
@@ -65,11 +60,11 @@ internal sealed class ImageConverterJob(
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to convert image {File}", file);
+                logger.LogWarning(ex, "Failed to convert image {File}", file);
             }
         }
 
-        _logger.LogInformation("Image conversion scan complete");
+        logger.LogInformation("Image conversion scan complete");
     }
 
     internal async Task ConvertImageAsync(RelativePath imagePath, CancellationToken cancellationToken)
@@ -78,9 +73,9 @@ internal sealed class ImageConverterJob(
         var directory = imagePath.Directory;
         var name = imagePath.FileNameWithoutExtension;
 
-        var imageData = await _fileProvider.GetFileInfo(imagePath).ReadAsBytesAsync();
+        var imageData = await fileProvider.GetFileInfo(imagePath).ReadAsBytesAsync();
 
-        foreach (var format in _imageEnumerator.SupportedFormats)
+        foreach (var format in imageEnumerator.SupportedFormats)
         {
             var targetFormat = ImageConverter.ParseFormat(format);
             if (targetFormat == sourceFormat)
@@ -96,33 +91,33 @@ internal sealed class ImageConverterJob(
             };
 
             var fullPath = directory.Combine($"{name}{targetExtension}");
-            if (!_fileProvider.GetFileInfo(fullPath).Exists)
+            if (!fileProvider.GetFileInfo(fullPath).Exists)
             {
                 try
                 {
-                    _logger.LogInformation("Converting {Source} to full-resolution {Format}", imagePath, format);
-                    var fullData = _converter.ConvertFull(imageData, targetFormat);
-                    await _fileProvider.WriteAsync(fullPath, fullData.ToArray(), cancel: cancellationToken);
+                    logger.LogInformation("Converting {Source} to full-resolution {Format}", imagePath, format);
+                    var fullData = converter.ConvertFull(imageData, targetFormat);
+                    await fileProvider.WriteAsync(fullPath, fullData.ToArray(), cancel: cancellationToken);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to convert {Source} to full {Format}", imagePath, format);
+                    logger.LogWarning(ex, "Failed to convert {Source} to full {Format}", imagePath, format);
                 }
             }
 
             var thumbnailName = $"{name}{ImageConverterOptions.ThumbnailInfix}{targetExtension}";
             var thumbnailPath = directory.Combine(thumbnailName);
-            if (!_fileProvider.GetFileInfo(thumbnailPath).Exists)
+            if (!fileProvider.GetFileInfo(thumbnailPath).Exists)
             {
                 try
                 {
-                    _logger.LogInformation("Converting {Source} to thumbnail {Format}", imagePath, format);
-                    var thumbnailData = _converter.ConvertThumbnail(imageData, targetFormat);
-                    await _fileProvider.WriteAsync(thumbnailPath, thumbnailData.ToArray(), cancel: cancellationToken);
+                    logger.LogInformation("Converting {Source} to thumbnail {Format}", imagePath, format);
+                    var thumbnailData = converter.ConvertThumbnail(imageData, targetFormat);
+                    await fileProvider.WriteAsync(thumbnailPath, thumbnailData.ToArray(), cancel: cancellationToken);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to convert {Source} to thumbnail {Format}", imagePath, format);
+                    logger.LogWarning(ex, "Failed to convert {Source} to thumbnail {Format}", imagePath, format);
                 }
             }
         }

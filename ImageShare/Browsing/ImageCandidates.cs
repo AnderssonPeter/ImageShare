@@ -8,23 +8,23 @@ namespace ImageShare.Browsing;
 
 public sealed class ImageCandidates
 {
-    private readonly IReadOnlyList<IFileInfo> _files;
-    private readonly IContentTypeProvider _contentTypeProvider;
+    private readonly IReadOnlyList<IFileInfo> files;
+    private readonly IContentTypeProvider contentTypeProvider;
 
     public ImageCandidates(IReadOnlyList<IFileInfo> files, IContentTypeProvider contentTypeProvider)
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(contentTypeProvider);
-        _files = files;
-        _contentTypeProvider = contentTypeProvider;
+        this.files = files;
+        this.contentTypeProvider = contentTypeProvider;
     }
 
     public FileStreamHttpResult ServeBest(StringValues acceptHeader)
     {
-        foreach (var file in _files)
+        foreach (var file in files)
         {
             var filePath = new RelativePath(file.Name);
-            var mimeType = _contentTypeProvider.GetContentType($".{filePath.Extension}");
+            var mimeType = contentTypeProvider.GetContentType($".{filePath.Extension}");
 
             if (acceptHeader.Accepts(mimeType))
             {

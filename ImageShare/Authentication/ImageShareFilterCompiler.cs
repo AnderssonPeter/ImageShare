@@ -4,15 +4,15 @@ namespace ImageShare.Authentication;
 
 public class ImageShareFilterCompiler
 {
-    private readonly Dictionary<string, Regex> _cache = [];
-    private readonly Lock _lock = new();
+    private readonly Dictionary<string, Regex> cache = [];
+    private readonly Lock cacheLock = new();
 
     public Regex Compile(string imageShareFilter)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(imageShareFilter);
-        lock (_lock)
+        lock (cacheLock)
         {
-            if (_cache.TryGetValue(imageShareFilter, out var cachedRegex))
+            if (cache.TryGetValue(imageShareFilter, out var cachedRegex))
             {
                 return cachedRegex;
             }
@@ -29,7 +29,7 @@ public class ImageShareFilterCompiler
             }
 
             var regex = new Regex("^(" + string.Join('|', regexParts) + ")$", RegexOptions.Compiled | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(0.25));
-            _cache[imageShareFilter] = regex;
+            cache[imageShareFilter] = regex;
             return regex;
         }
     }

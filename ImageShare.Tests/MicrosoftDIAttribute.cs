@@ -14,10 +14,10 @@ namespace ImageShare.Tests;
 
 public class MicrosoftDIAttribute : DependencyInjectionDataSourceAttribute<IServiceScope>
 {
-    private static readonly IServiceProvider ServiceProvider = BuildProvider();
+    private static readonly IServiceProvider serviceProvider = BuildProvider();
 
     public override IServiceScope CreateScope(DataGeneratorMetadata dataGeneratorMetadata) =>
-        ServiceProvider.CreateScope();
+        serviceProvider.CreateScope();
 
     public override object? Create(IServiceScope scope, Type type) =>
         scope.ServiceProvider.GetService(type);

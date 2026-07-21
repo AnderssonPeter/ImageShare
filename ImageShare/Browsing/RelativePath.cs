@@ -8,18 +8,17 @@ public readonly struct RelativePath : IEquatable<RelativePath>
 {
     public const string SafePathPattern = @"^(?!.*\.\.)[^/].*$";
 
-    private readonly string? _value;
-
+    private readonly string? path;
     public static readonly RelativePath Root = new("");
     public RelativePath(string value)
     {
         EnsureSafe(value);
-        _value = value;
+        path = value;
     }
 
-    public string Value => _value ?? "";
-    public bool HasRootFolder => !string.IsNullOrEmpty(_value);
-    public bool IsInFolder => _value is not null && _value.Contains('/');
+    public string Value => path ?? "";
+    public bool HasRootFolder => !string.IsNullOrEmpty(path);
+    public bool IsInFolder => path is not null && path.Contains('/');
 
     public string RootFolder
     {

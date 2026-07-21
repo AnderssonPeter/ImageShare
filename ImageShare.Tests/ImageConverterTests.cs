@@ -7,7 +7,7 @@ namespace ImageShare.Tests;
 [MicrosoftDI]
 public class ImageConverterTests(ImageConverter converter, TestImageFactory imageFactory)
 {
-    private static readonly ImageConverterOptions DefaultOptions = new()
+    private static readonly ImageConverterOptions defaultOptions = new()
     {
         FullQuality = 80,
         ThumbnailQuality = 70,
@@ -15,7 +15,7 @@ public class ImageConverterTests(ImageConverter converter, TestImageFactory imag
         ThumbnailMaxHeight = 200,
     };
 
-    private static readonly ImageConverter DefaultConverter = new(Options.Create(DefaultOptions));
+    private static readonly ImageConverter defaultConverter = new(Options.Create(defaultOptions));
 
     [Test]
     [Arguments("jpeg", MagickFormat.Jpeg)]

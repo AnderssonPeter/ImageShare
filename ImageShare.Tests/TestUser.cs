@@ -9,15 +9,15 @@ public sealed class TestUser : IUser
     public bool IsAuthenticated { get; set; } = true;
     public bool IsAdmin { get; set; }
     public string Name { get; set; } = "test";
-    private readonly HashSet<string> _allowedFolders = [];
+    private readonly HashSet<string> allowedFolders = [];
 
     public TestUser Allow(string folder)
     {
-        _allowedFolders.Add(folder);
+        allowedFolders.Add(folder);
         return this;
     }
 
-    public bool CanAccessFolder(string folder) => _allowedFolders.Contains(folder);
+    public bool CanAccessFolder(string folder) => allowedFolders.Contains(folder);
 
     public void EnsureAuthenticated()
     {

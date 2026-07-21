@@ -2,6 +2,10 @@
 [X] Add nuget mcp
 [X] Enable dotnet and typescript LSP
 [X] Add powershell to docker
+[ ] Dynamic Context Pruning Plugin https://github.com/Opencode-DCP/opencode-dynamic-context-pruning
+[ ] Allow opencode to access tmp folder by default
+[ ] mcp to search code base https://github.com/Helweg/opencode-codebase-index
+[ ] Fix context7 auth
 [X] Add Auth endpoint where you can provide a filter (same as `User.ImageShareFilter` and a end date, and returns a signed jwt token
   [X] The endpoint that generates a JWT should verify that the user has a admin role (what the role is named should be configured in appsettings, the admin role can only exist when authing from open id connect)
   [X] Add a auth endpoint that accepts the jwt token from above as sign in
@@ -11,7 +15,6 @@
   [X] The api keys should be stored in the settings file, with a `ImageShareFilter`
 [X] Do not use magic string, check if they are defined in some other class or create a const, Example "image_share_filter", "name", "display_name"
 [X] Modify the script that starts the open code container, fix the todos in it!
-[ ] Allow opencode to access tmp folder by default
 [X] What is rg cli tool? install in container?
 [X] Add nuget mcp server
 [X] Enable microsoft docs mcp server
@@ -106,7 +109,7 @@
     [X] Change from PhysicalFileProvider to WritablePhysicalFileProvider, register it as both IAsyncWritableFileProvider and IFileProvider, use IAsyncWritableFileProvider when creating new files.
     [ ] use an enum for image formats instead of magic strings
   [X] Add static analysis unit test that ensures that all minimal endpoints parameters has [FromQuery], [FromRoute], [FromBody], [FromHeader] or [FromServices] attributes
-  [ ] Call OpenApi endpoint instead of root in startup.ps1
+  [X] Call OpenApi endpoint instead of root in startup.ps1
   [ ] Fork WritableFileProvider and add cancellationToken to ReadAsBytesAsync
 [ ] FE
   [ ] Add mcp server for tanstack

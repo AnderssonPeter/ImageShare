@@ -8,12 +8,10 @@ internal sealed class ApiKeyProvider(
     IOptions<ApiKeySettings> apiKeySettings,
     IOptions<OidcSettings> oidcSettings) : IApiKeyProvider
 {
-    private readonly ApiKeySettings _settings = apiKeySettings.Value;
-    private readonly OidcSettings _oidcSettings = oidcSettings.Value;
 
     public Task<IApiKey?> ProvideAsync(string key)
     {
-        var matchingEntry = _settings.Keys.FirstOrDefault(entry =>
+        var matchingEntry = apiKeySettings.Value.Keys.FirstOrDefault(entry =>
             string.Equals(entry.Key, key, StringComparison.Ordinal));
 
         if (matchingEntry is null)
@@ -29,7 +27,7 @@ internal sealed class ApiKeyProvider(
 
         if (matchingEntry.IsAdmin)
         {
-            claims.Add(new Claim(ImageShareClaims.Role, _oidcSettings.AdminRole));
+            claims.Add(new Claim(ImageShareClaims.Role, oidcSettings.Value.AdminRole));
         }
 
         return Task.FromResult<IApiKey?>(new ApiKey(matchingEntry.Key, matchingEntry.Name, claims));

@@ -31,6 +31,8 @@ If `format:check` fails (often due to file encoding on newly created files), run
 
 Do not use abbreviations when naming variables, parameters, fields, or methods. Use full, descriptive names (e.g. `cancellationToken` not `ct`, `directory` not `dir`, `extension` not `ext`).
 
+Private fields must be `camelCase` without an underscore prefix (e.g. `cache`, not `_cache` or `Cache`). The `.editorconfig` IDE1006 naming rule enforces this in the IDE; prefer auto-properties (PascalCase) or primary-constructor parameters over introducing a private field where the value is just a stored dependency or computed option.
+
 ## Domain modeling (no helper / service classes)
 
 Do not create `*Helper`, `*Service`, `*Util`, or `*Manager` classes as dumping grounds for free functions. They break encapsulation and hide behavior that belongs on a domain concept. Prefer one of these alternatives, in order:
