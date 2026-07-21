@@ -62,7 +62,7 @@
   [X] /folders without any folders listed dosen't work so its impossible to list the root folders.
   [X] /images/download fails due to some `System.InvalidOperationException: Synchronous operations are disallowed. Call WriteAsync or set AllowSynchronousIO to true instead.` error
   [X] Path parameters are incorrectly sent from scalar, i don't know if its a bug in scalar or a bug in how we specified the path variable in openapi, the path parameter is url encoded so / is replaced by %2f
-  [ ] When a path is provided that doesn't exist return 404
+  [X] When a path is provided that doesn't exist return 404
   [ ] Image converter job doesn't seem to work
   [ ] When you only download one folder, don't create a folder for it inside the zip
   [X] Add canAccessFolder method to user class

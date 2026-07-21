@@ -117,6 +117,17 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
     }
 
     [Test]
+    public async Task GetEntries_NonExistentDirectory_ReturnsNotFound()
+    {
+        // Arrange
+        user.Allow("allowed");
+
+        // Act
+        // Assert
+        await Assert.That(async () => await mediator.Send(new GetEntriesQuery(new RelativePath("allowed/non-existent"), Page, PageSize))).Throws<NotFoundException>();
+    }
+
+    [Test]
     public async Task GetEntries_Subfolder_DoesNotFilterByAccess()
     {
         // Arrange

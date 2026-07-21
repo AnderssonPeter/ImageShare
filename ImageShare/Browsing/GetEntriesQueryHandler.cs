@@ -27,6 +27,11 @@ internal sealed class GetEntriesQueryHandler(
             throw new NotFoundException($"Folder '{request.Path}' was not found.");
         }
 
+        if (request.Path.HasRootFolder && !imageEnumerator.GetDirectoryContents(request.Path).Exists)
+        {
+            throw new NotFoundException($"Folder '{request.Path}' was not found.");
+        }
+
         var entries = CollectEntries(imageEnumerator, request.Path, user);
 
         var result = TypedResults.Ok(PaginatedResult<FolderEntry>.Paginate(entries, request.Page, request.PageSize));
