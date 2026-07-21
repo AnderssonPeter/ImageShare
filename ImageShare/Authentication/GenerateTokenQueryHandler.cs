@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ImageShare.Authentication;
 
-internal sealed class GenerateTokenQueryHandler(JwtTokenService tokenService)
+internal sealed class GenerateTokenQueryHandler(JwtTokenIssuer tokenIssuer)
     : IQueryHandler<GenerateTokenQuery, Ok<string>>
 {
     public ValueTask<Ok<string>> Handle(GenerateTokenQuery request, CancellationToken cancellationToken)
@@ -24,7 +24,7 @@ internal sealed class GenerateTokenQueryHandler(JwtTokenService tokenService)
             throw new BadRequestException("The end date must be in the future.");
         }
 
-        var token = tokenService.CreateToken(request.Name, request.Filter, request.EndDate);
+        var token = tokenIssuer.CreateToken(request.Name, request.Filter, request.EndDate);
         return new(TypedResults.Ok(token));
     }
 }

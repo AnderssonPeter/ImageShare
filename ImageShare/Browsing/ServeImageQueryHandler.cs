@@ -33,6 +33,6 @@ internal sealed class ServeImageQueryHandler(
             throw new NotFoundException($"Image '{request.Path.FileNameWithoutExtension}' was not found.");
         }
 
-        return new(BrowsingHelpers.ServeBestMatch(candidates, contentTypeProvider, request.Accept));
+        return new(new ImageCandidates(candidates, contentTypeProvider).ServeBest(request.Accept));
     }
 }

@@ -53,7 +53,7 @@ internal sealed class GetRandomImageQueryHandler(
             throw new NotFoundException($"Image '{randomBaseName}' was not found.");
         }
 
-        return new(BrowsingHelpers.ServeBestMatch(candidates, contentTypeProvider, request.Accept));
+        return new(new ImageCandidates(candidates, contentTypeProvider).ServeBest(request.Accept));
     }
 
     private static List<RelativePath> NormalizeFolders(string[] folderValues) =>

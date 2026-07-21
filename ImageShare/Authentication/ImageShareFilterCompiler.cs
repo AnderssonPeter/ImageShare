@@ -2,12 +2,12 @@
 
 namespace ImageShare.Authentication;
 
-public class ImageShareFilterService
+public class ImageShareFilterCompiler
 {
     private readonly Dictionary<string, Regex> _cache = [];
     private readonly Lock _lock = new();
 
-    public Regex GetImageShareFilterRegex(string imageShareFilter)
+    public Regex Compile(string imageShareFilter)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(imageShareFilter);
         lock (_lock)

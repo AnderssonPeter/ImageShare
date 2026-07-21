@@ -7,13 +7,13 @@ using Microsoft.AspNetCore.Http.HttpResults;
 namespace ImageShare.Authentication;
 
 internal sealed class LoginWithJwtCommandHandler(
-    JwtTokenService tokenService,
+    JwtTokenValidator tokenValidator,
     IHttpContextAccessor httpContextAccessor)
     : ICommandHandler<LoginWithJwtCommand, RedirectHttpResult>
 {
     public async ValueTask<RedirectHttpResult> Handle(LoginWithJwtCommand request, CancellationToken cancellationToken)
     {
-        var principal = await tokenService.ValidateTokenAsync(request.Token);
+        var principal = await tokenValidator.ValidateTokenAsync(request.Token);
         var filterClaim = principal.Claims
             .Single(claim => claim.Type.Equals(ImageShareClaims.ImageShareFilter, StringComparison.OrdinalIgnoreCase));
         var nameClaim = principal.Claims

@@ -18,10 +18,12 @@ public static class AuthenticationExtensions
     }
 
     public static IServiceCollection AddImageShareFilter(this IServiceCollection services) =>
-        services.AddSingleton<ImageShareFilterService>();
+        services.AddSingleton<ImageShareFilterCompiler>();
 
-    public static IServiceCollection AddJwtTokenService(this IServiceCollection services) =>
-        services.AddSingleton<JwtTokenService>();
+    public static IServiceCollection AddJwtTokens(this IServiceCollection services) =>
+        services
+            .AddSingleton<JwtTokenIssuer>()
+            .AddSingleton<JwtTokenValidator>();
 
     public static IServiceCollection AddAuthentications(this IServiceCollection services)
     {

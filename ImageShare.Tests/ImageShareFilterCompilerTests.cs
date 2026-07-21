@@ -3,13 +3,13 @@
 namespace ImageShare.Tests;
 
 [MicrosoftDI]
-public class ImageShareFilterServiceTests(ImageShareFilterService service)
+public class ImageShareFilterCompilerTests(ImageShareFilterCompiler compiler)
 {
     [Test]
-    public async Task GetImageShareFilterRegex_LiteralPattern_MatchesExactString()
+    public async Task Compile_LiteralPattern_MatchesExactString()
     {
         // Act
-        var regex = service.GetImageShareFilterRegex("hello");
+        var regex = compiler.Compile("hello");
 
         // Assert
         await Assert.That(regex.IsMatch("hello")).IsTrue();
@@ -19,10 +19,10 @@ public class ImageShareFilterServiceTests(ImageShareFilterService service)
     }
 
     [Test]
-    public async Task GetImageShareFilterRegex_WildcardStar_MatchesAnyNonSlashSequence()
+    public async Task Compile_WildcardStar_MatchesAnyNonSlashSequence()
     {
         // Act
-        var regex = service.GetImageShareFilterRegex("images/*.jpg");
+        var regex = compiler.Compile("images/*.jpg");
 
         // Assert
         await Assert.That(regex.IsMatch("images/photo.jpg")).IsTrue();
@@ -32,10 +32,10 @@ public class ImageShareFilterServiceTests(ImageShareFilterService service)
     }
 
     [Test]
-    public async Task GetImageShareFilterRegex_WildcardQuestion_MatchesSingleNonSlashChar()
+    public async Task Compile_WildcardQuestion_MatchesSingleNonSlashChar()
     {
         // Act
-        var regex = service.GetImageShareFilterRegex("file?.txt");
+        var regex = compiler.Compile("file?.txt");
 
         // Assert
         await Assert.That(regex.IsMatch("file1.txt")).IsTrue();
@@ -45,10 +45,10 @@ public class ImageShareFilterServiceTests(ImageShareFilterService service)
     }
 
     [Test]
-    public async Task GetImageShareFilterRegex_MultiplePatterns_MatchesAnyOfThem()
+    public async Task Compile_MultiplePatterns_MatchesAnyOfThem()
     {
         // Act
-        var regex = service.GetImageShareFilterRegex("*.jpg|*.png|*.gif");
+        var regex = compiler.Compile("*.jpg|*.png|*.gif");
 
         // Assert
         await Assert.That(regex.IsMatch("photo.jpg")).IsTrue();
@@ -59,10 +59,10 @@ public class ImageShareFilterServiceTests(ImageShareFilterService service)
     }
 
     [Test]
-    public async Task GetImageShareFilterRegex_CaseInsensitive_MatchesRegardlessOfCase()
+    public async Task Compile_CaseInsensitive_MatchesRegardlessOfCase()
     {
         // Act
-        var regex = service.GetImageShareFilterRegex("FILE.TXT");
+        var regex = compiler.Compile("FILE.TXT");
 
         // Assert
         await Assert.That(regex.IsMatch("file.txt")).IsTrue();
@@ -71,10 +71,10 @@ public class ImageShareFilterServiceTests(ImageShareFilterService service)
     }
 
     [Test]
-    public async Task GetImageShareFilterRegex_Anchored_DoesNotMatchPartialString()
+    public async Task Compile_Anchored_DoesNotMatchPartialString()
     {
         // Act
-        var regex = service.GetImageShareFilterRegex("foo");
+        var regex = compiler.Compile("foo");
 
         // Assert
         await Assert.That(regex.IsMatch("foo")).IsTrue();
@@ -83,10 +83,10 @@ public class ImageShareFilterServiceTests(ImageShareFilterService service)
     }
 
     [Test]
-    public async Task GetImageShareFilterRegex_SpecialRegexChars_AreEscaped()
+    public async Task Compile_SpecialRegexChars_AreEscaped()
     {
         // Act
-        var regex = service.GetImageShareFilterRegex("cost[0-9].txt");
+        var regex = compiler.Compile("cost[0-9].txt");
 
         // Assert
         await Assert.That(regex.IsMatch("cost[0-9].txt")).IsTrue();
@@ -94,10 +94,10 @@ public class ImageShareFilterServiceTests(ImageShareFilterService service)
     }
 
     [Test]
-    public async Task GetImageShareFilterRegex_ComplexPattern_MatchesCorrectly()
+    public async Task Compile_ComplexPattern_MatchesCorrectly()
     {
         // Act
-        var regex = service.GetImageShareFilterRegex("src/**/build/*.dll|src/*.exe");
+        var regex = compiler.Compile("src/**/build/*.dll|src/*.exe");
 
         // Assert
         await Assert.That(regex.IsMatch("src/project/build/output.dll")).IsTrue();
@@ -108,43 +108,43 @@ public class ImageShareFilterServiceTests(ImageShareFilterService service)
     [Test]
     [Arguments(null)]
     [Arguments("")]
-    public async Task GetImageShareFilterRegex_NullOrEmptyInput_ThrowsArgumentException(string? input) =>
-        await Assert.That(() => service.GetImageShareFilterRegex(input!)).Throws<ArgumentException>();
+    public async Task Compile_NullOrEmptyInput_ThrowsArgumentException(string? input) =>
+        await Assert.That(() => compiler.Compile(input!)).Throws<ArgumentException>();
 
     [Test]
     [Arguments(" ")]
     [Arguments("\t")]
     [Arguments("  ")]
-    public async Task GetImageShareFilterRegex_WhitespaceInput_ThrowsArgumentException(string input) =>
-        await Assert.That(() => service.GetImageShareFilterRegex(input)).Throws<ArgumentException>();
+    public async Task Compile_WhitespaceInput_ThrowsArgumentException(string input) =>
+        await Assert.That(() => compiler.Compile(input)).Throws<ArgumentException>();
 
     [Test]
-    public async Task GetImageShareFilterRegex_SameInput_ReturnsCachedInstance()
+    public async Task Compile_SameInput_ReturnsCachedInstance()
     {
         // Act
-        var regex1 = service.GetImageShareFilterRegex("cached-pattern");
-        var regex2 = service.GetImageShareFilterRegex("cached-pattern");
+        var regex1 = compiler.Compile("cached-pattern");
+        var regex2 = compiler.Compile("cached-pattern");
 
         // Assert
         await Assert.That(regex1).IsSameReferenceAs(regex2);
     }
 
     [Test]
-    public async Task GetImageShareFilterRegex_DifferentInputs_ReturnDifferentInstances()
+    public async Task Compile_DifferentInputs_ReturnDifferentInstances()
     {
         // Act
-        var regex1 = service.GetImageShareFilterRegex("pattern-a");
-        var regex2 = service.GetImageShareFilterRegex("pattern-b");
+        var regex1 = compiler.Compile("pattern-a");
+        var regex2 = compiler.Compile("pattern-b");
 
         // Assert
         await Assert.That(regex1).IsNotSameReferenceAs(regex2);
     }
 
     [Test]
-    public async Task GetImageShareFilterRegex_StarAtStart_MatchesEverything()
+    public async Task Compile_StarAtStart_MatchesEverything()
     {
         // Act
-        var regex = service.GetImageShareFilterRegex("*.log");
+        var regex = compiler.Compile("*.log");
 
         // Assert
         await Assert.That(regex.IsMatch("errors.log")).IsTrue();
@@ -153,10 +153,10 @@ public class ImageShareFilterServiceTests(ImageShareFilterService service)
     }
 
     [Test]
-    public async Task GetImageShareFilterRegex_EscapedPattern_HandlesDotCorrectly()
+    public async Task Compile_EscapedPattern_HandlesDotCorrectly()
     {
         // Act
-        var regex = service.GetImageShareFilterRegex("file.txt");
+        var regex = compiler.Compile("file.txt");
 
         // Assert
         await Assert.That(regex.IsMatch("file.txt")).IsTrue();

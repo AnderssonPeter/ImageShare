@@ -44,11 +44,11 @@
   [X] Add user class
   [X] Don't use _ for private fields
     [X] Configure .editorconfig accordingly
-  [ ] Try not to create helper classes or service classes, create extension methods or classes that handle the logic
-    [ ] BrowsingHelpers.IsImageFile/IsHiddenFile could be added to a `RelativePath` class, that is converted from string.
-    [ ] `PathHelper` could also be merged into `RelativePath`
-    [ ] BrowsingHelpers.HasVisibleContent Should be an extension method on IFileProvider
-    [ ] Add XML comments to the newly created methods
+  [X] Try not to create helper classes or service classes, create extension methods or classes that handle the logic
+    [X] BrowsingHelpers.IsImageFile/IsHiddenFile could be added to a `RelativePath` class, that is converted from string.
+    [X] `PathHelper` could also be merged into `RelativePath`
+    [X] BrowsingHelpers.HasVisibleContent Should be an extension method on IFileProvider
+    [X] Add XML comments to the newly created methods
   [X] Add custom exception mapper
     [X] Use custom exceptions for different types of errors
     [X] Add EnsureAuthenticated on IUser

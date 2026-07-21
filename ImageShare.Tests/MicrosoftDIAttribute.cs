@@ -52,7 +52,7 @@ public class MicrosoftDIAttribute : DependencyInjectionDataSourceAttribute<IServ
             .AddSingleton<IContentTypeProvider>(contentTypeProvider)
             .AddSingleton<ILoggerFactory>(new LoggerFactory())
             .AddSingleton<ImageConverter>()
-            .AddSingleton<ImageShareFilterService>()
+            .AddSingleton<ImageShareFilterCompiler>()
             .AddTransient<ImageConverterJob>()
             .AddSingleton<TestImageFactory>()
             .AddScoped<TestUser>()

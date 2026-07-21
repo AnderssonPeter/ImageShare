@@ -22,10 +22,10 @@ internal sealed class DownloadImagesQueryHandler(
             throw new BadRequestException("At least one folder must be specified.");
         }
 
-        var format = BrowsingHelpers.NormalizeFormat(request.Format);
-        if (format is not null && !imageEnumerator.IsSupportedFormat(format))
+        var format = new RequestedFormat(request.Format);
+        if (!format.IsSupportedBy(imageEnumerator.SupportedFormats))
         {
-            throw new BadRequestException($"Format '{format}' is not supported.");
+            throw new BadRequestException($"Format '{format.Value}' is not supported.");
         }
 
         foreach (var folder in folders)
@@ -35,7 +35,7 @@ internal sealed class DownloadImagesQueryHandler(
 
         var imageFiles = folders
             .SelectMany(folder => imageEnumerator.EnumerateImages(folder, recursive: true))
-            .Where(file => format is null || string.Equals(file.Path.Extension, format, StringComparison.OrdinalIgnoreCase))
+            .Where(file => format.Matches(file.Path.Extension))
             .ToList();
 
         if (imageFiles.Count == 0)

@@ -33,7 +33,7 @@ builder.Services.AddCustomErrors();
 builder.Services.AddAuthentications();
 builder.Services.AddImageShareFilter();
 builder.Services.AddUser();
-builder.Services.AddJwtTokenService();
+builder.Services.AddJwtTokens();
 builder.Services.AddImageConversion();
 builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
 builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuthenticationBehavior<,>));

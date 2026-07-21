@@ -21,7 +21,7 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IMediat
     public async Task IsFormatAccepted_MatchesExpectedBehavior(StringValues header, string format, bool expected)
     {
         // Act
-        var result = BrowsingHelpers.IsFormatAccepted(header, format);
+        var result = header.Accepts(format);
 
         // Assert
         await Assert.That(result).IsEqualTo(expected);

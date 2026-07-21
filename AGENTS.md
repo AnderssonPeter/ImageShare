@@ -31,6 +31,17 @@ If `format:check` fails (often due to file encoding on newly created files), run
 
 Do not use abbreviations when naming variables, parameters, fields, or methods. Use full, descriptive names (e.g. `cancellationToken` not `ct`, `directory` not `dir`, `extension` not `ext`).
 
+## Domain modeling (no helper / service classes)
+
+Do not create `*Helper`, `*Service`, `*Util`, or `*Manager` classes as dumping grounds for free functions. They break encapsulation and hide behavior that belongs on a domain concept. Prefer one of these alternatives, in order:
+
+1. **Find a better class name** Find a class name that has one responsibility no more
+2. **Extension methods.** If the behavior is a pure transformation that operates on an existing type you do not own (framework types like `StringValues`, `IFileInfo`, `string[]`), expose it as an extension method on that type. Group related extensions in a single static `*Extensions` class — this is not a "helper" class, it is the C# mechanism for adding methods to foreign types.
+3. **Adapters implementing an external interface.** A class that implements a third-party framework interface (e.g. `IApiKeyProvider`, `IOpenIdConnectOptionsConfigure`) is legitimate and not covered by this rule — it only exists to satisfy the framework's contract.
+4. **Split the class into multiple classes** If none of the above is possible, split the class into multiple classes each with a more narrow usecase.
+ 
+When you encounter an existing `*Helper`, `*Service`, `*Util`, or `*Manager` class that violates this rule, do not add new code to it. Propose a refactor to the user: according to the rules above.
+
 ## Options objects
 
 All options must be validated on startup
