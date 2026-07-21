@@ -75,7 +75,6 @@ public class ImageEndpointsTests(ISyncWritableFileProvider fileProvider, IMediat
     [Test]
     [Arguments("../etc")]
     [Arguments("/etc")]
-    [Arguments("/")]
     [Arguments("/etc/passwd")]
     public async Task ServeImage_UnsafePath_ThrowsArgumentException(string path) =>
         await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath(path), "", false))).Throws<ArgumentException>();

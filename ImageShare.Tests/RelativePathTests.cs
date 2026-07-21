@@ -20,10 +20,14 @@ public class RelativePathTests
     [Arguments("foo/../bar")]
     [Arguments("FOO/..")]
     [Arguments("/etc/passwd")]
-    [Arguments("/")]
     [Arguments("/etc")]
     public async Task Constructor_UnsafePath_ThrowsArgumentException(string path) =>
         await Assert.That(() => new RelativePath(path)).Throws<ArgumentException>();
+
+    [Test]
+    [Arguments("/", "")]
+    public async Task Constructor_RootSlash_NormalizesToRoot(string input, string expected) =>
+        await Assert.That(new RelativePath(input).Value).IsEqualTo(expected);
 
     [Test]
     [Arguments("foo/bar", "foo")]
@@ -44,6 +48,18 @@ public class RelativePathTests
     [Test]
     public async Task Combine_SafePaths_ReturnsCombinedPath() =>
         await Assert.That(new RelativePath("foo").Combine("bar").Value).IsEqualTo("foo/bar");
+
+    [Test]
+    public async Task Combine_NestedPaths_ReturnsNestedPath() =>
+        await Assert.That(new RelativePath("foo/bar").Combine("baz").Value).IsEqualTo("foo/bar/baz");
+
+    [Test]
+    [Arguments("birds/", "birds")]
+    [Arguments("birds/nested/", "birds/nested")]
+    [Arguments("birds\\nested", "birds/nested")]
+    [Arguments("birds\\nested\\", "birds/nested")]
+    public async Task Constructor_NormalizesSeparatorsAndTrimsTrailingSlash(string input, string expected) =>
+        await Assert.That(new RelativePath(input).Value).IsEqualTo(expected);
 
     [Test]
     [Arguments("../etc", "bar")]

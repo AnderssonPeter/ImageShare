@@ -2,9 +2,9 @@
 [X] Add nuget mcp
 [X] Enable dotnet and typescript LSP
 [X] Add powershell to docker
-[ ] Dynamic Context Pruning Plugin https://github.com/Opencode-DCP/opencode-dynamic-context-pruning
-[ ] Allow opencode to access tmp folder by default
-[ ] mcp to search code base https://github.com/Helweg/opencode-codebase-index
+[X] Dynamic Context Pruning Plugin https://github.com/Opencode-DCP/opencode-dynamic-context-pruning
+[X] Allow opencode to access tmp folder by default
+[X] mcp to search code base https://github.com/Helweg/opencode-codebase-index
 [ ] Fix context7 auth
 [X] Add Auth endpoint where you can provide a filter (same as `User.ImageShareFilter` and a end date, and returns a signed jwt token
   [X] The endpoint that generates a JWT should verify that the user has a admin role (what the role is named should be configured in appsettings, the admin role can only exist when authing from open id connect)
@@ -63,8 +63,8 @@
   [X] /images/download fails due to some `System.InvalidOperationException: Synchronous operations are disallowed. Call WriteAsync or set AllowSynchronousIO to true instead.` error
   [X] Path parameters are incorrectly sent from scalar, i don't know if its a bug in scalar or a bug in how we specified the path variable in openapi, the path parameter is url encoded so / is replaced by %2f
   [X] When a path is provided that doesn't exist return 404
-  [ ] Image converter job doesn't seem to work
-  [ ] When you only download one folder, don't create a folder for it inside the zip
+  [/] Image converter job doesn't seem to work
+  [X] When you only download one folder, don't create a folder for it inside the zip
   [X] Add canAccessFolder method to user class
     [X] Move the regex generation logic into it's own class that caches regexes for each filter.
     [X] Add unit tests for canAccessFolder method

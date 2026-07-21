@@ -1,21 +1,25 @@
 ﻿{
   "$schema": "https://opencode.ai/config.json",
   "lsp": true,
-    "mcp": {
-        "context7": {
-            "type": "remote",
-            "url": "https://mcp.context7.com/mcp/oauth",
-            "enabled": true
-        },
-        "microsoft-learn": {
-            "type": "remote",
-            "url": "https://learn.microsoft.com/api/mcp",
-            "enabled": true
-        },
-        "nuget": {
-            "type": "local",
-            "command": [ "dnx", "NuGet.Mcp.Server", "--source", "https://api.nuget.org/v3/index.json", "--yes" ],
-            "enabled": true
-        }
+  "plugin": ["opencode-codebase-index"],
+  "permission": {
+    "grep *": "allow"
+  },
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp/oauth",
+      "enabled": true
+    },
+    "microsoft-learn": {
+      "type": "remote",
+      "url": "https://learn.microsoft.com/api/mcp",
+      "enabled": true
+    },
+    "nuget": {
+      "type": "local",
+      "command": [ "dnx", "NuGet.Mcp.Server", "--source", "https://api.nuget.org/v3/index.json", "--yes" ],
+      "enabled": true
     }
+  }
 }

@@ -43,22 +43,38 @@ internal sealed class DownloadImagesQueryHandler(
             throw new NotFoundException("No images were found matching the requested criteria.");
         }
 
+        RelativePath? stripPrefix = folders.Count == 1 ? folders[0] : null;
+
         var result = TypedResults.Stream(
-            async stream => await WriteZipAsync(imageFiles, stream, cancellationToken),
+            async stream => await WriteZipAsync(imageFiles, stream, cancellationToken, stripPrefix),
             "application/zip",
             "images.zip");
 
         return new(result);
     }
 
-    internal static async Task WriteZipAsync(IEnumerable<(RelativePath Path, IFileInfo Info)> imageFiles, Stream output, CancellationToken cancellationToken)
+    internal static async Task WriteZipAsync(
+        IEnumerable<(RelativePath Path, IFileInfo Info)> imageFiles,
+        Stream output,
+        CancellationToken cancellationToken,
+        RelativePath? stripPrefix = null)
     {
         using var memoryStream = new MemoryStream();
         await using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, leaveOpen: true))
         {
             foreach (var (path, info) in imageFiles)
             {
-                var entry = archive.CreateEntry(path, CompressionLevel.NoCompression);
+                var entryName = path.Value;
+                if (stripPrefix is { } prefix)
+                {
+                    var prefixWithSlash = prefix.Value + "/";
+                    if (entryName.StartsWith(prefixWithSlash, StringComparison.Ordinal))
+                    {
+                        entryName = entryName[prefixWithSlash.Length..];
+                    }
+                }
+
+                var entry = archive.CreateEntry(entryName, CompressionLevel.NoCompression);
                 await using var entryStream = await entry.OpenAsync(cancellationToken);
                 await using var fileStream = info.CreateReadStream();
                 await fileStream.CopyToAsync(entryStream, cancellationToken);
@@ -70,5 +86,7 @@ internal sealed class DownloadImagesQueryHandler(
     }
 
     private static List<RelativePath> NormalizeFolders(string[] folderValues) =>
-        [.. folderValues.Where(value => !string.IsNullOrEmpty(value)).Select(value => new RelativePath(value))];
+        [.. folderValues
+            .Where(value => !string.IsNullOrEmpty(value))
+            .Select(value => new RelativePath(value))];
 }

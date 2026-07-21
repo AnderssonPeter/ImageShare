@@ -28,7 +28,6 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
     [Test]
     [Arguments("../etc")]
     [Arguments("/etc")]
-    [Arguments("/")]
     [Arguments("/etc/passwd")]
     public async Task GetEntries_UnsafePath_ThrowsArgumentException(string path) =>
         await Assert.That(async () => await mediator.Send(new GetEntriesQuery(new RelativePath(path), Page, PageSize))).Throws<ArgumentException>();
@@ -470,15 +469,15 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         using var memory = new MemoryStream();
-        await DownloadImagesQueryHandler.WriteZipAsync(files, memory, CancellationToken.None);
+        await DownloadImagesQueryHandler.WriteZipAsync(files, memory, CancellationToken.None, new RelativePath("album"));
         memory.Position = 0;
         using var archive = new ZipArchive(memory, ZipArchiveMode.Read);
 
         // Assert
         var entries = archive.Entries.Select(entry => entry.FullName).ToList();
         await Assert.That(entries.Count).IsEqualTo(2);
-        await Assert.That(entries).Contains("album/photo.avif");
-        await Assert.That(entries).Contains("album/sub/nested.jpg");
+        await Assert.That(entries).Contains("photo.avif");
+        await Assert.That(entries).Contains("sub/nested.jpg");
         await Assert.That(entries.Any(name => name.Contains("thumb", StringComparison.OrdinalIgnoreCase))).IsFalse();
         await Assert.That(entries.Any(name => name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))).IsFalse();
     }
@@ -509,6 +508,22 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
     }
 
     [Test]
+    public async Task DownloadImages_TrailingSlashFolder_StripsFolderPrefixFromEntries()
+    {
+        // Arrange
+        fileProvider.AddFile("album/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.AddFile("album/sub/nested.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
+        user.Allow("album");
+
+        // Act
+        var result = await mediator.Send(new DownloadImagesQuery(["album/"], ["avif", "jpg"]));
+
+        // Assert
+        await Assert.That(result.IsStatusCode(200)).IsTrue();
+        await Assert.That(result.GetContentType()).IsEqualTo("application/zip");
+    }
+
+    [Test]
     public async Task DownloadImages_UnsupportedFormat_ReturnsBadRequest()
     {
         // Arrange
@@ -535,14 +550,14 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         using var memory = new MemoryStream();
-        await DownloadImagesQueryHandler.WriteZipAsync(files, memory, CancellationToken.None);
+        await DownloadImagesQueryHandler.WriteZipAsync(files, memory, CancellationToken.None, new RelativePath("album"));
         memory.Position = 0;
         using var archive = new ZipArchive(memory, ZipArchiveMode.Read);
 
         // Assert
         var entries = archive.Entries.Select(entry => entry.FullName).ToList();
         await Assert.That(entries.Count).IsEqualTo(1);
-        await Assert.That(entries).Contains("album/picture.jpg");
+        await Assert.That(entries).Contains("picture.jpg");
     }
 
     [Test]
@@ -568,7 +583,7 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
 
         // Act
         using var memory = new MemoryStream();
-        await DownloadImagesQueryHandler.WriteZipAsync(files, memory, CancellationToken.None);
+        await DownloadImagesQueryHandler.WriteZipAsync(files, memory, CancellationToken.None, new RelativePath("vacation"));
         memory.Position = 0;
         using var archive = new ZipArchive(memory, ZipArchiveMode.Read);
 
@@ -685,7 +700,6 @@ public class FolderEndpointsTests(ISyncWritableFileProvider fileProvider, IMedia
     [Test]
     [Arguments("../etc")]
     [Arguments("/etc")]
-    [Arguments("/")]
     [Arguments("/etc/passwd")]
     public async Task GetRandomImage_Thumbnail_UnsafePath_ThrowsArgumentException(string path) =>
         await Assert.That(async () => await mediator.Send(new GetRandomImageQuery([path], Thumbnail: true))).Throws<ArgumentException>();

@@ -100,7 +100,7 @@ public class IntegrationTests
         using var memoryStream = new MemoryStream(zipBytes);
         using var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read);
         await Assert.That(archive.Entries.Count).IsEqualTo(1);
-        await Assert.That(archive.Entries[0].FullName).IsEqualTo("vacation/photo.avif");
+        await Assert.That(archive.Entries[0].FullName).IsEqualTo("photo.avif");
     }
 
     [Test]
