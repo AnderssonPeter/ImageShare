@@ -400,3 +400,4 @@ FodyWeavers.xsd
 # opencode
 opencode/state/*
 opencode/share/*
+/ImageShare/openapi.json

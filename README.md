@@ -110,6 +110,8 @@
   [X] Add static analysis unit test that ensures that all minimal endpoints parameters has [FromQuery], [FromRoute], [FromBody], [FromHeader] or [FromServices] attributes
   [X] Call OpenApi endpoint instead of root in startup.ps1
   [ ] Fork WritableFileProvider and add cancellationToken to ReadAsBytesAsync
+  [X] Write openapi spec to disk on build
+  [/] Include full path in /content and /content/{path}
 [ ] FE
   [ ] Add mcp server for tanstack
   [ ] Add mcp server for shadcn
