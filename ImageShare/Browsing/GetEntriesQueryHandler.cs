@@ -58,11 +58,11 @@ internal sealed class GetEntriesQueryHandler(
                     continue;
                 }
 
-                entries.Add(new FolderEntry { Name = item.Name, Type = EntryType.Folder });
+                entries.Add(new FolderEntry { Name = item.Name, Path = folderPath.Value, Type = EntryType.Folder });
             }
             else if (relativePath.HasRootFolder && TryGetVisibleFileName(enumerator, item.Name, out var fileName) && seenFiles.Add(fileName))
             {
-                entries.Add(new FolderEntry { Name = fileName, Type = EntryType.File });
+                entries.Add(new FolderEntry { Name = fileName, Path = relativePath.Combine(fileName).Value, Type = EntryType.File });
             }
         }
 

@@ -23,7 +23,7 @@
 [X] Convert unit tests to parameterized unit tests where it makes sense
 [X] Add TestUser to DI
 [X] Disallow root paths
-[ ] Folder endpoint should only return files that have a image file extension
+[X] Folder endpoint should only return files that have a image file extension
 [X] Add endpoint to download multiple images, from multiple folders recursively
 [X] Add endpoint to get random image from a list of folder recursively
 [X] In unit tests move AddDir (rename to AddDirectory), AddFile, AddImageFile, AddThumbFile, Unwrap and other common methods to extension methods
@@ -63,7 +63,7 @@
   [X] /images/download fails due to some `System.InvalidOperationException: Synchronous operations are disallowed. Call WriteAsync or set AllowSynchronousIO to true instead.` error
   [X] Path parameters are incorrectly sent from scalar, i don't know if its a bug in scalar or a bug in how we specified the path variable in openapi, the path parameter is url encoded so / is replaced by %2f
   [X] When a path is provided that doesn't exist return 404
-  [/] Image converter job doesn't seem to work
+  [X] Image converter job doesn't seem to work
   [X] When you only download one folder, don't create a folder for it inside the zip
   [X] Add canAccessFolder method to user class
     [X] Move the regex generation logic into it's own class that caches regexes for each filter.
@@ -111,7 +111,7 @@
   [X] Call OpenApi endpoint instead of root in startup.ps1
   [ ] Fork WritableFileProvider and add cancellationToken to ReadAsBytesAsync
   [X] Write openapi spec to disk on build
-  [/] Include full path in /content and /content/{path}
+  [X] Include full path in /content and /content/{path}
 [ ] FE
   [ ] Add mcp server for tanstack
   [ ] Add mcp server for shadcn

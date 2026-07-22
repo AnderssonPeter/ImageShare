@@ -65,6 +65,7 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
 
         var folder = paginated.Items.Single(entry => entry.Name == "allowed-folder");
         await Assert.That(folder.Type).IsEqualTo(EntryType.Folder);
+        await Assert.That(folder.Path).IsEqualTo("allowed-folder");
 
         await Assert.That(paginated.Items.Any(entry => entry.Name == "blocked-folder")).IsFalse();
     }
@@ -85,6 +86,7 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(1);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("images");
+        await Assert.That(paginated.Items[0].Path).IsEqualTo("images");
         await Assert.That(paginated.Items[0].Type).IsEqualTo(EntryType.Folder);
     }
 
@@ -143,10 +145,16 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         await Assert.That(paginated.Items.Count).IsEqualTo(3);
         await Assert.That(paginated.TotalCount).IsEqualTo(3);
 
+        var file = paginated.Items.Single(entry => entry.Name == "sub-file");
+        await Assert.That(file.Type).IsEqualTo(EntryType.File);
+        await Assert.That(file.Path).IsEqualTo("allowed/sub-file");
+
         var folder1 = paginated.Items.Single(entry => entry.Name == "sub-secret");
         await Assert.That(folder1.Type).IsEqualTo(EntryType.Folder);
+        await Assert.That(folder1.Path).IsEqualTo("allowed/sub-secret");
         var folder2 = paginated.Items.Single(entry => entry.Name == "sub-public");
         await Assert.That(folder2.Type).IsEqualTo(EntryType.Folder);
+        await Assert.That(folder2.Path).IsEqualTo("allowed/sub-public");
     }
 
     [Test]
@@ -271,8 +279,10 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(2);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("image");
+        await Assert.That(paginated.Items[0].Path).IsEqualTo("sub/image");
         await Assert.That(paginated.Items[0].Type).IsEqualTo(EntryType.File);
         await Assert.That(paginated.Items[1].Name).IsEqualTo("readme");
+        await Assert.That(paginated.Items[1].Path).IsEqualTo("sub/readme");
     }
 
     [Test]
@@ -291,7 +301,9 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(2);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("other");
+        await Assert.That(paginated.Items[0].Path).IsEqualTo("sub/other");
         await Assert.That(paginated.Items[1].Name).IsEqualTo("photo");
+        await Assert.That(paginated.Items[1].Path).IsEqualTo("sub/photo");
     }
 
     [Test]
@@ -315,7 +327,9 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         await Assert.That(page1.TotalCount).IsEqualTo(5);
         await Assert.That(page1.Page).IsEqualTo(1);
         await Assert.That(page1.Items[0].Name).IsEqualTo("1");
+        await Assert.That(page1.Items[0].Path).IsEqualTo("sub/1");
         await Assert.That(page1.Items[1].Name).IsEqualTo("2");
+        await Assert.That(page1.Items[1].Path).IsEqualTo("sub/2");
 
         await Assert.That(page2.Items.Count).IsEqualTo(2);
         await Assert.That(page2.Page).IsEqualTo(2);
@@ -360,7 +374,9 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(2);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("image");
+        await Assert.That(paginated.Items[0].Path).IsEqualTo("sub/image");
         await Assert.That(paginated.Items[1].Name).IsEqualTo("photo");
+        await Assert.That(paginated.Items[1].Path).IsEqualTo("sub/photo");
     }
 
     [Test]
@@ -378,6 +394,7 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         // Assert
         await Assert.That(paginated.TotalCount).IsEqualTo(1);
         await Assert.That(paginated.Items[0].Name).IsEqualTo("photo");
+        await Assert.That(paginated.Items[0].Path).IsEqualTo("sub/photo");
         await Assert.That(paginated.Items[0].Type).IsEqualTo(EntryType.File);
     }
 
