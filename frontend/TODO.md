@@ -1,0 +1,99 @@
+﻿# ImageShare Frontend — Todo List
+
+Generated from `PLAN.md`. Check off items as you complete them.
+
+---
+
+## Phase 1 — Project setup & tooling
+
+- [ ] Install runtime dependencies: `@tanstack/react-router`, `@tanstack/router-plugin`, `@tanstack/react-query`, `@tanstack/react-virtual`, `react-zoom-pan-pinch`, `qrcode.react`
+- [ ] Install dev dependencies: `tailwindcss`, `@tailwindcss/vite`, `orval`
+- [ ] Configure oxlint with more strict rules
+- [ ] Add vitest
+- [ ] Adapt .editorconfig for typescript and react
+- [ ] Initialize shadcn-ui: `pnpm dlx shadcn@latest init`
+- [ ] Add shadcn components: `pnpm dlx shadcn@latest add button dialog carousel input label tooltip dropdown-menu sonner skeleton`
+- [ ] Update `vite.config.ts`: add Tailwind + Router plugins, `@` alias, hardcoded dev proxy port
+- [ ] Update `tsconfig.app.json` / `tsconfig.json`: add `baseUrl` and `paths` for `@/*`
+- [ ] Replace `src/index.css` with `@import "tailwindcss";` + shadcn theme variables
+- [ ] Add `gen:api` and update `build` scripts in `package.json`
+- [ ] Create a SVG Icon for the solution
+- [ ] Build a favicon based on the svg icon
+
+---
+
+## Phase 2 — API client generation (orval)
+
+- [ ] Create `orval.config.ts` at repo root (input: `../ImageShare/openapi.json`, fetch mutator, TanStack Query overrides)
+- [ ] Implement `src/lib/api/custom-fetcher.ts` (credentials, Accept header, ProblemDetails error unwrapping)
+- [ ] Implement `src/lib/api/content-queries.ts` — `useFolderContent(path?)` `useInfiniteQuery` wrapper handling page/pageSize vs Page/PageSize casing
+- [ ] Implement `src/lib/api/urls.ts` — `imageUrl`, `randomFolderUrl`, `downloadUrl` string builders
+- [ ] Run `pnpm gen:api` and verify generated client compiles
+
+---
+
+## Phase 3 — Metro UI design system + theming
+
+- [ ] Define light + dark theme CSS variables (accent = blue `#0078D4`, radius ~2px)
+- [ ] Implement theme detection: `matchMedia('(prefers-color-scheme: dark)')` with fallback to dark
+- [ ] Add live theme-switch listener + optional localStorage override
+- [ ] Create `ThemeToggle` component for app bar
+- [ ] Create `MetroAppBar` layout (app title, breadcrumb slot, theme toggle, user chip, admin button)
+- [ ] Establish Metro tile base styles (flat, no shadow, 2px gutters, accent on press)
+
+---
+
+## Phase 4 — Routing (TanStack Router, file-based)
+
+- [ ] Create `src/routes/__root.tsx` — layout shell, `beforeLoad` auth (401 → backend `/login`), expose `user` + `queryClient` via router context, theme init
+- [ ] Create `src/routes/index.tsx` — redirect to `/browse`
+- [ ] Create `src/routes/browse.$.tsx` — splat route, reconstruct `RelativePath` from segments, prefetch first page in `loader`
+- [ ] Create `src/routes/share.$token.tsx` — redirect to `/login/jwt/{token}`
+- [ ] Create `src/routes/admin.tsx` — `beforeLoad` isAdmin gate (403 redirect)
+- [ ] Verify `src/routeTree.gen.ts` auto-generates via Vite plugin
+- [ ] Wire `router.tsx` with `createRouter` + `scrollRestoration`
+
+---
+
+## Phase 5 — Browse grid (TanStack Query × TanStack Virtual)
+
+- [ ] Implement `FolderGrid.tsx` — flatten infinite-query pages into flat item array
+- [ ] Implement responsive column count (ResizeObserver / `useMeasure`)
+- [ ] Implement `useVirtualizer` row-based virtualization (`estimateSize` = tile + gutter)
+- [ ] Implement autoload: trigger `fetchNextPage()` when last visible row near end; skeleton placeholder while fetching
+- [ ] Implement `FolderTile` — cover from `randomFolderUrl(thumbnail, recursive)`, name overlay, navigate on click, download affordance
+- [ ] Implement `ImageTile` — thumbnail from `imageUrl(path, true)`, click opens carousel at index
+- [ ] Implement `Breadcrumb` in app bar from splat segments (clickable ancestors)
+
+---
+
+## Phase 6 — Fullscreen carousel
+
+- [ ] Implement `ImageViewer.tsx` — shadcn `carousel` (Embla), opens at clicked index
+- [ ] Add `react-zoom-pan-pinch` `TransformWrapper` / `TransformComponent` for pan/zoom; reset on slide change
+- [ ] Add keyboard navigation (←/→ navigate, Esc close, +/- zoom)
+- [ ] Use full-res `imageUrl(path, false)` for slides
+- [ ] Preload neighbor images for smooth swiping
+
+---
+
+## Phase 7 — Admin share (token + QR)
+
+- [ ] Implement `ShareLinkDialog.tsx` — Name, Filter, EndDate form with validation
+- [ ] Wire `useGenerateToken` mutation (orval) → JWT string
+- [ ] Build shareable URL `${origin}/login/jwt/${token}`
+- [ ] Render QR code via `qrcode.react` `<QRCodeSVG>`
+- [ ] Add "Copy link" + "Download QR" (SVG→PNG) actions
+- [ ] Handle 400/403 RFC 7807 errors in UI
+- [ ] Gate visibility on `user.isAdmin`
+
+---
+
+## Phase 8 — Error handling, loading, polish
+- [ ] Global QueryClient `onError`: 401 → `/login`, 404 → empty state, 403/406 → toast
+- [ ] Skeletons for initial grid load
+- [ ] Empty-state tiles for folders with no images
+- [ ] Per-route error boundaries
+- [ ] `sonner` toasts: download started, link copied, token generated
+- [ ] Review code for React-Compiler friendliness (stable refs, no unnecessary `useMemo`)
+- [ ] Run `pnpm lint` (oxlint) and `tsc -b`; fix any issues

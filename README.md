@@ -5,7 +5,8 @@
 [X] Dynamic Context Pruning Plugin https://github.com/Opencode-DCP/opencode-dynamic-context-pruning
 [X] Allow opencode to access tmp folder by default
 [X] mcp to search code base https://github.com/Helweg/opencode-codebase-index
-[ ] Fix context7 auth
+[X] Fix context7 auth go into container and curl with "" around the url!
+[ ] Install headroom
 [X] Add Auth endpoint where you can provide a filter (same as `User.ImageShareFilter` and a end date, and returns a signed jwt token
   [X] The endpoint that generates a JWT should verify that the user has a admin role (what the role is named should be configured in appsettings, the admin role can only exist when authing from open id connect)
   [X] Add a auth endpoint that accepts the jwt token from above as sign in
@@ -112,11 +113,12 @@
   [ ] Fork WritableFileProvider and add cancellationToken to ReadAsBytesAsync
   [X] Write openapi spec to disk on build
   [X] Include full path in /content and /content/{path}
+  [ ] Add frontend proxy
 [ ] FE
-  [ ] Add mcp server for tanstack
-  [ ] Add mcp server for shadcn
-  [ ] Client Generation
-  [ ] editorconfig
-  [ ] Add linting
-  [ ] Add UI
-  [ ] Add to dockerfile
+  [X] Add mcp server for tanstack
+  [X] Add mcp server for shadcn
+  [X] Client Generation
+  [X] editorconfig
+  [X] Add linting
+  [X] Add UI
+  [X] Add to dockerfile
