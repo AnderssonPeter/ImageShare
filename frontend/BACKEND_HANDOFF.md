@@ -1,4 +1,4 @@
-# ImageShare — Backend Handoff for Frontend
+﻿# ImageShare — Backend Handoff for Frontend
 
 ## What it is
 ImageShare is an ASP.NET Core minimal-API service that lets authenticated users browse a server-side directory tree of images, view them (in client-preferred formats with auto-generated thumbnails), download images as a zip, and get random images. It exposes an OpenAPI spec for client generation.
@@ -23,7 +23,7 @@ Configured in `AuthenticationExtensions.cs`. The policy scheme picks one per req
 2. **API key** — header **`X-API-Key`** (or same name as query param). Keys are configured server-side in `ApiKeys` settings (`appsettings.json:17`); each key carries a `name`, a `Filter`, and optional `IsAdmin`. Good for headless/automated clients.
 
 3. **JWT (issued by this API)** — for short-lived, scoped access granted to a non-interactive client:
-   - `GET /token/generate?Name=...&Filter=...&EndDate=<ISO 8601>` → returns a JWT string. Requires an authenticated **admin** (401/403) (`AuthenticationEndpoints.cs:37`, `GenerateTokenQuery.cs`).
+   - `GET /token/generate?Name=...&filter=...&endDate=<ISO 8601>` → returns a JWT string. Requires an authenticated **admin** (401/403) (`AuthenticationEndpoints.cs:37`, `GenerateTokenQuery.cs`).
    - `GET /login/jwt/{token}` → validates the JWT and signs the caller in via cookie, then redirects. This is the browser-friendly way to "sign in with a token" (`AuthenticationEndpoints.cs:44`, `LoginWithJwtCommand.cs`).
 
 ### Claims the FE-developer-relevant user object
@@ -58,8 +58,6 @@ All folder/file paths in the API are **relative, forward-slash-delimited** strin
 | `GET /content/random/{folder}` | `Thumbnail` (bool), `Recursive` (bool) | image bytes (401/400/403/404/**406**) | uses `Accept` header to pick format |
 | `GET /content/image/{path}` | `Thumbnail` (bool) | image bytes (401/400/403/404/**406**) | uses `Accept` header to pick format |
 
-Note the **casing mismatch**: `/content` uses lowercase `page`/`pageSize`; `/content/{path}`, `/content/download/{folder}`, `/content/random/{folder}`, `/content/image/{path}` use PascalCase `Page`/`PageSize`/`Format`/`Thumbnail`/`Recursive`. The OpenAPI spec (`/app/ImageShare/openapi.json`) is the source of truth — generate the client from it.
-
 ### Response shapes
 `FolderEntry` (`FolderEntry.cs`):
 ```json
@@ -75,12 +73,12 @@ Note the **casing mismatch**: `/content` uses lowercase `page`/`pageSize`; `/con
 - Root folder listing shows only folders the user's filter allows; subfolder listings show both folders and image files.
 
 ### Image serving & content negotiation
-Image endpoints use the **`Accept`** header to pick a format from the server's `ImageFormats:SupportedFormats` (`appsettings.json:25`, currently `avif`, `webp`, `jpg`). If none match → **406 Not Acceptable**. Send e.g. `Accept: image/avif,image/webp`. Use `Thumbnail=true` for the 200×200 (max) version. Supported MIME: `image/avif`, `image/webp`, `image/jpeg`, `image/png` (`Program.cs:44-49`).
+Image endpoints use the **`Accept`** header to pick a format from the server's `ImageFormats:SupportedFormats` (`appsettings.json:25`, currently `avif`, `webp`, `jpg`). If none match → **406 Not Acceptable**. Send e.g. `Accept: image/avif,image/webp`. Use `thumbnail=true` for the 200×200 (max) version. Supported MIME: `image/avif`, `image/webp`, `image/jpeg`, `image/png` (`Program.cs:44-49`).
 
 A background `ImageConverterJob` automatically generates all configured formats and thumbnails for every source image on startup and on filesystem changes — the FE just requests whichever format it prefers.
 
 ### Download
-`GET /content/download/{folder}?Format=avif&Format=webp` streams a zip. Per the README, when only a single top-level folder is requested, the zip does **not** wrap it in a subfolder. `Format` is a repeated query param.
+`GET /content/download/{folder}?format=avif&format=webp` streams a zip. Per the README, when only a single top-level folder is requested, the zip does **not** wrap it in a subfolder. `Format` is a repeated query param.
 
 ### Errors
 All error responses use RFC 7807 **`application/problem+json`** (`ProblemDetails`): `{ type, title, status, detail, instance }`. Map on `status`:
@@ -101,8 +99,8 @@ Already scaffolded: Vite + React 19 + TS, `oxlint`. Outstanding FE work (per `RE
 Suggested flow for the UI:
 - On 401, redirect to `/login?returnUrl=<current>`.
 - Use `GET /user` to read `isAdmin` and gate admin features (token generation form).
-- `GET /content` for root, then `GET /content/{path}` to navigate; render folders as cards using `GET /content/random/{path}?Thumbnail=true&Recursive=true` for cover images.
-- `GET /content/image/{path}?Thumbnail=true` with `Accept: image/webp` for thumbnails; without `Thumbnail` and best Accept for full view.
-- `GET /content/download/{path}?Format=avif&Format=webp` for "download all" buttons.
+- `GET /content` for root, then `GET /content/{path}` to navigate; render folders as cards using `GET /content/random/{path}?thumbnail=true&recursive=true` for cover images.
+- `GET /content/image/{path}?thumbnail=true` with `Accept: image/webp` for thumbnails; without `thumbnail` and best Accept for full view.
+- `GET /content/download/{path}?format=avif&format=webp` for "download all" buttons.
 
 OpenAPI spec lives at `/app/ImageShare/openapi.json` and is regenerated on build — point the client generator there.

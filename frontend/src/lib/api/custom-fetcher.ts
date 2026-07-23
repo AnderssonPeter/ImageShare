@@ -142,7 +142,9 @@ function resolveStatus(response: Response, problem: ProblemDetails | undefined):
  * params baked in and `options` is a `RequestInit` with `method` (and
  * optionally the caller's `headers`/`body`/`signal`) set.
  *
- * Returns the parsed body on success; throws {@link ApiError} on any non-2xx.
+ * Returns `{ status, data, headers }` on success (the shape orval's fetch
+ * client expects for its response union types); throws {@link ApiError} on any
+ * non-2xx response so TanStack Query receives errors in its `error` field.
  */
 export const customFetcher = async <ResponseType>(
   url: string,
@@ -160,7 +162,8 @@ export const customFetcher = async <ResponseType>(
     throw new ApiError(resolveStatus(response, problem), problem)
   }
 
-  return parseBody<ResponseType>(response)
+  const data = await parseBody<unknown>(response)
+  return { status: response.status, data, headers: response.headers } as ResponseType
 }
 
 export default customFetcher

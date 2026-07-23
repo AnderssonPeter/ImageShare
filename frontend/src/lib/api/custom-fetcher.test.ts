@@ -30,17 +30,19 @@ describe("customFetcher JSON parsing", () => {
   });
 
   it(
-    "parses a JSON success body",
+    "wraps a JSON success body in { status, data, headers }",
     async () => {
-      expect.assertions(2);
+      expect.assertions(4);
       // Arrange
-      fetchMock.mockResolvedValueOnce(okJson({ isAuthenticated: true, isAdmin: false, name: "Jane" }));
+      fetchMock.mockResolvedValueOnce(okJson({ name: "Jane" }));
 
       // Act
-      const result = await customFetcher<{ name: string }>("/user", { method: "GET" });
+      const result = await customFetcher<{ status: number; data: { name: string }; headers: Headers }>("/user", { method: "GET" });
 
       // Assert
-      expect(result.name).toBe("Jane");
+      expect(result.status).toBe(200);
+      expect(result.data.name).toBe("Jane");
+      expect(result.headers).toBeInstanceOf(Headers);
       expect(fetchMock).toHaveBeenCalledOnce();
     },
     1000,
@@ -144,9 +146,9 @@ describe("customFetcher binary and signal", () => {
   });
 
   it(
-    "returns a Blob for non-JSON success responses",
+    "wraps a non-JSON success response as a Blob in data",
     async () => {
-      expect.assertions(1);
+      expect.assertions(3);
       // Arrange
       fetchMock.mockResolvedValueOnce(
         new Response(new Uint8Array([1, 2, 3]), {
@@ -156,10 +158,14 @@ describe("customFetcher binary and signal", () => {
       );
 
       // Act
-      const result = await customFetcher<Blob>("/content/download/photos", { method: "GET" });
+      const result = await customFetcher<{ status: number; data: Blob; headers: Headers }>("/content/download/photos", {
+        method: "GET",
+      });
 
       // Assert
-      expect(result).toBeInstanceOf(Blob);
+      expect(result.status).toBe(200);
+      expect(result.data).toBeInstanceOf(Blob);
+      expect(result.headers).toBeInstanceOf(Headers);
     },
     1000,
   );

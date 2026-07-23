@@ -29,7 +29,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [X] Implement `src/lib/api/custom-fetcher.ts` (credentials, Accept header, ProblemDetails error unwrapping)
 - [X] Do we need both @testing-library/dom and @testing-library/jest-dom
 - [X] Disable `import/exports-last` and place the export directly where they have been placed in the end just to fix that linting error
-- [ ] Implement `src/lib/api/content-queries.ts` — `useFolderContent(path?)` `useInfiniteQuery` wrapper handling page/pageSize vs Page/PageSize casing
+- [X] Implement `src/lib/api/content-queries.ts` — `useFolderContent(path?)` `useInfiniteQuery` wrapper handling page/pageSize vs Page/PageSize casing
 - [ ] Implement `src/lib/api/urls.ts` — `imageUrl`, `randomFolderUrl`, `downloadUrl` string builders
 - [ ] Run `pnpm gen:api` and verify generated client compiles
 
@@ -101,3 +101,6 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [ ] Review code for React-Compiler friendliness (stable refs, no unnecessary `useMemo`)
 - [ ] Run `pnpm lint` (oxlint) and `tsc -b`; fix any issues
 - [ ] Create a better icon
+
+## Phase 9 - Extra features
+- [ ] Add cast functionality to chrome cast or airplay

@@ -114,6 +114,8 @@
   [X] Write openapi spec to disk on build
   [X] Include full path in /content and /content/{path}
   [ ] Add frontend proxy
+  [ ] Chrome MCP server?
+  [ ] Download log
 [ ] FE
   [X] Add mcp server for tanstack
   [X] Add mcp server for shadcn
