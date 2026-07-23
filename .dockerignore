@@ -21,6 +21,11 @@
 **/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
+
+# Frontend generated files (regenerated during image build; keep context lean)
+frontend/src/lib/api/generated/
+frontend/.tanstack/
+frontend/dist
 LICENSE
 README.md
 !**/.gitignore

@@ -20,7 +20,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [X] Create a SVG Icon for the solution
 - [X] Build a favicon based on the svg icon
 - [X] Update all dependencies
-- [ ] Exclude generated files from git and docker
+- [X] Exclude generated files from git and docker
 ---
 
 ## Phase 2 — API client generation (orval)
