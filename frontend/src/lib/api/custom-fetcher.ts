@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Custom fetch mutator for the orval-generated TanStack Query client.
  *
  * Responsibilities (see BACKEND_HANDOFF.md "Errors" & "Image serving"):
