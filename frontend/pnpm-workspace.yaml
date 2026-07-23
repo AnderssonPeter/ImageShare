@@ -1,0 +1,54 @@
+﻿# ---- Supply-chain hardening ----
+
+# Registry / transport security -------------------------------------------------
+# Pin every scope to an official HTTPS endpoint to prevent a stray .npmrc or
+# env var from redirecting resolution to an untrusted/HTTP source
+# (dependency-confusion protection).
+registries:
+  default: https://registry.npmjs.org/
+strictSsl: true
+
+# Fail when the project requires a Node/package-manager version that is not met,
+# instead of silently proceeding on an unsupported toolchain.
+engineStrict: true
+
+# Do not auto-install peer dependencies from the transitive graph unexpectedly.
+autoInstallPeers: false
+
+# Build-script control ---------------------------------------------------------
+# Only allow explicitly listed packages to run lifecycle/build scripts.
+# No package may run install scripts unless whitelisted here.
+allowBuilds:
+  esbuild: true
+
+# Fail the install instead of silently allowing any dependency's build script.
+strictDepBuilds: true
+
+# Never auto-approve all build scripts (defense in depth; default is already false).
+dangerouslyAllowAllBuilds: false
+
+# Release-age policy -----------------------------------------------------------
+# Block newly-published versions: a version must be at least 1 day old before it
+# is installed. Applies to transitive deps too. Reduces risk of compromised publishes.
+minimumReleaseAge: 1440
+
+# Fail resolution if no version in the requested range satisfies the age constraint,
+# rather than falling back to a too-new version.
+minimumReleaseAgeStrict: true
+
+# Exempt packages that you must adopt immediately (e.g. security hotfixes).
+# Keep this list small and reviewed.
+minimumReleaseAgeExclude: []
+
+# Exotic-source restriction ----------------------------------------------------
+# Only direct root dependencies may use exotic sources (git URLs, tarballs).
+# Transitive deps are restricted to the configured registry / workspace / file paths.
+blockExoticSubdeps: true
+
+# Trust policy -----------------------------------------------------------------
+# Reject dependency versions whose provenance is weaker than what was previously trusted.
+trustPolicy: no-downgrade
+# Exempted because pnpm flagged semver@6.3.1 as a provenance downgrade; reviewed and
+# accepted. Keep this list minimal and revisit periodically.
+trustPolicyExclude:
+  - semver@6.3.1

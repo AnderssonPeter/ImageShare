@@ -9,6 +9,7 @@ indent_style = space
 indent_size = 4
 insert_final_newline = true
 trim_trailing_whitespace = true
+max_line_length = 100
 
 [*.{json,csproj}]
 indent_size = 2
@@ -136,3 +137,12 @@ dotnet_diagnostic.AsyncFixer03.severity = warning
 dotnet_diagnostic.AsyncFixer04.severity = warning
 dotnet_diagnostic.AsyncFixer05.severity = warning
 
+
+[*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,json,jsonc,json5,css,scss,html,md,mdx,yaml,yml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[.oxlintrc.json]
+charset = utf-8

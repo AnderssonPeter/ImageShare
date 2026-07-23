@@ -6,25 +6,26 @@ Generated from `PLAN.md`. Check off items as you complete them.
 
 ## Phase 1 — Project setup & tooling
 
-- [ ] Install runtime dependencies: `@tanstack/react-router`, `@tanstack/router-plugin`, `@tanstack/react-query`, `@tanstack/react-virtual`, `react-zoom-pan-pinch`, `qrcode.react`
-- [ ] Install dev dependencies: `tailwindcss`, `@tailwindcss/vite`, `orval`
-- [ ] Configure oxlint with more strict rules
-- [ ] Add vitest
-- [ ] Adapt .editorconfig for typescript and react
-- [ ] Initialize shadcn-ui: `pnpm dlx shadcn@latest init`
-- [ ] Add shadcn components: `pnpm dlx shadcn@latest add button dialog carousel input label tooltip dropdown-menu sonner skeleton`
-- [ ] Update `vite.config.ts`: add Tailwind + Router plugins, `@` alias, hardcoded dev proxy port
-- [ ] Update `tsconfig.app.json` / `tsconfig.json`: add `baseUrl` and `paths` for `@/*`
-- [ ] Replace `src/index.css` with `@import "tailwindcss";` + shadcn theme variables
-- [ ] Add `gen:api` and update `build` scripts in `package.json`
-- [ ] Create a SVG Icon for the solution
-- [ ] Build a favicon based on the svg icon
-
+- [X] Install runtime dependencies: `@tanstack/react-router`, `@tanstack/router-plugin`, `@tanstack/react-query`, `@tanstack/react-virtual`, `react-zoom-pan-pinch`, `qrcode.react`
+- [X] Install dev dependencies: `tailwindcss`, `@tailwindcss/vite`, `orval`
+- [X] Configure oxlint with more strict rules
+- [X] Add vitest
+- [X] Adapt .editorconfig for typescript and react
+- [X] Initialize shadcn-ui: `pnpm dlx shadcn@latest init`
+- [X] Add shadcn components: `pnpm dlx shadcn@latest add button dialog carousel input label tooltip dropdown-menu sonner skeleton`
+- [X] Update `vite.config.ts`: add Tailwind + Router plugins, `@` alias, hardcoded dev proxy port
+- [X] Update `tsconfig.app.json` / `tsconfig.json`: add `baseUrl` and `paths` for `@/*`
+- [X] Replace `src/index.css` with `@import "tailwindcss";` + shadcn theme variables
+- [X] Add `gen:api` and update `build` scripts in `package.json`
+- [X] Create a SVG Icon for the solution
+- [X] Build a favicon based on the svg icon
+- [X] Update all dependencies
+- [ ] Exclude generated files from git and docker
 ---
 
 ## Phase 2 — API client generation (orval)
 
-- [ ] Create `orval.config.ts` at repo root (input: `../ImageShare/openapi.json`, fetch mutator, TanStack Query overrides)
+- [X] Create `orval.config.ts` at repo root (input: `../ImageShare/openapi.json`, fetch mutator, TanStack Query overrides)
 - [ ] Implement `src/lib/api/custom-fetcher.ts` (credentials, Accept header, ProblemDetails error unwrapping)
 - [ ] Implement `src/lib/api/content-queries.ts` — `useFolderContent(path?)` `useInfiniteQuery` wrapper handling page/pageSize vs Page/PageSize casing
 - [ ] Implement `src/lib/api/urls.ts` — `imageUrl`, `randomFolderUrl`, `downloadUrl` string builders
@@ -97,3 +98,4 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [ ] `sonner` toasts: download started, link copied, token generated
 - [ ] Review code for React-Compiler friendliness (stable refs, no unnecessary `useMemo`)
 - [ ] Run `pnpm lint` (oxlint) and `tsc -b`; fix any issues
+- [ ] Create a better icon

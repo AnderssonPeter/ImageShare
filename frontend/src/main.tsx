@@ -1,10 +1,17 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
 import './index.css'
+import { type ReactNode, StrictMode } from 'react'
 import App from './App.tsx'
+import { createRoot } from 'react-dom/client'
 
-createRoot(document.getElementById('root')!).render(
+const rootElement: HTMLElement | null = document.querySelector('#root')
+if (rootElement === null) {
+  throw new Error('Root element #root not found')
+}
+
+const children: ReactNode = (
   <StrictMode>
     <App />
-  </StrictMode>,
+  </StrictMode>
 )
+
+createRoot(rootElement).render(children)
