@@ -12,9 +12,6 @@ strictSsl: true
 # instead of silently proceeding on an unsupported toolchain.
 engineStrict: true
 
-# Do not auto-install peer dependencies from the transitive graph unexpectedly.
-autoInstallPeers: false
-
 # Build-script control ---------------------------------------------------------
 # Only allow explicitly listed packages to run lifecycle/build scripts.
 # No package may run install scripts unless whitelisted here.

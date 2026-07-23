@@ -27,7 +27,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
 
 - [X] Create `orval.config.ts` at repo root (input: `../ImageShare/openapi.json`, fetch mutator, TanStack Query overrides)
 - [X] Implement `src/lib/api/custom-fetcher.ts` (credentials, Accept header, ProblemDetails error unwrapping)
-- [/] Do we need both @testing-library/dom and @testing-library/jest-dom
+- [X] Do we need both @testing-library/dom and @testing-library/jest-dom
 - [ ] Disable `import/exports-last` and place the export directly where they have been placed in the end just to fix that linting error
 - [ ] Implement `src/lib/api/content-queries.ts` — `useFolderContent(path?)` `useInfiniteQuery` wrapper handling page/pageSize vs Page/PageSize casing
 - [ ] Implement `src/lib/api/urls.ts` — `imageUrl`, `randomFolderUrl`, `downloadUrl` string builders
