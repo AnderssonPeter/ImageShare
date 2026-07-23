@@ -26,7 +26,9 @@ Generated from `PLAN.md`. Check off items as you complete them.
 ## Phase 2 — API client generation (orval)
 
 - [X] Create `orval.config.ts` at repo root (input: `../ImageShare/openapi.json`, fetch mutator, TanStack Query overrides)
-- [ ] Implement `src/lib/api/custom-fetcher.ts` (credentials, Accept header, ProblemDetails error unwrapping)
+- [X] Implement `src/lib/api/custom-fetcher.ts` (credentials, Accept header, ProblemDetails error unwrapping)
+- [/] Do we need both @testing-library/dom and @testing-library/jest-dom
+- [ ] Disable `import/exports-last` and place the export directly where they have been placed in the end just to fix that linting error
 - [ ] Implement `src/lib/api/content-queries.ts` — `useFolderContent(path?)` `useInfiniteQuery` wrapper handling page/pageSize vs Page/PageSize casing
 - [ ] Implement `src/lib/api/urls.ts` — `imageUrl`, `randomFolderUrl`, `downloadUrl` string builders
 - [ ] Run `pnpm gen:api` and verify generated client compiles
@@ -58,7 +60,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
 
 ## Phase 5 — Browse grid (TanStack Query × TanStack Virtual)
 
-- [ ] Implement `FolderGrid.tsx` — flatten infinite-query pages into flat item array
+- [ ] Implement `ContentGrid.tsx` — flatten infinite-query pages into flat item array
 - [ ] Implement responsive column count (ResizeObserver / `useMeasure`)
 - [ ] Implement `useVirtualizer` row-based virtualization (`estimateSize` = tile + gutter)
 - [ ] Implement autoload: trigger `fetchNextPage()` when last visible row near end; skeleton placeholder while fetching
