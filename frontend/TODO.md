@@ -30,7 +30,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [X] Do we need both @testing-library/dom and @testing-library/jest-dom
 - [X] Disable `import/exports-last` and place the export directly where they have been placed in the end just to fix that linting error
 - [X] Implement `src/lib/api/content-queries.ts` — `useFolderContent(path?)` `useInfiniteQuery` wrapper handling page/pageSize vs Page/PageSize casing
-- [ ] Implement `src/lib/api/urls.ts` — `imageUrl`, `randomFolderUrl`, `downloadUrl` string builders
+- [X] Implement `src/lib/api/urls.ts` — `imageUrl`, `randomFolderUrl`, `downloadUrl` string builders
 - [ ] Run `pnpm gen:api` and verify generated client compiles
 
 ---

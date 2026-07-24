@@ -1,11 +1,11 @@
-﻿/**
+/**
  * Custom fetch mutator for the orval-generated TanStack Query client.
  *
  * Responsibilities (see BACKEND_HANDOFF.md "Errors" & "Image serving"):
  *  - Default the `Accept` header to `application/json`; callers may override
  *    it per request via `options.headers` (e.g. an image-bytes fetch).
  *  - Unwrap RFC 7807 `application/problem+json` error bodies into a typed
- *    {@link ApiError} so React Query `onError` handlers can branch on `status`.
+ *    ApiError so React Query `onError` handlers can branch on `status`.
  *  - Parse success bodies by content type (JSON / text / blob) so the fetcher
  *    is usable for both JSON listing endpoints and any binary endpoint.
  *
@@ -25,17 +25,12 @@ export interface ProblemDetails {
   instance?: string | null
 }
 
-/**
- * Error thrown for any non-2xx response. Carries the parsed
- * {@link ProblemDetails} when the server returned `application/problem+json`
- * (all ImageShare error responses do), so callers can read `status`, `title`,
- * and `detail` uniformly.
- */
+/** Error thrown for any non-2xx response. Carries parsed ProblemDetails. */
 export class ApiError extends Error {
-  readonly status: number
-  readonly problem: ProblemDetails | undefined
+  public readonly status: number
+  public readonly problem: ProblemDetails | undefined
 
-  constructor(status: number, problem: ProblemDetails | undefined, message?: string) {
+  public constructor(status: number, problem: ProblemDetails | undefined, message?: string) {
     super(message ?? problem?.detail ?? problem?.title ?? `Request failed with status ${status}`)
     this.name = 'ApiError'
     this.status = status
@@ -45,11 +40,8 @@ export class ApiError extends Error {
 
 /**
  * Orval convention: exporting `ErrorType` makes the generated hooks default
- * their `TError` generic to {@link ApiError} (instead of the raw schema shape),
- * so callers get `error: ApiError` in `onError` / mutation results. The type
- * parameter is the error-shape the caller expected; it is carried only for
- * compatibility with orval's `ErrorType<...>` call sites and otherwise unused,
- * so the resolved type collapses to exactly {@link ApiError}.
+ * their `TError` generic to ApiError (instead of the raw schema shape), so
+ * callers get `error: ApiError` in `onError` / mutation results.
  */
 export type ErrorType<Error = unknown> = ApiError & Record<never, Error>
 
@@ -61,21 +53,31 @@ const defaultHeaders: Record<string, string> = {
   Accept: 'application/json',
 }
 
+/** Normalize a Headers instance into a plain record. */
+function headersToRecord(headers: Headers): Record<string, string> {
+  const record: Record<string, string> = {}
+  for (const [key, value] of headers.entries()) {
+    record[key] = value
+  }
+  return record
+}
+
+/** Normalize an array of header tuples into a plain record. */
+function arrayToRecord(entries: [string, string][]): Record<string, string> {
+  const record: Record<string, string> = {}
+  for (const [key, value] of entries) {
+    record[key] = value
+  }
+  return record
+}
+
 /** Normalize a `HeadersInit` into a plain record for merging. */
 function toHeaderRecord(init: HeadersInit | undefined): Record<string, string> {
   if (init instanceof Headers) {
-    const record: Record<string, string> = {}
-    for (const [key, value] of init.entries()) {
-      record[key] = value
-    }
-    return record
+    return headersToRecord(init)
   }
   if (Array.isArray(init)) {
-    const record: Record<string, string> = {}
-    for (const [key, value] of init) {
-      record[key] = value
-    }
-    return record
+    return arrayToRecord(init)
   }
   return { ...init }
 }
@@ -107,7 +109,6 @@ function parseBody<ResponseType>(response: Response): Promise<ResponseType> {
   if (contentType.startsWith('text/')) {
     return response.text() as Promise<ResponseType>
   }
-  // Non-JSON, non-text success (e.g. image bytes / zip) — hand back a Blob.
   return response.blob() as Promise<ResponseType>
 }
 
@@ -143,13 +144,13 @@ function resolveStatus(response: Response, problem: ProblemDetails | undefined):
  * optionally the caller's `headers`/`body`/`signal`) set.
  *
  * Returns `{ status, data, headers }` on success (the shape orval's fetch
- * client expects for its response union types); throws {@link ApiError} on any
- * non-2xx response so TanStack Query receives errors in its `error` field.
+ * client expects for its response union types); throws ApiError on any non-2xx
+ * response so TanStack Query receives errors in its `error` field.
  */
-export const customFetcher = async <ResponseType>(
+export async function customFetcher<ResponseType>(
   url: string,
   options?: RequestInit,
-): Promise<ResponseType> => {
+): Promise<ResponseType> {
   const headers = mergeHeaders(defaultHeaders, options?.headers)
 
   const response = await fetch(url, {

@@ -36,11 +36,20 @@
     "eslint/no-magic-numbers": "off",
     "eslint/max-lines-per-function": ["warn", 50],
     "unicorn/no-array-for-each": "warn",
+    "vitest/prefer-called-once": "off",
+    "vitest/prefer-to-be-truthy": "off",
+    "vitest/prefer-to-be-falsy": "off",
     "react-perf/jsx-no-new-object-as-prop": "warn",
     "react-perf/jsx-no-jsx-as-prop": "warn",
     "import/group-exports": "off"
   },
   "overrides": [
+    {
+      "files": ["vite.config.ts"],
+      "rules": {
+        "eslint/no-inline-comments": "off",
+      }
+    },
     {
       "files": ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}", "src/test/**"],
       "rules": {
@@ -48,7 +57,7 @@
         "vitest/no-importing-vitest-globals": "off",
         "vitest/prefer-importing-vitest-globals": "error",
         "vitest/require-test-timeout": "error",
-        "eslint/no-magic-numbers": "off"
+        "vitest/prefer-import-in-mock": "warn"
       }
     },
     {
@@ -66,6 +75,13 @@
     },
     {
       "files": ["src/routes/**"],
+      "rules": {
+        "import/no-named-export": "off",
+        "import/prefer-default-export": "off"
+      }
+    },
+    {
+      "files": ["src/lib/api/**"],
       "rules": {
         "import/no-named-export": "off",
         "import/prefer-default-export": "off"
