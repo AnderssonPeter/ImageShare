@@ -10,7 +10,9 @@ public static class AuthenticationEndpoints
 {
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/login", (string? returnUrl) =>
+        var group = endpoints.MapGroup("authentication").WithTags("authentication");
+
+        group.MapGet("/login", (string? returnUrl) =>
         {
             var redirectUri = string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl;
             return TypedResults.Challenge(
@@ -18,33 +20,34 @@ public static class AuthenticationEndpoints
                 new[] { OpenIdConnectDefaults.AuthenticationScheme });
         });
 
-        endpoints.MapGet("/logout", () =>
+        group.MapGet("/logout", () =>
             TypedResults.SignOut(
                 new AuthenticationProperties { RedirectUri = "/" },
                 new[] { CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme }));
 
-        endpoints.MapGet("/user", Ok<IUser> (IUser user) =>
+        group.MapGet("/user", Ok<IUser> (IUser user) =>
         {
             user.EnsureAuthenticated();
             return TypedResults.Ok(user);
         }).RequireAuthorization().ProducesProblem(StatusCodes.Status401Unauthorized);
 
-        return endpoints;
+        return group;
     }
 
     public static IEndpointRouteBuilder MapTokenEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/token/generate", async (IMediator mediator, [AsParameters] GenerateTokenQuery request) =>
+        var group = endpoints.MapGroup("authentication").WithTags("authentication");
+        group.MapGet("/token/generate", async (IMediator mediator, [AsParameters] GenerateTokenQuery request) =>
             await mediator.Send(request))
             .RequireAuthorization()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        endpoints.MapGet("/login/jwt/{token}", async (IMediator mediator, [AsParameters] LoginWithJwtCommand request) =>
+        group.MapGet("/login/jwt/{token}", async (IMediator mediator, [AsParameters] LoginWithJwtCommand request) =>
             await mediator.Send(request))
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        return endpoints;
+        return group;
     }
 }

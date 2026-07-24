@@ -8,7 +8,7 @@ public static class ContentEndpoints
 {
     public static IEndpointRouteBuilder MapContentEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/content").RequireAuthorization();
+        var group = endpoints.MapGroup("/content").RequireAuthorization().WithTags("content");
 
         group.MapGet("/", async (IMediator mediator, [FromQuery] int page = 1, [FromQuery] int pageSize = 50) =>
             await mediator.Send(new GetEntriesQuery(RelativePath.Root, page, pageSize)))
