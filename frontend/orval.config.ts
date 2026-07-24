@@ -16,6 +16,7 @@ export default defineConfig({
     input: '../ImageShare/openapi.json',
     output: {
       target: 'src/lib/api/generated/imageShare.ts',
+      mode: 'tags-split',
       httpClient: 'fetch',
       client: 'react-query',
       baseUrl: '',

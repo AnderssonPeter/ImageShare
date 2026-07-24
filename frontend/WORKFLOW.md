@@ -9,7 +9,7 @@
 
 3. When the item is complete:
    - Verify the change
-   - **Always run `pnpm lint`, `pnpm test`, `pnpm test:ui` and `pnpm build` and fix every resulting error** before marking the item done. Warnings are not acceptable, all unit tests and linting errors must be fixed even if they have nothing to do with what was changed. (If you know of a permanent fix to the issue, suggest it to me.)
+   - **Always run `pnpm lint:fix`, `pnpm test`, `pnpm test:ui` and `pnpm build` and fix every resulting error** before marking the item done. Warnings are not acceptable, all unit tests and linting errors must be fixed even if they have nothing to do with what was changed. (If you know of a permanent fix to the issue, suggest it to me.)
    - **Never disable lint rules.** Always fix warnings/errors by changing the code you own. Only if you have exhausted every possible code-level fix may you ask the user for permission to disable a rule — never do it without asking first.
    - Mark it done by changing `[/]` → `[X]`.
 

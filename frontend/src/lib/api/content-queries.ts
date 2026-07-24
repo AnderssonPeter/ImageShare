@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Manual TanStack Query wrappers for the content-listing endpoints.
  *
  * Orval's `useInfinite` is disabled in `orval.config.ts`; this module
@@ -7,16 +7,16 @@
  */
 
 import {
-  type PaginatedResultOfFolderEntry,
   getContent,
   getContentPath,
   type getContentPathResponse,
   type getContentResponse,
-} from './generated/imageShare'
+} from './generated/content/content'
 import { ApiError } from './custom-fetcher'
+import { type PaginatedResultOfFolderEntry } from './generated/imageShare.schemas'
 import { useInfiniteQuery } from '@tanstack/react-query'
 
-export type { FolderEntry, PaginatedResultOfFolderEntry } from './generated/imageShare'
+export type { FolderEntry, PaginatedResultOfFolderEntry } from './generated/imageShare.schemas'
 
 /** Page size used for all content listing requests (backend max is 500). */
 const PAGE_SIZE = 50
