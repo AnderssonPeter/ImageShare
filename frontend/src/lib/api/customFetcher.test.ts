@@ -1,4 +1,4 @@
-import { ApiError, customFetcher } from "./custom-fetcher";
+import { ApiError, customFetcher } from "./customFetcher";
 import { describe, expect, it, vi } from "vitest";
 
 function okJson(body: unknown, headers: Record<string, string> = {}): Response {

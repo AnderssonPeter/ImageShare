@@ -55,6 +55,11 @@ export function clearStoredTheme(): void {
   localStorage.removeItem(THEME_STORAGE_KEY)
 }
 
+/** Whether the user has set an explicit theme override in localStorage. */
+export function hasThemeOverride(): boolean {
+  return getStoredTheme() !== undefined
+}
+
 /** Subscribe to system colour-scheme changes. Returns an unsubscribe function. */
 export function onSystemThemeChange(onChange: (theme: Theme) => void): () => void {
   if (typeof globalThis === 'undefined' || !globalThis.matchMedia) {

@@ -12,7 +12,7 @@ import {
   type getContentPathResponse,
   type getContentResponse,
 } from './generated/content/content'
-import { ApiError } from './custom-fetcher'
+import { ApiError } from './customFetcher'
 import { type PaginatedResultOfFolderEntry } from './generated/imageShare.schemas'
 import { useInfiniteQuery } from '@tanstack/react-query'
 

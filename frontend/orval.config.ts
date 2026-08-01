@@ -1,4 +1,4 @@
-import { defineConfig } from 'orval'
+﻿import { defineConfig } from 'orval'
 
 /**
  * Orval configuration — generates a typed TanStack Query client from the
@@ -9,7 +9,7 @@ import { defineConfig } from 'orval'
  * - client: 'react-query' -> generates TanStack Query hooks (useQuery /
  *   useMutation). Infinite hooks are NOT auto-generated because the API has a
  *   pagination param casing mismatch (page/pageSize vs Page/PageSize); we write
- *   manual useInfiniteQuery wrappers in src/lib/api/content-queries.ts instead.
+ *   manual useInfiniteQuery wrappers in src/lib/api/contentQueries.ts instead.
  */
 export default defineConfig({
   imageShare: {
@@ -25,7 +25,7 @@ export default defineConfig({
       mock: false,
       override: {
         mutator: {
-          path: './src/lib/api/custom-fetcher.ts',
+          path: './src/lib/api/customFetcher.ts',
           name: 'customFetcher',
         },
         query: {

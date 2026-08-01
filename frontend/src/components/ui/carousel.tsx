@@ -3,7 +3,7 @@
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import { type ComponentProps, type KeyboardEvent, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import useEmblaCarousel, { type UseEmblaCarouselType } from 'embla-carousel-react'
-import Button from '@/components/ui/button'
+import Button from '@/components/ui/Button'
 import cn from '@/lib/utils'
 
 type CarouselApi = UseEmblaCarouselType[1]

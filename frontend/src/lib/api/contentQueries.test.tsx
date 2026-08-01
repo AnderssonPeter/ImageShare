@@ -4,7 +4,7 @@ import { type getContent, type getContentPath } from "./generated/content/conten
 import { renderHook, waitFor } from "@testing-library/react";
 import { type FolderEntry } from "./generated/imageShare.schemas";
 import { type ReactNode } from "react";
-import { useFolderContent } from "./content-queries";
+import { useFolderContent } from "./contentQueries";
 
 const { mockGetContent, mockGetContentPath } = vi.hoisted(() => ({
   mockGetContent: vi.fn<typeof getContent>(),

@@ -21,7 +21,7 @@
     "react/jsx-filename-extension": ["warn", { "extensions": [".tsx", ".jsx"] }],
     "react/jsx-props-no-spreading": "off",
     "react/jsx-no-constructed-context-values": "off",
-    "unicorn/filename-case": ["warn", { "cases": { "pascalCase": true, "kebabCase": true } }],
+    "unicorn/filename-case": ["warn", { "cases": { "camelCase": true, "pascalCase": false, "kebabCase": false } }],
     "react/no-direct-mutation-state": "error",
     "react/no-unknown-property": "warn",
     "typescript/no-unused-vars": "warn",
@@ -81,7 +81,13 @@
       }
     },
     {
-      "files": ["src/lib/api/**"],
+      "files": ["src/App.tsx", "src/components/**"],
+      "rules": {
+        "unicorn/filename-case": ["warn", { "cases": { "camelCase": false, "pascalCase": true, "kebabCase": false } }]
+      }
+    },
+    {
+      "files": ["src/lib/**"],
       "rules": {
         "import/no-named-export": "off",
         "import/prefer-default-export": "off"

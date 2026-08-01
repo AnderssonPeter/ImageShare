@@ -9,7 +9,7 @@ The frontend lives in `/app/frontend`. Stack: Vite + React 19 + TypeScript, TanS
 
 ## Naming
 
-- Do not use abbreviations when naming variables, parameters, fields, or methods. Use full, descriptive names (e.g. `cancellationToken` not `ct`, `directory` not `dir`, `extension` not `ext`).
+- Do not use abbreviations when naming variables, parameters, fields, or methods. Use full, descriptive names (e.g. `directory` not `dir`, `extension` not `ext`).
 
 ## Tooling & commands
 
