@@ -43,7 +43,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [X] Create `ThemeToggle` component for app bar
 - [X] Create `MetroAppBar` layout (app title, breadcrumb slot, theme toggle, user chip, admin button)
 - [X] Establish Metro tile base styles (flat, no shadow, 2px gutters, accent on press)
-- [ ] Create a showcase page that displays all components that should only be included in develop builds
+- [X] Create a showcase page that displays all components that should only be included in develop builds
 
 ---
 
