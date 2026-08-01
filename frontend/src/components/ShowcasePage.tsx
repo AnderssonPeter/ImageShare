@@ -140,7 +140,7 @@ function CarouselSlides(): React.JSX.Element {
     <>
       {tileLabels.map((text) => (
         <Carousel.CarouselItem key={text}>
-          <div className="metro-tile flex h-32 items-center justify-center text-lg">
+          <div className="metro-tile h-32 text-lg">
             {text}
           </div>
         </Carousel.CarouselItem>
@@ -171,18 +171,22 @@ function CarouselSection(): React.JSX.Element {
   )
 }
 
+const tileImageStyle = {
+  '--metro-tile-image': 'url(/src/assets/showcase-tile.svg)',
+} as React.CSSProperties
+
 function TileGrid(): React.JSX.Element {
   return (
     <div className="grid grid-cols-2 gap-gutter sm:grid-cols-3 md:grid-cols-4">
       {tileLabels.map((label) => (
-        <div
-          key={label}
-          className="metro-tile flex h-24 flex-col items-center justify-center gap-gutter"
-        >
-          <Folder className="size-8 text-primary" />
-          <span className="text-sm">{label}</span>
+        <div key={label} className="metro-tile h-24">
+          <Folder className="metro-tile-icon size-8" />
+          <span className="absolute bottom-1 left-1 text-sm leading-none">{label}</span>
         </div>
       ))}
+      <div className="metro-tile h-24" style={tileImageStyle}>
+        <span className="absolute bottom-1 left-1 text-sm leading-none text-white">With image</span>
+      </div>
     </div>
   )
 }
