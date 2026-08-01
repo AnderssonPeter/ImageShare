@@ -56,8 +56,32 @@ async function fetchContentPage(
 }
 
 /** Query key factory: stable, serializable key per folder path. */
-function contentQueryKey(path: string | undefined): readonly [string, string] {
+export function contentQueryKey(path: string | undefined): readonly [string, string] {
   return ['content', path ?? ''] as const
+}
+
+/**
+ * Infinite-query options for browsing folder content, shared between the
+ * `useFolderContent` hook and route loaders (so a loader can prefetch the
+ * first page into the same cache the hook reads).
+ *
+ * - No `path` (or empty) -> `GET /content?page=N&pageSize=50` (root listing).
+ * - With `path`          -> `GET /content/{path}?page=N&pageSize=50` (subfolder).
+ */
+export function folderContentQueryOptions(path: string | undefined) {
+  return {
+    queryKey: contentQueryKey(path),
+    queryFn: ({ pageParam, signal }: { pageParam: unknown; signal: AbortSignal }) =>
+      fetchContentPage(path, pageParam as number, signal),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: PaginatedResultOfFolderEntry) => {
+      const currentPage = toNumber(lastPage.page)
+      const totalCount = toNumber(lastPage.totalCount)
+      const loadedCount = toNumber(lastPage.pageSize) * currentPage
+
+      return loadedCount < totalCount ? currentPage + 1 : undefined
+    },
+  }
 }
 
 /**
@@ -67,16 +91,5 @@ function contentQueryKey(path: string | undefined): readonly [string, string] {
  * - With `path`          -> `GET /content/{path}?page=N&pageSize=50` (subfolder).
  */
 export function useFolderContent(path?: string) {
-  return useInfiniteQuery({
-    queryKey: contentQueryKey(path),
-    queryFn: ({ pageParam, signal }) => fetchContentPage(path, pageParam as number, signal),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
-      const currentPage = toNumber(lastPage.page)
-      const totalCount = toNumber(lastPage.totalCount)
-      const loadedCount = toNumber(lastPage.pageSize) * currentPage
-
-      return loadedCount < totalCount ? currentPage + 1 : undefined
-    },
-  })
+  return useInfiniteQuery(folderContentQueryOptions(path))
 }
