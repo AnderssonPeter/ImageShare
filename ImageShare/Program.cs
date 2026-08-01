@@ -20,6 +20,7 @@ builder.Services.AddAuthentications();
 builder.Services.AddImageShareFilter();
 builder.Services.AddUser();
 builder.Services.AddJwtTokens();
+builder.Services.AddRateLimiting();
 builder.Services.AddImageConversion();
 builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
 builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuthenticationBehavior<,>));
@@ -73,6 +74,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCustomErrors();
 app.UseHttpsRedirection();
+app.UseRateLimiting();
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -189,4 +189,42 @@ public class IntegrationTests
         var body = await response.Content.ReadAsStringAsync();
         await Assert.That(body).IsEqualTo("\"pong\"");
     }
+
+    [Test]
+    public async Task RateLimit_UnauthenticatedJwtLogin_ExceedsLimit_Returns429()
+    {
+        // Arrange — the test factory sets PermitLimit=3, WindowSeconds=60
+        using var app = new TestApp();
+        var client = app.Factory.CreateClient();
+
+        // Act — send requests that exceed the permit limit
+        var responses = new List<HttpResponseMessage>();
+        for (var index = 0; index < 5; index++)
+        {
+            responses.Add(await client.GetAsync("/authentication/login/jwt/invalid-token"));
+        }
+
+        // Assert — first requests within the limit should not be 429; the excess should be 429
+        var statusCodes = responses.Select(response => response.StatusCode).ToList();
+        await Assert.That(statusCodes.Count(statusCode => statusCode == HttpStatusCode.TooManyRequests)).IsEqualTo(2);
+        await Assert.That(statusCodes.Count(statusCode => statusCode != HttpStatusCode.TooManyRequests)).IsEqualTo(3);
+    }
+
+    [Test]
+    public async Task RateLimit_AuthenticatedEndpoint_NotRateLimited()
+    {
+        // Arrange — authenticated client uses API key; /content requires authorization and is not rate-limited
+        using var app = new TestApp();
+        app.Factory.FileProvider.AddFile("photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+
+        // Act — send more requests than the unauthenticated permit limit
+        var responses = new List<HttpResponseMessage>();
+        for (var index = 0; index < 5; index++)
+        {
+            responses.Add(await app.Client.GetAsync("/content"));
+        }
+
+        // Assert — all requests succeed because authenticated endpoints are not rate-limited
+        await Assert.That(responses.All(response => response.StatusCode == HttpStatusCode.OK)).IsTrue();
+    }
 }

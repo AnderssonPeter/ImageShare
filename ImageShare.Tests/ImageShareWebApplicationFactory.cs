@@ -44,6 +44,8 @@ public sealed class ImageShareWebApplicationFactory : WebApplicationFactory<Prog
                 ["Jwt:Audience"] = "ImageShare",
                 ["Jwt:SigningKey"] = "test-signing-key-must-be-at-least-32-characters-long",
                 ["Storage:BasePath"] = "images",
+                ["RateLimit:PermitLimit"] = "3",
+                ["RateLimit:WindowSeconds"] = "60",
             });
         });
 

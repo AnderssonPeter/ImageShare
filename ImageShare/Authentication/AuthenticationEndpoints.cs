@@ -18,12 +18,13 @@ public static class AuthenticationEndpoints
             return TypedResults.Challenge(
                 new AuthenticationProperties { RedirectUri = redirectUri },
                 new[] { OpenIdConnectDefaults.AuthenticationScheme });
-        });
+        }).RequireRateLimiting(RateLimitExtensions.UnauthenticatedPolicy);
 
         group.MapGet("/logout", () =>
             TypedResults.SignOut(
                 new AuthenticationProperties { RedirectUri = "/" },
-                new[] { CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme }));
+                new[] { CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme }))
+            .RequireRateLimiting(RateLimitExtensions.UnauthenticatedPolicy);
 
         group.MapGet("/user", Ok<IUser> (IUser user) =>
         {
@@ -46,7 +47,9 @@ public static class AuthenticationEndpoints
 
         group.MapGet("/login/jwt/{token}", async (IMediator mediator, [AsParameters] LoginWithJwtCommand request) =>
             await mediator.Send(request))
-            .ProducesProblem(StatusCodes.Status400BadRequest);
+            .RequireRateLimiting(RateLimitExtensions.UnauthenticatedPolicy)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
         return group;
     }
