@@ -21,6 +21,7 @@ public sealed class JwtTokenValidator(IOptions<JwtSettings> jwtSettings)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
+            ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
             ClockSkew = TimeSpan.FromMinutes(5),
         };
 

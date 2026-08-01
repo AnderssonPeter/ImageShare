@@ -114,8 +114,12 @@
   [X] Write openapi spec to disk on build
   [X] Include full path in /content and /content/{path}
   [ ] Add frontend proxy
-  [ ] Chrome MCP server?
+  [ ] Chrome MCP server? / Playwright MCP
   [ ] Download log
+  [ ] Playwright MCP
+  [X] Create unit tests that tries to forge an jwt token
+  [ ] Add rate limit to unauthenticated endpoints
+  [ ] Break up the agent.md into skills to lower the token usage
 [ ] FE
   [X] Add mcp server for tanstack
   [X] Add mcp server for shadcn

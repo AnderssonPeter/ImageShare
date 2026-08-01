@@ -24,11 +24,12 @@ When you detect that I have made changes that you don't recognition don't just u
 
 Before considering a task complete, run the CI steps individually (not `dotnet r ci`) so that slow or failing steps are easy to identify. Run them in order, stopping on the first failure:
 
-1. `dotnet build-server shutdown`
-2. `dotnet r format`
-3. `dotnet r build`
-4. `dotnet r test`
-5. `dotnet r startup`
+1. `dotnet r format`
+2. `dotnet r build`
+3. `dotnet r test`
+4. `dotnet r startup`
+
+If any of the steps above fail, run `dotnet build-server shutdown` and then re-run the failed step. (If you have any idea how to fix it permanently, please do so and then re-run the failed step.)
 
 Run `dotnet tool restore` once at the start of a new session before using `dotnet r`.
 
@@ -82,6 +83,7 @@ Files should be placed by feature instead of by type.
 C# unit tests use TUnit, skill exists for this.
 All unit tests should have Arrange, Act, Assert comments
 When possible and where it makes sense use parameterized unit tests
+Use DI for unit tests: add the `[MicrosoftDI]` class attribute and inject the system-under-test via the primary constructor (see `MicrosoftDIAttribute`). Register any missing dependencies in `MicrosoftDIAttribute.BuildProvider`. Only construct types manually when the test deliberately needs a different configuration than the shared container (e.g. an attacker forging a token with a different key).
 
 ## Mediator queries and commands
 All query and command objects (types implementing `IBaseQuery` or `IBaseCommand` from `Mediator.Abstractions`) must have an explicit binding source attribute on every constructor parameter: `[FromQuery]`, `[FromRoute]`, `[FromBody]`, `[FromHeader]`, or `[FromServices]` from `Microsoft.AspNetCore.Mvc`. This is enforced by `StaticAnalysis`.

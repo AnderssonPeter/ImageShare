@@ -53,6 +53,15 @@ public class MicrosoftDIAttribute : DependencyInjectionDataSourceAttribute<IServ
             .AddSingleton<ILoggerFactory>(new LoggerFactory())
             .AddSingleton<ImageConverter>()
             .AddSingleton<ImageShareFilterCompiler>()
+            .AddSingleton<IOptions<JwtSettings>>(
+                Options.Create(new JwtSettings
+                {
+                    Issuer = "ImageShare",
+                    Audience = "ImageShare",
+                    SigningKey = "test-signing-key-must-be-at-least-32-characters-long",
+                }))
+            .AddSingleton<JwtTokenIssuer>()
+            .AddSingleton<JwtTokenValidator>()
             .AddTransient<ImageConverterJob>()
             .AddSingleton<TestImageFactory>()
             .AddScoped<TestUser>()
