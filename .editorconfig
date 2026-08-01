@@ -144,5 +144,5 @@ indent_size = 2
 [*.md]
 trim_trailing_whitespace = false
 
-[.oxlintrc.json]
+[.oxlintrc.json,package.json]
 charset = utf-8

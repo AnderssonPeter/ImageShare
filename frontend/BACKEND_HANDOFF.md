@@ -6,28 +6,28 @@ ImageShare is an ASP.NET Core minimal-API service that lets authenticated users 
 The frontend (`/app/frontend`) is a fresh Vite + React 19 + TypeScript scaffold with `oxlint` — currently only the starter template. Nothing image-share related has been built yet.
 
 ## Base URL & dev access
-- In **Development**, the API serves Scalar at the root and the OpenAPI JSON at `/openapi.json` (`ImageShare/Program.cs:74`).
+- In **Development**, the API serves Scalar at `/api/scalar` and the OpenAPI JSON at `/api/openapi/v1.json` (`ImageShare/Program.cs`). All backend endpoints live under the `/api` prefix so they cannot collide with frontend routes.
 - All `/content/**` and `/user` endpoints require authorization (`ContentEndpoints.cs:11`, `AuthenticationEndpoints.cs:30`).
-- Health check: `GET /` → `"pong"` (`HealthEndpoints.cs:7`).
+- Health check: `GET /api/health` → `"pong"` (`HealthEndpoints.cs:7`).
 - CORS is **not** configured. If the FE runs on a different origin during dev, ask backend to enable it (or proxy via Vite `server.proxy`).
 
 ## Authentication — three coexisting schemes
 Configured in `AuthenticationExtensions.cs`. The policy scheme picks one per request:
 
 1. **OpenID Connect (Cookie)** — interactive browser login. Endpoints:
-   - `GET /login?returnUrl=...` → 302 challenge to OIDC provider (`AuthenticationEndpoints.cs:13`).
-   - `GET /logout` → signs out of cookie + OIDC (`AuthenticationEndpoints.cs:21`).
-   - `GET /user` → current user as `IUser` JSON (401 if not authed) (`AuthenticationEndpoints.cs:26`).
-   - OIDC callback path is `/signin-oidc`; logout callback `/signout-callback-oidc`. Frontend just needs to link/navigate to `/login` and `/logout`.
+   - `GET /api/authentication/login?returnUrl=...` → 302 challenge to OIDC provider (`AuthenticationEndpoints.cs:13`).
+   - `GET /api/authentication/logout` → signs out of cookie + OIDC (`AuthenticationEndpoints.cs:21`).
+   - `GET /api/authentication/user` → current user as `IUser` JSON (401 if not authed) (`AuthenticationEndpoints.cs:26`).
+   - OIDC callback path is `/signin-oidc`; logout callback `/signout-callback-oidc` (these are OIDC-handler paths, not under `/api`). Frontend just needs to link/navigate to `/api/authentication/login` and `/api/authentication/logout`.
 
 2. **API key** — header **`X-API-Key`** (or same name as query param). Keys are configured server-side in `ApiKeys` settings (`appsettings.json:17`); each key carries a `name`, a `Filter`, and optional `IsAdmin`. Good for headless/automated clients.
 
 3. **JWT (issued by this API)** — for short-lived, scoped access granted to a non-interactive client:
-   - `GET /token/generate?Name=...&filter=...&endDate=<ISO 8601>` → returns a JWT string. Requires an authenticated **admin** (401/403) (`AuthenticationEndpoints.cs:37`, `GenerateTokenQuery.cs`).
-   - `GET /login/jwt/{token}` → validates the JWT and signs the caller in via cookie, then redirects. This is the browser-friendly way to "sign in with a token" (`AuthenticationEndpoints.cs:44`, `LoginWithJwtCommand.cs`).
+   - `GET /api/authentication/token/generate?Name=...&filter=...&endDate=<ISO 8601>` → returns a JWT string. Requires an authenticated **admin** (401/403) (`AuthenticationEndpoints.cs:37`, `GenerateTokenQuery.cs`).
+   - `GET /api/authentication/login/jwt/{token}` → validates the JWT and signs the caller in via cookie, then redirects. This is the browser-friendly way to "sign in with a token" (`AuthenticationEndpoints.cs:44`, `LoginWithJwtCommand.cs`).
 
 ### Claims the FE-developer-relevant user object
-`GET /user` returns `IUser` (`IUser.cs`):
+`GET /api/authentication/user` returns `IUser` (`IUser.cs`):
 ```json
 { "isAuthenticated": true, "isAdmin": false, "name": "Jane" }
 ```
@@ -38,25 +38,25 @@ Every authenticated user has an `image_share_filter` claim — a glob-like patte
 
 ## Path convention: `RelativePath`
 All folder/file paths in the API are **relative, forward-slash-delimited** strings, never rooted, never containing `..` (`RelativePath.cs:9-18`). When sent as a path parameter they must be URL-encoded (e.g. `/` → `%2F`). The OpenAPI schema for `RelativePath` is just `type: string`. Examples:
-- Root listing: `GET /content` (no path).
-- Subfolder: `GET /content/photos%2F2024` or `GET /content/photos/2024` (use encodeURI on the segment).
+- Root listing: `GET /api/content` (no path).
+- Subfolder: `GET /api/content/photos%2F2024` or `GET /api/content/photos/2024` (use encodeURI on the segment).
 - Thumbnail infix is a fixed string in file names — thumbnails appear as `{name}{ThumbnailInfix}.{ext}`. The FE never needs to construct these; listings hide thumbnails and show files by name without extension.
 
 ## Endpoints (all under the `ImageShare` tag in OpenAPI)
 
 | Method & path | Query params | Returns | Notes |
 |---|---|---|---|
-| `GET /` | — | `text "pong"` | health |
-| `GET /login` | `returnUrl` | 302 | OIDC challenge |
-| `GET /logout` | — | 302 | sign out |
-| `GET /user` | — | `IUser` (401) | current user |
-| `GET /token/generate` | `Name`, `Filter`, `EndDate` (date-time) | `string` JWT (401/403/400) | admin only |
-| `GET /login/jwt/{token}` | — | 302 redirect (400) | sign in via JWT |
-| `GET /content` | `page=1`, `pageSize=50` | `PaginatedResult<FolderEntry>` (401/400/404) | list root |
-| `GET /content/{path}` | `Page=1`, `PageSize=50` | `PaginatedResult<FolderEntry>` (401/400/404) | list folder |
-| `GET /content/download/{folder}` | `Format` (string[], repeated) | `application/zip` stream (401/400/403/404) | recursive zip download of `Format` files |
-| `GET /content/random/{folder}` | `Thumbnail` (bool), `Recursive` (bool) | image bytes (401/400/403/404/**406**) | uses `Accept` header to pick format |
-| `GET /content/image/{path}` | `Thumbnail` (bool) | image bytes (401/400/403/404/**406**) | uses `Accept` header to pick format |
+| `GET /api/health` | — | `text "pong"` | health |
+| `GET /api/authentication/login` | `returnUrl` | 302 | OIDC challenge |
+| `GET /api/authentication/logout` | — | 302 | sign out |
+| `GET /api/authentication/user` | — | `IUser` (401) | current user |
+| `GET /api/authentication/token/generate` | `Name`, `Filter`, `EndDate` (date-time) | `string` JWT (401/403/400) | admin only |
+| `GET /api/authentication/login/jwt/{token}` | — | 302 redirect (400) | sign in via JWT |
+| `GET /api/content` | `page=1`, `pageSize=50` | `PaginatedResult<FolderEntry>` (401/400/404) | list root |
+| `GET /api/content/{path}` | `Page=1`, `PageSize=50` | `PaginatedResult<FolderEntry>` (401/400/404) | list folder |
+| `GET /api/content/download/{folder}` | `Format` (string[], repeated) | `application/zip` stream (401/400/403/404) | recursive zip download of `Format` files |
+| `GET /api/content/random/{folder}` | `Thumbnail` (bool), `Recursive` (bool) | image bytes (401/400/403/404/**406**) | uses `Accept` header to pick format |
+| `GET /api/content/image/{path}` | `Thumbnail` (bool) | image bytes (401/400/403/404/**406**) | uses `Accept` header to pick format |
 
 ### Response shapes
 `FolderEntry` (`FolderEntry.cs`):
@@ -78,13 +78,13 @@ Image endpoints use the **`Accept`** header to pick a format from the server's `
 A background `ImageConverterJob` automatically generates all configured formats and thumbnails for every source image on startup and on filesystem changes — the FE just requests whichever format it prefers.
 
 ### Download
-`GET /content/download/{folder}?format=avif&format=webp` streams a zip. Per the README, when only a single top-level folder is requested, the zip does **not** wrap it in a subfolder. `Format` is a repeated query param.
+`GET /api/content/download/{folder}?format=avif&format=webp` streams a zip. Per the README, when only a single top-level folder is requested, the zip does **not** wrap it in a subfolder. `Format` is a repeated query param.
 
 ### Errors
 All error responses use RFC 7807 **`application/problem+json`** (`ProblemDetails`): `{ type, title, status, detail, instance }`. Map on `status`:
 - `400` bad request (validation, bad path, etc.)
-- `401` not authenticated (redirect to `/login` for browser flows)
-- `403` forbidden (e.g. folder outside filter, non-admin calling `/token/generate`)
+- `401` not authenticated (redirect to `/api/authentication/login` for browser flows)
+- `403` forbidden (e.g. folder outside filter, non-admin calling `/api/authentication/token/generate`)
 - `404` folder/file not found — note: a forbidden folder is also reported as 404 to avoid leaking existence (`GetEntriesQueryHandler.cs:25-28`)
 - `406` no acceptable image format
 
@@ -97,10 +97,10 @@ Already scaffolded: Vite + React 19 + TS, `oxlint`. Outstanding FE work (per `RE
 5. Add the FE to the backend `Dockerfile`.
 
 Suggested flow for the UI:
-- On 401, redirect to `/login?returnUrl=<current>`.
-- Use `GET /user` to read `isAdmin` and gate admin features (token generation form).
-- `GET /content` for root, then `GET /content/{path}` to navigate; render folders as cards using `GET /content/random/{path}?thumbnail=true&recursive=true` for cover images.
-- `GET /content/image/{path}?thumbnail=true` with `Accept: image/webp` for thumbnails; without `thumbnail` and best Accept for full view.
-- `GET /content/download/{path}?format=avif&format=webp` for "download all" buttons.
+- On 401, redirect to `/api/authentication/login?returnUrl=<current>`.
+- Use `GET /api/authentication/user` to read `isAdmin` and gate admin features (token generation form).
+- `GET /api/content` for root, then `GET /api/content/{path}` to navigate; render folders as cards using `GET /api/content/random/{path}?thumbnail=true&recursive=true` for cover images.
+- `GET /api/content/image/{path}?thumbnail=true` with `Accept: image/webp` for thumbnails; without `thumbnail` and best Accept for full view.
+- `GET /api/content/download/{path}?format=avif&format=webp` for "download all" buttons.
 
 OpenAPI spec lives at `/app/ImageShare/openapi.json` and is regenerated on build — point the client generator there.

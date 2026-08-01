@@ -4,6 +4,7 @@ using ImageShare.Browsing;
 using ImageShare.Errors;
 using ImageShare.Health;
 using ImageShare.ImageConversion;
+using ImageShare.Spa;
 using Mediator;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
@@ -28,6 +29,7 @@ builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AdminBehavior<,>
 builder.Services.AddSingleton<ImageShare.Browsing.ImageEnumerator>();
 builder.Services.AddOptions<StorageOptions>().BindConfiguration("Storage").Validated();
 builder.Services.AddOptions<ImageFormatOptions>().BindConfiguration("ImageFormats").Validated();
+builder.Services.AddSpaHosting();
 builder.Services.AddSingleton<IContentTypeProvider>(serviceProvider =>
 {
     var provider = new FileExtensionContentTypeProvider();
@@ -56,10 +58,12 @@ if (!Directory.Exists(baseDirectory))
 }
 #pragma warning restore RS0030
 
+var api = app.MapGroup("/api");
+
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference(options =>
+    api.MapOpenApi();
+    api.MapScalarApiReference(options =>
     {
         options.Title = "ImageShare";
         options.Telemetry = false;
@@ -69,6 +73,7 @@ if (app.Environment.IsDevelopment())
         {
             Disabled = true
         };
+        options.WithOpenApiRoutePattern("/api/openapi/{documentName}.json");
     });
 }
 
@@ -77,10 +82,11 @@ app.UseHttpsRedirection();
 app.UseRateLimiting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSpaHosting(app.Environment);
 
-app.MapHealthEndpoints();
-app.MapAuthEndpoints();
-app.MapTokenEndpoints();
-app.MapContentEndpoints();
+api.MapHealthEndpoints();
+api.MapAuthEndpoints();
+api.MapTokenEndpoints();
+api.MapContentEndpoints();
 
 await app.RunAsync();

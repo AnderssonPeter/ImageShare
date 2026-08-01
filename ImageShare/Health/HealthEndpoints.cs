@@ -4,7 +4,7 @@ public static class HealthEndpoints
 {
     public static IEndpointRouteBuilder MapHealthEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/", () => TypedResults.Ok("pong"));
+        endpoints.MapGet("/health", () => TypedResults.Ok("pong"));
         return endpoints;
     }
 }

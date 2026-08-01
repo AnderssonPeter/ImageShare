@@ -33,7 +33,7 @@ public class IntegrationTests
         app.Factory.FileProvider.AddFile("vacation/photo.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
 
         // Act
-        var response = await app.Client.GetAsync("/content");
+        var response = await app.Client.GetAsync("/api/content");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -53,7 +53,7 @@ public class IntegrationTests
         app.Factory.FileProvider.AddFile("album/photo.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
 
         // Act
-        var response = await app.Client.GetAsync("/content/");
+        var response = await app.Client.GetAsync("/api/content/");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -72,7 +72,7 @@ public class IntegrationTests
         app.Factory.FileProvider.AddFile("vacation/picture.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
 
         // Act
-        var response = await app.Client.GetAsync("/content/vacation");
+        var response = await app.Client.GetAsync("/api/content/vacation");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -90,7 +90,7 @@ public class IntegrationTests
         app.Factory.FileProvider.AddFile("vacation/photo.avif", photoData);
 
         // Act
-        var response = await app.Client.GetAsync("/content/download/vacation");
+        var response = await app.Client.GetAsync("/api/content/download/vacation");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -112,7 +112,7 @@ public class IntegrationTests
         app.Factory.FileProvider.AddFile("photo.avif", photoData);
 
         // Act
-        var response = await app.Client.GetAsync("/content/image/photo.avif");
+        var response = await app.Client.GetAsync("/api/content/image/photo.avif");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -130,7 +130,7 @@ public class IntegrationTests
         app.Factory.FileProvider.AddFile("vacation/photo.avif", photoData);
 
         // Act
-        var response = await app.Client.GetAsync("/content/image/vacation/photo.avif");
+        var response = await app.Client.GetAsync("/api/content/image/vacation/photo.avif");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -148,7 +148,7 @@ public class IntegrationTests
         app.Factory.FileProvider.AddFile("vacation/photo.avif", photoData);
 
         // Act — simulate Scalar URL-encoding the path separator
-        var response = await app.Client.GetAsync("/content/image/vacation%2Fphoto.avif");
+        var response = await app.Client.GetAsync("/api/content/image/vacation%2Fphoto.avif");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -166,7 +166,7 @@ public class IntegrationTests
         app.Factory.FileProvider.AddFile("album/2024/trip/photo.jpg", photoData);
 
         // Act
-        var response = await app.Client.GetAsync("/content/image/album/2024/trip/photo.jpg");
+        var response = await app.Client.GetAsync("/api/content/image/album/2024/trip/photo.jpg");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -182,7 +182,7 @@ public class IntegrationTests
         using var app = new TestApp();
 
         // Act
-        var response = await app.Client.GetAsync("/");
+        var response = await app.Client.GetAsync("/api/health");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -201,7 +201,7 @@ public class IntegrationTests
         var responses = new List<HttpResponseMessage>();
         for (var index = 0; index < 5; index++)
         {
-            responses.Add(await client.GetAsync("/authentication/login/jwt/invalid-token"));
+            responses.Add(await client.GetAsync("/api/authentication/login/jwt/invalid-token"));
         }
 
         // Assert — first requests within the limit should not be 429; the excess should be 429
@@ -221,7 +221,7 @@ public class IntegrationTests
         var responses = new List<HttpResponseMessage>();
         for (var index = 0; index < 5; index++)
         {
-            responses.Add(await app.Client.GetAsync("/content"));
+            responses.Add(await app.Client.GetAsync("/api/content"));
         }
 
         // Assert — all requests succeed because authenticated endpoints are not rate-limited
