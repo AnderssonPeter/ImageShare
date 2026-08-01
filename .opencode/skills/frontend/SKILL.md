@@ -39,6 +39,10 @@ Import alias: **`@`** → `src/` (configured in `vite.config.ts` and `tsconfig`)
 - Image and download endpoints are **not** consumed through the fetcher — use the URL builders in `src/lib/api/urls.ts` with plain `<img>`/`<a>` (the browser handles Accept negotiation and streaming). All relative paths must be URL-encoded (e.g. `/` → `%2F`).
 - `useInfinite` is disabled in orval (page/pageSize casing mismatch); write manual `useInfiniteQuery` wrappers in `src/lib/api/content-queries.ts` instead. Follow that file's pattern: extract success data, coerce `number | string` fields with a `toNumber` helper, fixed `PAGE_SIZE = 50`.
 
+## Authentication
+
+- The backend gates all access — unauthenticated users never reach the SPA. The `SpaExtensions` middleware serves the built bundle only to authenticated users (cookie/oidc). Do **not** implement client-side auth checks or 401→login redirects in route guards. The `user` is still fetched via `GET /api/authentication/user` in the root route's `beforeLoad` (to get `name`/`isAdmin` for the app bar), but no redirect logic is needed — a 401 there means the session expired mid-session and is handled by the global `QueryClient` `onError` handler (Phase 8), not by route guards.
+
 ## Components (shadcn on base-ui)
 
 - Components live in `src/components/ui/`, built on `@base-ui/react` primitives (not Radix), styled with `class-variance-authority` (`cva`) and the `cn` helper from `src/lib/utils.ts` (`twMerge(clsx(...))`).

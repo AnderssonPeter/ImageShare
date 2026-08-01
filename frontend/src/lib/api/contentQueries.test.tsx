@@ -1,22 +1,22 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
-import { type getContent, type getContentPath } from "./generated/content/content";
+import { type getApiContent, type getApiContentPath } from "./generated/content/content";
 import { renderHook, waitFor } from "@testing-library/react";
 import { type FolderEntry } from "./generated/imageShare.schemas";
 import { type ReactNode } from "react";
 import { useFolderContent } from "./contentQueries";
 
 const { mockGetContent, mockGetContentPath } = vi.hoisted(() => ({
-  mockGetContent: vi.fn<typeof getContent>(),
-  mockGetContentPath: vi.fn<typeof getContentPath>(),
+  mockGetContent: vi.fn<typeof getApiContent>(),
+  mockGetContentPath: vi.fn<typeof getApiContentPath>(),
 }));
 
 vi.mock(import("./generated/content/content"), async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
-    getContent: mockGetContent,
-    getContentPath: mockGetContentPath,
+    getApiContent: mockGetContent,
+    getApiContentPath: mockGetContentPath,
   };
 });
 

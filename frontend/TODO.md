@@ -49,7 +49,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
 
 ## Phase 4 — Routing (TanStack Router, file-based)
 
-- [ ] Create `src/routes/__root.tsx` — layout shell, `beforeLoad` auth (401 → backend `/login`), expose `user` + `queryClient` via router context, theme init
+- [X] Create `src/routes/__root.tsx` — layout shell, `beforeLoad` auth (401 → backend `/login`), expose `user` + `queryClient` via router context, theme init
 - [ ] Create `src/routes/index.tsx` — redirect to `/browse`
 - [ ] Create `src/routes/browse.$.tsx` — splat route, reconstruct `RelativePath` from segments, prefetch first page in `loader`
 - [ ] Create `src/routes/share.$token.tsx` — redirect to `/login/jwt/{token}`

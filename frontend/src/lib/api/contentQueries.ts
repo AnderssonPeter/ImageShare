@@ -7,10 +7,10 @@
  */
 
 import {
-  getContent,
-  getContentPath,
-  type getContentPathResponse,
-  type getContentResponse,
+  getApiContent,
+  getApiContentPath,
+  type getApiContentPathResponse,
+  type getApiContentResponse,
 } from './generated/content/content'
 import { ApiError } from './customFetcher'
 import { type PaginatedResultOfFolderEntry } from './generated/imageShare.schemas'
@@ -22,7 +22,7 @@ export type { FolderEntry, PaginatedResultOfFolderEntry } from './generated/imag
 const PAGE_SIZE = 50
 
 /** Union of both listing response types (each is a success/error union). */
-type ContentResponse = getContentResponse | getContentPathResponse
+type ContentResponse = getApiContentResponse | getApiContentPathResponse
 
 /** Narrow a response union to its success branch and return the page data. */
 function extractPageData(response: ContentResponse): PaginatedResultOfFolderEntry {
@@ -49,8 +49,8 @@ async function fetchContentPage(
 ): Promise<PaginatedResultOfFolderEntry> {
   const params = { page, pageSize: PAGE_SIZE }
   const response: ContentResponse = path === undefined || path === ''
-    ? await getContent(params, { signal })
-    : await getContentPath(path, params, { signal })
+    ? await getApiContent(params, { signal })
+    : await getApiContentPath(path, params, { signal })
 
   return extractPageData(response)
 }
