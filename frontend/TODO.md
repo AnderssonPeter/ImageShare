@@ -50,10 +50,10 @@ Generated from `PLAN.md`. Check off items as you complete them.
 ## Phase 4 — Routing (TanStack Router, file-based)
 
 - [X] Create `src/routes/__root.tsx` — layout shell, `beforeLoad` auth (401 → backend `/login`), expose `user` + `queryClient` via router context, theme init
-- [ ] Create `src/routes/index.tsx` — redirect to `/browse`
+- [X] Create `src/routes/index.tsx` — redirect to `/browse`
 - [ ] Create `src/routes/browse.$.tsx` — splat route, reconstruct `RelativePath` from segments, prefetch first page in `loader`
-- [ ] Create `src/routes/share.$token.tsx` — redirect to `/login/jwt/{token}`
 - [ ] Create `src/routes/admin.tsx` — `beforeLoad` isAdmin gate (403 redirect)
+- [ ] Create `src/routes/admin/share.$token.tsx` — create link to `/api/login/jwt/{token}`
 - [ ] Verify `src/routeTree.gen.ts` auto-generates via Vite plugin
 - [ ] Wire `router.tsx` with `createRouter` + `scrollRestoration`
 
