@@ -22,10 +22,17 @@ When you detect that I have made changes that you don't recognition don't just u
 
 ## Verification
 
-Before considering a task complete, run `dotnet r ci` to verify all changes pass CI checks.
+Before considering a task complete, run the CI steps individually (not `dotnet r ci`) so that slow or failing steps are easy to identify. Run them in order, stopping on the first failure:
+
+1. `dotnet build-server shutdown`
+2. `dotnet r format`
+3. `dotnet r build`
+4. `dotnet r test`
+5. `dotnet r startup`
+
 Run `dotnet tool restore` once at the start of a new session before using `dotnet r`.
 
-If `format:check` fails (often due to file encoding on newly created files), run `dotnet r format` to correct the errors, then re-run `dotnet r ci`.
+If `dotnet restore` fails with a vulnerability error (NU1901/NU1902/NU1903) treated as an error, upgrade the offending package to a non-vulnerable version rather than suppressing the warning. Use `nuget_fix_vulnerable_packages` to compute the smallest safe version change, then apply it.
 
 ## Naming
 
