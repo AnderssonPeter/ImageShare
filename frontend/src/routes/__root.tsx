@@ -2,8 +2,9 @@
  * Root route — the application layout shell.
  *
  * Uses `createRootRouteWithContext` so every descendant route has type-safe
- * access to the shared `queryClient` (provided at router creation) and the
- * authenticated `user` (resolved by `beforeLoad` and merged into context).
+ * access to the shared `queryClient` (provided at router creation). The
+ * authenticated `user` is resolved by `beforeLoad` and merged into context
+ * for all descendants — it is not part of the initial `RouterContext`.
  *
  * The backend gates all access — unauthenticated users never reach the SPA.
  * `beforeLoad` fetches the current user via `GET /api/authentication/user`
@@ -19,22 +20,16 @@ import { ThemeProvider } from '@/lib/themeContext'
 import { getApiAuthenticationUser } from '@/lib/api/generated/authentication/authentication'
 
 /**
- * Base router context — supplied at `createRouter` time (see `router.tsx`).
- * `user` starts as `undefined` and is resolved by the root route's
- * `beforeLoad`, which merges the fetched `IUser` into context for all
- * descendant routes.
+ * Initial router context — supplied at `createRouter` time (see `router.tsx`).
+ * Only contains the `queryClient`; the `user` is resolved by the root route's
+ * `beforeLoad` and merged into context for all descendant routes.
  */
-interface RouterContext {
+export interface RouterContext {
   queryClient: QueryClient
-  user: IUser | undefined
 }
 
 function RootComponent(): React.JSX.Element {
-  const match = Route.useMatch()
-  const { user } = match.context
-  if (user === undefined) {
-    throw new Error('User must be resolved by beforeLoad before rendering')
-  }
+  const { user } = Route.useMatch().context
   return (
     <ThemeProvider>
       <MetroAppBar user={user}>
@@ -50,7 +45,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     if (response.status !== 200) {
       throw new Error(`Unexpected response status: ${response.status}`)
     }
-    return { user: response.data }
+    return { user: response.data satisfies IUser }
   },
   component: RootComponent,
 })

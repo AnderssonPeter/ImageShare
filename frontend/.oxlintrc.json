@@ -82,13 +82,13 @@
       }
     },
     {
-      "files": ["src/App.tsx", "src/components/**"],
+      "files": ["src/components/**"],
       "rules": {
         "unicorn/filename-case": ["warn", { "cases": { "camelCase": false, "pascalCase": true, "kebabCase": false } }]
       }
     },
     {
-      "files": ["src/lib/**"],
+      "files": ["src/lib/**", "src/router.tsx"],
       "rules": {
         "import/no-named-export": "off",
         "import/prefer-default-export": "off"

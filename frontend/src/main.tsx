@@ -1,6 +1,8 @@
 import './index.css'
 import { type ReactNode, StrictMode } from 'react'
-import App from './App.tsx'
+import { queryClient, router } from './router'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { RouterProvider } from '@tanstack/react-router'
 import { createRoot } from 'react-dom/client'
 
 const rootElement: HTMLElement | null = document.querySelector('#root')
@@ -10,7 +12,9 @@ if (rootElement === null) {
 
 const children: ReactNode = (
   <StrictMode>
-    <App />
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   </StrictMode>
 )
 

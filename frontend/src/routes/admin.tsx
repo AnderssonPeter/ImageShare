@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Admin layout route — gates all `/admin/**` routes on `user.isAdmin`.
  *
  * The backend gates SPA access entirely (only authenticated users reach
@@ -11,8 +11,8 @@ import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/admin')({
   beforeLoad: ({ context }) => {
-    if (context.user?.isAdmin !== true) {
-      throw redirect({ to: '/browse' })
+    if (!context.user.isAdmin) {
+      throw redirect({ to: '/browse/$' })
     }
   },
   component: AdminLayout,
