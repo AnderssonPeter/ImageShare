@@ -69,7 +69,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [ ] Implement `FolderTile` — cover from `randomFolderUrl(thumbnail, recursive)`, name overlay, navigate on click, download affordance
 - [ ] Implement `ImageTile` — thumbnail from `imageUrl(path, true)`, click opens carousel at index
 - [ ] Implement `Breadcrumb` in app bar from splat segments (clickable ancestors)
-- [ ] Move the styling of metro tile out of the index.css and use tailwind inside the component instead
+- [X] Move the styling of metro tile out of the index.css and use tailwind inside the component instead
 ---
 
 ## Phase 6 — Fullscreen carousel

@@ -18,6 +18,7 @@ import {
 } from "react";
 import { type ReactVirtualizer, type VirtualItem, useVirtualizer } from "@tanstack/react-virtual";
 import { type FolderEntry } from "@lib/api/generated/imageShare.schemas";
+import MetroTile from "@components/MetroTile";
 import { tw } from "@lib/utils";
 import { useFolderContent } from "@lib/api/contentQueries";
 
@@ -40,7 +41,8 @@ const ROW_HEIGHT = TILE_SIZE + GUTTER;
 const SKELETON_ROWS = 4;
 
 /** Static styles — module-level so react-perf/jsx-no-new-object-as-prop is satisfied. */
-const TILE_STYLE: CSSProperties = { width: TILE_SIZE, height: TILE_SIZE };
+const TILE_SIZE_CLASS = tw`w-[160px] h-[160px]`;
+const SKELETON_TILE_CLASS = tw`animate-pulse bg-muted rounded-sm w-[160px] h-[160px]`;
 const ROW_POSITION_BASE_STYLE: CSSProperties = {
   position: "absolute",
   top: 0,
@@ -110,11 +112,9 @@ function useAutoload({
 
 function GridTile({ entry }: { entry: FolderEntry }) {
   return (
-    <div className="metro-tile" style={TILE_STYLE}>
-      <span className="absolute bottom-1 left-1 text-sm leading-none text-tile-foreground">
-        {entry.name}
-      </span>
-    </div>
+    <MetroTile className={TILE_SIZE_CLASS}>
+      <span className="absolute bottom-1 left-1 text-sm leading-none">{entry.name}</span>
+    </MetroTile>
   );
 }
 
@@ -191,9 +191,7 @@ function VirtualGridBody({ rowVirtualizer, items, columns }: VirtualGridBodyProp
 function SkeletonRow({ columns }: { columns: number }) {
   const tiles: ReactNode[] = [];
   for (let column = 0; column < columns; column++) {
-    tiles.push(
-      <div key={column} className="animate-pulse bg-muted rounded-sm" style={TILE_STYLE} />,
-    );
+    tiles.push(<div key={column} className={SKELETON_TILE_CLASS} />);
   }
   return <div className="flex gap-gutter">{tiles}</div>;
 }
