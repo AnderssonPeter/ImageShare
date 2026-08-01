@@ -37,12 +37,13 @@ Generated from `PLAN.md`. Check off items as you complete them.
 
 ## Phase 3 — Metro UI design system + theming
 
-- [ ] Define light + dark theme CSS variables (accent = blue `#0078D4`, radius ~2px)
-- [ ] Implement theme detection: `matchMedia('(prefers-color-scheme: dark)')` with fallback to dark
+- [X] Define light + dark theme CSS variables (accent = blue `#0078D4`, radius ~2px)
+- [X] Implement theme detection: `matchMedia('(prefers-color-scheme: dark)') with fallback to dark
 - [ ] Add live theme-switch listener + optional localStorage override
 - [ ] Create `ThemeToggle` component for app bar
 - [ ] Create `MetroAppBar` layout (app title, breadcrumb slot, theme toggle, user chip, admin button)
 - [ ] Establish Metro tile base styles (flat, no shadow, 2px gutters, accent on press)
+- [ ] Create a showcase page that displays all components that should only be included in develop builds
 
 ---
 
