@@ -128,6 +128,7 @@
   --radius-2xl: 0.125rem;
   --radius-3xl: 0.125rem;
   --radius-4xl: 0.125rem;
+  --spacing-gutter: 0.125rem;
   --font-sans: "Segoe UI", "Geist Variable", system-ui, -apple-system, Roboto, sans-serif;
   --font-heading: var(--font-sans);
 }
@@ -158,18 +159,22 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Metro tile: flat, no shadow, accent on press. */
-.metro-tile {
+/* Metro tile: flat fill, no shadow, accent on press.
+   Registered as a Tailwind utility so it composes with other utilities
+   (a consumer's bg-* override wins) and supports variant nesting. */
+@utility metro-tile {
   background: var(--tile);
   color: var(--tile-foreground);
   border-radius: var(--radius);
   transition: background-color 120ms ease, transform 120ms ease;
-}
-.metro-tile:hover {
-  background: var(--muted);
-}
-.metro-tile:active {
-  background: var(--accent);
-  color: var(--accent-foreground);
-  transform: scale(0.98);
+
+  &:hover {
+    background: var(--muted);
+  }
+
+  &:active {
+    background: var(--accent);
+    color: var(--accent-foreground);
+    transform: scale(0.98);
+  }
 }
