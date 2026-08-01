@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { type IUser } from '@/lib/api/generated/imageShare.schemas'
-import MetroAppBar from './MetroAppBar'
+import { type IUser } from '@lib/api/generated/imageShare.schemas'
+import MetroAppBar from '@components/MetroAppBar'
 import { type ReactNode } from 'react'
-import { ThemeProvider } from '@/lib/themeContext'
-import setupThemeEnvironment from '@/test/themeEnvironment'
+import { ThemeProvider } from '@lib/themeContext'
+import setupThemeEnvironment from '@test/themeEnvironment'
 
 function authenticatedUser(overrides: Partial<IUser> = {}): IUser {
   return { isAuthenticated: true, isAdmin: false, name: 'Jane', ...overrides }

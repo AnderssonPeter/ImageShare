@@ -1,8 +1,8 @@
-import { ThemeProvider, useThemeContext } from './themeContext'
+import { ThemeProvider, useThemeContext } from '@lib/themeContext'
 import { act, renderHook } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { type ReactNode } from 'react'
-import setupThemeEnvironment from '@/test/themeEnvironment'
+import setupThemeEnvironment from '@test/themeEnvironment'
 
 function wrapper({ children }: { children: ReactNode }) {
   return <ThemeProvider>{children}</ThemeProvider>

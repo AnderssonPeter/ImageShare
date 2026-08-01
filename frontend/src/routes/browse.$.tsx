@@ -13,7 +13,7 @@
  * component reads the same cache.
  */
 import { createFileRoute } from '@tanstack/react-router'
-import { folderContentQueryOptions } from '@/lib/api/contentQueries'
+import { folderContentQueryOptions } from '@lib/api/contentQueries'
 
 export const Route = createFileRoute('/browse/$')({
   loader: async ({ context, params }) => {

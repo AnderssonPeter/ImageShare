@@ -11,12 +11,12 @@ import {
   getApiContentPath,
   type getApiContentPathResponse,
   type getApiContentResponse,
-} from './generated/content/content'
-import { ApiError } from './customFetcher'
-import { type PaginatedResultOfFolderEntry } from './generated/imageShare.schemas'
+} from '@lib/api/generated/content/content'
+import { ApiError } from '@lib/api/customFetcher'
+import { type PaginatedResultOfFolderEntry } from '@lib/api/generated/imageShare.schemas'
 import { useInfiniteQuery } from '@tanstack/react-query'
 
-export type { FolderEntry, PaginatedResultOfFolderEntry } from './generated/imageShare.schemas'
+export type { FolderEntry, PaginatedResultOfFolderEntry } from '@lib/api/generated/imageShare.schemas'
 
 /** Page size used for all content listing requests (backend max is 500). */
 const PAGE_SIZE = 50

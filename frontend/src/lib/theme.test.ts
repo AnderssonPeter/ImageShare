@@ -6,7 +6,7 @@ import {
   onSystemThemeChange,
   resolveTheme,
   storeTheme,
-} from "./theme";
+} from "@lib/theme";
 import { describe, expect, it, vi } from "vitest";
 
 type StorageReturn = string | undefined;

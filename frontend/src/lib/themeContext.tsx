@@ -30,7 +30,7 @@ import {
   onSystemThemeChange,
   resolveTheme,
   storeTheme,
-} from './theme'
+} from '@lib/theme'
 
 export interface ThemeContextValue {
   /** The currently effective theme. */

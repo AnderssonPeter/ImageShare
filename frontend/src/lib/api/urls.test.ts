@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { downloadUrl, imageUrl, randomFolderUrl } from "./urls";
+import { downloadUrl, imageUrl, randomFolderUrl } from "@lib/api/urls";
 
 describe("imageUrl builder", () => {
   it(

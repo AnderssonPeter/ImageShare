@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Admin layout route — gates all `/admin/**` routes on `user.isAdmin`.
  *
  * The backend gates SPA access entirely (only authenticated users reach

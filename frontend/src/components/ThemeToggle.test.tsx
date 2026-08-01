@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { type ReactNode } from 'react'
-import { ThemeProvider } from '@/lib/themeContext'
-import ThemeToggle from './ThemeToggle'
-import setupThemeEnvironment from '@/test/themeEnvironment'
+import { ThemeProvider } from '@lib/themeContext'
+import ThemeToggle from '@components/ThemeToggle'
+import setupThemeEnvironment from '@test/themeEnvironment'
 
 function wrapper({ children }: { children: ReactNode }) {
   return <ThemeProvider>{children}</ThemeProvider>

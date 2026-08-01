@@ -13,11 +13,11 @@
  * by the global `QueryClient` `onError` handler (Phase 8).
  */
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
-import { type IUser } from '@/lib/api/generated/imageShare.schemas'
-import MetroAppBar from '@/components/MetroAppBar'
+import { type IUser } from '@lib/api/generated/imageShare.schemas'
+import MetroAppBar from '@components/MetroAppBar'
 import { type QueryClient } from '@tanstack/react-query'
-import { ThemeProvider } from '@/lib/themeContext'
-import { getApiAuthenticationUser } from '@/lib/api/generated/authentication/authentication'
+import { ThemeProvider } from '@lib/themeContext'
+import { getApiAuthenticationUser } from '@lib/api/generated/authentication/authentication'
 
 /**
  * Initial router context — supplied at `createRouter` time (see `router.tsx`).

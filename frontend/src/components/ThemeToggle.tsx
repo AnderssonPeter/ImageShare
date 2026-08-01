@@ -9,10 +9,10 @@
  * an override; the toggle does not expose a "follow system" mode.
  */
 import { Moon, Sun } from 'lucide-react'
-import Button from '@/components/ui/Button'
-import Tooltip from '@/components/ui/Tooltip'
+import Button from '@components/ui/Button'
+import Tooltip from '@components/ui/Tooltip'
 import { useCallback } from 'react'
-import { useThemeContext } from '@/lib/themeContext'
+import { useThemeContext } from '@lib/themeContext'
 
 interface ThemeToggleTriggerProps {
   isDark: boolean

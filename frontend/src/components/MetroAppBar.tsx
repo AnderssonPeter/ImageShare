@@ -13,12 +13,12 @@
  * is wired up. Page content is rendered below the bar via `children`.
  */
 import { Shield, User } from 'lucide-react'
-import Button from '@/components/ui/Button'
-import { type IUser } from '@/lib/api/generated/imageShare.schemas'
-import Logo from '@/components/Logo'
+import Button from '@components/ui/Button'
+import { type IUser } from '@lib/api/generated/imageShare.schemas'
+import Logo from '@components/Logo'
 import { type ReactNode } from 'react'
-import ThemeToggle from '@/components/ThemeToggle'
-import Tooltip from '@/components/ui/Tooltip'
+import ThemeToggle from '@components/ThemeToggle'
+import Tooltip from '@components/ui/Tooltip'
 
 interface AdminButtonProps {
   visible: boolean
