@@ -12,24 +12,24 @@
  * data that must block navigation). The `useFolderContent` hook in the
  * component reads the same cache.
  */
-import ContentGrid from '@components/ContentGrid'
-import { createFileRoute } from '@tanstack/react-router'
-import { folderContentQueryOptions } from '@lib/api/contentQueries'
+import ContentGrid from "@components/ContentGrid";
+import { createFileRoute } from "@tanstack/react-router";
+import { folderContentQueryOptions } from "@lib/api/contentQueries";
 
-export const Route = createFileRoute('/browse/$')({
+export const Route = createFileRoute("/browse/$")({
   loader: async ({ context, params }) => {
-    const segments = params._splat === undefined ? [] : params._splat.split('/')
-    const relativePath = segments.join('/')
-    const path = relativePath === '' ? undefined : relativePath
-    await context.queryClient.ensureInfiniteQueryData(folderContentQueryOptions(path))
+    const segments = params._splat === undefined ? [] : params._splat.split("/");
+    const relativePath = segments.join("/");
+    const path = relativePath === "" ? undefined : relativePath;
+    await context.queryClient.ensureInfiniteQueryData(folderContentQueryOptions(path));
   },
   component: BrowseComponent,
-})
+});
 
 function BrowseComponent(): React.JSX.Element {
-  const { _splat } = Route.useParams()
-  const segments = _splat === undefined ? [] : _splat.split('/')
-  const relativePath = segments.join('/')
-  const path = relativePath === '' ? undefined : relativePath
-  return <ContentGrid path={path} />
+  const { _splat } = Route.useParams();
+  const segments = _splat === undefined ? [] : _splat.split("/");
+  const relativePath = segments.join("/");
+  const path = relativePath === "" ? undefined : relativePath;
+  return <ContentGrid path={path} />;
 }

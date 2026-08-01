@@ -11,20 +11,20 @@
  * This route is nested under the admin layout, so the `beforeLoad` isAdmin
  * gate already ensures only admins can reach it.
  */
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/admin/share/$token')({
+export const Route = createFileRoute("/admin/share/$token")({
   component: ShareTokenComponent,
-})
+});
 
 function ShareTokenComponent(): React.JSX.Element {
-  const { token } = Route.useParams()
-  const shareUrl = `/api/authentication/login/jwt/${token}`
+  const { token } = Route.useParams();
+  const shareUrl = `/api/authentication/login/jwt/${token}`;
 
   return (
     <div className="flex flex-col gap-gutter p-4">
       <h2 className="text-lg font-semibold text-foreground">Share Link</h2>
       <code className="text-sm text-muted-foreground">{shareUrl}</code>
     </div>
-  )
+  );
 }

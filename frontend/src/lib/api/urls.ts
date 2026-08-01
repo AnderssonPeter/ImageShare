@@ -12,7 +12,7 @@
 
 /** Encode a RelativePath for use as a single path parameter segment. */
 function encodePath(path: string): string {
-  return encodeURIComponent(path)
+  return encodeURIComponent(path);
 }
 
 /**
@@ -23,14 +23,14 @@ function encodePath(path: string): string {
  * @returns A URL string suitable for `<img src>`.
  */
 export function imageUrl(path: string, thumbnail: boolean): string {
-  const params = new URLSearchParams()
+  const params = new URLSearchParams();
   if (thumbnail) {
-    params.set('thumbnail', 'true')
+    params.set("thumbnail", "true");
   }
-  const query = params.toString()
+  const query = params.toString();
   return query
     ? `/content/image/${encodePath(path)}?${query}`
-    : `/content/image/${encodePath(path)}`
+    : `/content/image/${encodePath(path)}`;
 }
 
 /**
@@ -42,22 +42,18 @@ export function imageUrl(path: string, thumbnail: boolean): string {
  * @param recursive - When true, pick from the folder recursively (all subfolders).
  * @returns A URL string suitable for `<img src>`.
  */
-export function randomFolderUrl(
-  folder: string,
-  thumbnail: boolean,
-  recursive: boolean,
-): string {
-  const params = new URLSearchParams()
+export function randomFolderUrl(folder: string, thumbnail: boolean, recursive: boolean): string {
+  const params = new URLSearchParams();
   if (thumbnail) {
-    params.set('thumbnail', 'true')
+    params.set("thumbnail", "true");
   }
   if (recursive) {
-    params.set('recursive', 'true')
+    params.set("recursive", "true");
   }
-  const query = params.toString()
+  const query = params.toString();
   return query
     ? `/content/random/${encodePath(folder)}?${query}`
-    : `/content/random/${encodePath(folder)}`
+    : `/content/random/${encodePath(folder)}`;
 }
 
 /**
@@ -70,12 +66,12 @@ export function randomFolderUrl(
  * @returns A URL string suitable for `<a href>`.
  */
 export function downloadUrl(folder: string, formats: readonly string[]): string {
-  const params = new URLSearchParams()
+  const params = new URLSearchParams();
   for (const format of formats) {
-    params.append('format', format)
+    params.append("format", format);
   }
-  const query = params.toString()
+  const query = params.toString();
   return query
     ? `/content/download/${encodePath(folder)}?${query}`
-    : `/content/download/${encodePath(folder)}`
+    : `/content/download/${encodePath(folder)}`;
 }

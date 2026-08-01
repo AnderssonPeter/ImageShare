@@ -17,6 +17,7 @@ The frontend lives in `/app/frontend`. Stack: Vite + React 19 + TypeScript, TanS
 - `pnpm dev` — Vite dev server on port 5000.
 - `pnpm build` — runs `gen:api` then `tsc -b && vite build`.
 - `pnpm lint` — oxlint (auto-fix is `oxlint --fix`).
+- `pnpm format` — format code.
 - `pnpm test` / `pnpm test:watch` / `pnpm test:ui` — vitest. See the `frontend-tests` skill.
 - `pnpm gen:api` — regenerates the typed API client from `../ImageShare/openapi.json`.
 

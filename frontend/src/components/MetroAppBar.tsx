@@ -12,42 +12,42 @@
  * props so it can be tested in isolation before the router context (Phase 4)
  * is wired up. Page content is rendered below the bar via `children`.
  */
-import { Shield, User } from 'lucide-react'
-import Button from '@components/ui/Button'
-import { type IUser } from '@lib/api/generated/imageShare.schemas'
-import Logo from '@components/Logo'
-import { type ReactNode } from 'react'
-import ThemeToggle from '@components/ThemeToggle'
-import Tooltip from '@components/ui/Tooltip'
+import { Shield, User } from "lucide-react";
+import Button from "@components/ui/Button";
+import { type IUser } from "@lib/api/generated/imageShare.schemas";
+import Logo from "@components/Logo";
+import { type ReactNode } from "react";
+import ThemeToggle from "@components/ThemeToggle";
+import Tooltip from "@components/ui/Tooltip";
 
 interface AdminButtonProps {
-  visible: boolean
+  visible: boolean;
 }
 
 function AdminButton({ visible }: AdminButtonProps) {
   if (!visible) {
-    return
+    return;
   }
   return (
     <Tooltip.Tooltip>
       <Tooltip.TooltipTrigger
-        className={Button.buttonVariants({ variant: 'ghost', size: 'icon' })}
+        className={Button.buttonVariants({ variant: "ghost", size: "icon" })}
         aria-label="Admin"
       >
         <Shield className="size-4" />
       </Tooltip.TooltipTrigger>
       <Tooltip.TooltipContent>Admin</Tooltip.TooltipContent>
     </Tooltip.Tooltip>
-  )
+  );
 }
 
 function UserChip({ name }: { name: string | undefined }) {
   return (
     <div className="flex items-center gap-2 px-2 text-sm text-foreground">
       <User className="size-4 text-muted-foreground" />
-      <span className="max-w-32 truncate">{name ?? 'User'}</span>
+      <span className="max-w-32 truncate">{name ?? "User"}</span>
     </div>
-  )
+  );
 }
 
 function AppBarLeft() {
@@ -56,18 +56,18 @@ function AppBarLeft() {
       <Logo className="size-6 text-primary" />
       <span className="text-sm font-medium text-foreground">ImageShare</span>
     </div>
-  )
+  );
 }
 
 function AppBarBreadcrumb({ breadcrumb }: { breadcrumb: ReactNode }) {
   if (breadcrumb === undefined) {
-    return
+    return;
   }
-  return <div className="min-w-0 flex-1">{breadcrumb}</div>
+  return <div className="min-w-0 flex-1">{breadcrumb}</div>;
 }
 
 interface AppBarRightProps {
-  user: IUser
+  user: IUser;
 }
 
 function AppBarRight({ user }: AppBarRightProps) {
@@ -77,7 +77,7 @@ function AppBarRight({ user }: AppBarRightProps) {
       <AdminButton visible={user.isAdmin === true} />
       <UserChip name={user.name ?? undefined} />
     </div>
-  )
+  );
 }
 
 export default function MetroAppBar({
@@ -85,9 +85,9 @@ export default function MetroAppBar({
   breadcrumb,
   children,
 }: {
-  user: IUser
-  breadcrumb?: ReactNode
-  children: ReactNode
+  user: IUser;
+  breadcrumb?: ReactNode;
+  children: ReactNode;
 }): React.JSX.Element {
   return (
     <div className="flex min-h-screen flex-col">
@@ -98,5 +98,5 @@ export default function MetroAppBar({
       </header>
       <main className="flex-1">{children}</main>
     </div>
-  )
+  );
 }

@@ -18,23 +18,23 @@
 
 /** RFC 7807 problem details. `status` may be a string per the OpenAPI schema. */
 export interface ProblemDetails {
-  type?: string | null
-  title?: string | null
-  status?: number | string | null
-  detail?: string | null
-  instance?: string | null
+  type?: string | null;
+  title?: string | null;
+  status?: number | string | null;
+  detail?: string | null;
+  instance?: string | null;
 }
 
 /** Error thrown for any non-2xx response. Carries parsed ProblemDetails. */
 export class ApiError extends Error {
-  public readonly status: number
-  public readonly problem: ProblemDetails | undefined
+  public readonly status: number;
+  public readonly problem: ProblemDetails | undefined;
 
   public constructor(status: number, problem: ProblemDetails | undefined, message?: string) {
-    super(message ?? problem?.detail ?? problem?.title ?? `Request failed with status ${status}`)
-    this.name = 'ApiError'
-    this.status = status
-    this.problem = problem
+    super(message ?? problem?.detail ?? problem?.title ?? `Request failed with status ${status}`);
+    this.name = "ApiError";
+    this.status = status;
+    this.problem = problem;
   }
 }
 
@@ -43,43 +43,43 @@ export class ApiError extends Error {
  * their `TError` generic to ApiError (instead of the raw schema shape), so
  * callers get `error: ApiError` in `onError` / mutation results.
  */
-export type ErrorType<Error = unknown> = ApiError & Record<never, Error>
+export type ErrorType<Error = unknown> = ApiError & Record<never, Error>;
 
 /** Orval convention: pass-through body type (no case transformation needed). */
-export type BodyType<BodyData = unknown> = BodyData
+export type BodyType<BodyData = unknown> = BodyData;
 
 /** Default headers applied to every request unless overridden per request. */
 const defaultHeaders: Record<string, string> = {
-  Accept: 'application/json',
-}
+  Accept: "application/json",
+};
 
 /** Normalize a Headers instance into a plain record. */
 function headersToRecord(headers: Headers): Record<string, string> {
-  const record: Record<string, string> = {}
+  const record: Record<string, string> = {};
   for (const [key, value] of headers.entries()) {
-    record[key] = value
+    record[key] = value;
   }
-  return record
+  return record;
 }
 
 /** Normalize an array of header tuples into a plain record. */
 function arrayToRecord(entries: [string, string][]): Record<string, string> {
-  const record: Record<string, string> = {}
+  const record: Record<string, string> = {};
   for (const [key, value] of entries) {
-    record[key] = value
+    record[key] = value;
   }
-  return record
+  return record;
 }
 
 /** Normalize a `HeadersInit` into a plain record for merging. */
 function toHeaderRecord(init: HeadersInit | undefined): Record<string, string> {
   if (init instanceof Headers) {
-    return headersToRecord(init)
+    return headersToRecord(init);
   }
   if (Array.isArray(init)) {
-    return arrayToRecord(init)
+    return arrayToRecord(init);
   }
-  return { ...init }
+  return { ...init };
 }
 
 /**
@@ -90,50 +90,53 @@ function mergeHeaders(
   base: Record<string, string>,
   override: HeadersInit | undefined,
 ): Record<string, string> {
-  const over = toHeaderRecord(override)
-  const merged: Record<string, string> = { ...base }
+  const over = toHeaderRecord(override);
+  const merged: Record<string, string> = { ...base };
   for (const [key, value] of Object.entries(over)) {
     if (value !== undefined && value !== null) {
-      merged[key] = value
+      merged[key] = value;
     }
   }
-  return merged
+  return merged;
 }
 
 /** Parse a success body based on the response content type. */
 function parseBody<ResponseType>(response: Response): Promise<ResponseType> {
-  const contentType = response.headers.get('content-type') ?? ''
-  if (contentType.includes('application/json')) {
-    return response.json() as Promise<ResponseType>
+  const contentType = response.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    return response.json() as Promise<ResponseType>;
   }
-  if (contentType.startsWith('text/')) {
-    return response.text() as Promise<ResponseType>
+  if (contentType.startsWith("text/")) {
+    return response.text() as Promise<ResponseType>;
   }
-  return response.blob() as Promise<ResponseType>
+  return response.blob() as Promise<ResponseType>;
 }
 
 /** Parse an error body, preferring RFC 7807 problem+json when present. */
 async function parseProblem(response: Response): Promise<ProblemDetails | undefined> {
-  const contentType = response.headers.get('content-type') ?? ''
-  if (contentType.includes('application/problem+json') || contentType.includes('application/json')) {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (
+    contentType.includes("application/problem+json") ||
+    contentType.includes("application/json")
+  ) {
     try {
-      return (await response.json()) as ProblemDetails
+      return (await response.json()) as ProblemDetails;
     } catch {
-      return undefined
+      return undefined;
     }
   }
-  return undefined
+  return undefined;
 }
 
 /** Resolve a numeric HTTP status, preferring the ProblemDetails `status` field. */
 function resolveStatus(response: Response, problem: ProblemDetails | undefined): number {
   if (problem?.status !== undefined && problem.status !== null) {
-    const parsed = Number(problem.status)
+    const parsed = Number(problem.status);
     if (Number.isFinite(parsed)) {
-      return parsed
+      return parsed;
     }
   }
-  return response.status
+  return response.status;
 }
 
 /**
@@ -151,20 +154,20 @@ export async function customFetcher<ResponseType>(
   url: string,
   options?: RequestInit,
 ): Promise<ResponseType> {
-  const headers = mergeHeaders(defaultHeaders, options?.headers)
+  const headers = mergeHeaders(defaultHeaders, options?.headers);
 
   const response = await fetch(url, {
     ...options,
     headers,
-  })
+  });
 
   if (!response.ok) {
-    const problem = await parseProblem(response)
-    throw new ApiError(resolveStatus(response, problem), problem)
+    const problem = await parseProblem(response);
+    throw new ApiError(resolveStatus(response, problem), problem);
   }
 
-  const data = await parseBody<unknown>(response)
-  return { status: response.status, data, headers: response.headers } as ResponseType
+  const data = await parseBody<unknown>(response);
+  return { status: response.status, data, headers: response.headers } as ResponseType;
 }
 
-export default customFetcher
+export default customFetcher;

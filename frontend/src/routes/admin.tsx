@@ -7,17 +7,17 @@
  * `/admin` is redirected rather than shown an empty/broken page. On
  * failure a `redirect` to `/browse` is thrown (307 by default).
  */
-import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
+import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/admin')({
+export const Route = createFileRoute("/admin")({
   beforeLoad: ({ context }) => {
     if (!context.user.isAdmin) {
-      throw redirect({ to: '/browse/$' })
+      throw redirect({ to: "/browse/$" });
     }
   },
   component: AdminLayout,
-})
+});
 
 function AdminLayout(): React.JSX.Element {
-  return <Outlet />
+  return <Outlet />;
 }

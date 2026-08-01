@@ -12,12 +12,12 @@
  * client-side auth redirect is needed. Session-expiry mid-session is handled
  * by the global `QueryClient` `onError` handler (Phase 8).
  */
-import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
-import { type IUser } from '@lib/api/generated/imageShare.schemas'
-import MetroAppBar from '@components/MetroAppBar'
-import { type QueryClient } from '@tanstack/react-query'
-import { ThemeProvider } from '@lib/themeContext'
-import { getApiAuthenticationUser } from '@lib/api/generated/authentication/authentication'
+import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
+import { type IUser } from "@lib/api/generated/imageShare.schemas";
+import MetroAppBar from "@components/MetroAppBar";
+import { type QueryClient } from "@tanstack/react-query";
+import { ThemeProvider } from "@lib/themeContext";
+import { getApiAuthenticationUser } from "@lib/api/generated/authentication/authentication";
 
 /**
  * Initial router context — supplied at `createRouter` time (see `router.tsx`).
@@ -25,27 +25,27 @@ import { getApiAuthenticationUser } from '@lib/api/generated/authentication/auth
  * `beforeLoad` and merged into context for all descendant routes.
  */
 export interface RouterContext {
-  queryClient: QueryClient
+  queryClient: QueryClient;
 }
 
 function RootComponent(): React.JSX.Element {
-  const { user } = Route.useMatch().context
+  const { user } = Route.useMatch().context;
   return (
     <ThemeProvider>
       <MetroAppBar user={user}>
         <Outlet />
       </MetroAppBar>
     </ThemeProvider>
-  )
+  );
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: async () => {
-    const response = await getApiAuthenticationUser()
+    const response = await getApiAuthenticationUser();
     if (response.status !== 200) {
-      throw new Error(`Unexpected response status: ${response.status}`)
+      throw new Error(`Unexpected response status: ${response.status}`);
     }
-    return { user: response.data satisfies IUser }
+    return { user: response.data satisfies IUser };
   },
   component: RootComponent,
-})
+});

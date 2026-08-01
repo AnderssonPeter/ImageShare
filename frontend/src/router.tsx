@@ -7,25 +7,25 @@
  * `defaultPreloadStaleTime: 0` ensures loaders always refetch fresh data
  * through React Query rather than serving stale route-level cache.
  */
-import { QueryClient } from '@tanstack/react-query'
-import { type RouterContext } from './routes/__root'
-import { createRouter } from '@tanstack/react-router'
-import { routeTree } from './routeTree.gen'
+import { QueryClient } from "@tanstack/react-query";
+import { type RouterContext } from "./routes/__root";
+import { createRouter } from "@tanstack/react-router";
+import { routeTree } from "./routeTree.gen";
 
-const queryClient: QueryClient = new QueryClient()
+const queryClient: QueryClient = new QueryClient();
 
 const router = createRouter({
   routeTree,
   context: { queryClient } satisfies RouterContext,
-  defaultPreload: 'intent',
+  defaultPreload: "intent",
   defaultPreloadStaleTime: 0,
   scrollRestoration: true,
-})
+});
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface Register {
-    router: typeof router
+    router: typeof router;
   }
 }
 
-export { queryClient, router }
+export { queryClient, router };

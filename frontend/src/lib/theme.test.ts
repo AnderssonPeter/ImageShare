@@ -53,112 +53,84 @@ function setupEnvironment(systemDark: boolean) {
 }
 
 describe("resolveTheme detection", () => {
-  it(
-    "returns dark when matchMedia is unavailable",
-    () => {
-      expect.hasAssertions();
-      // Arrange — stub localStorage but leave matchMedia unset
-      vi.stubGlobal("localStorage", createLocalStorage());
-      vi.stubGlobal("matchMedia", void 0);
+  it("returns dark when matchMedia is unavailable", () => {
+    expect.hasAssertions();
+    // Arrange — stub localStorage but leave matchMedia unset
+    vi.stubGlobal("localStorage", createLocalStorage());
+    vi.stubGlobal("matchMedia", void 0);
 
-      // Act + Assert
-      expect(resolveTheme()).toBe(DEFAULT_THEME);
-    },
-    1000,
-  );
+    // Act + Assert
+    expect(resolveTheme()).toBe(DEFAULT_THEME);
+  }, 1000);
 
-  it(
-    "returns dark when system prefers dark and no override",
-    () => {
-      expect.hasAssertions();
-      // Arrange
-      setupEnvironment(true);
+  it("returns dark when system prefers dark and no override", () => {
+    expect.hasAssertions();
+    // Arrange
+    setupEnvironment(true);
 
-      // Act + Assert
-      expect(resolveTheme()).toBe("dark");
-    },
-    1000,
-  );
+    // Act + Assert
+    expect(resolveTheme()).toBe("dark");
+  }, 1000);
 
-  it(
-    "returns light when system prefers light and no override",
-    () => {
-      expect.hasAssertions();
-      // Arrange
-      setupEnvironment(false);
+  it("returns light when system prefers light and no override", () => {
+    expect.hasAssertions();
+    // Arrange
+    setupEnvironment(false);
 
-      // Act + Assert
-      expect(resolveTheme()).toBe("light");
-    },
-    1000,
-  );
+    // Act + Assert
+    expect(resolveTheme()).toBe("light");
+  }, 1000);
 });
 
 describe("resolveTheme localStorage override", () => {
-  it(
-    "returns the stored override instead of the system preference",
-    () => {
-      expect.hasAssertions();
-      // Arrange
-      setupEnvironment(false);
-      storeTheme("dark");
+  it("returns the stored override instead of the system preference", () => {
+    expect.hasAssertions();
+    // Arrange
+    setupEnvironment(false);
+    storeTheme("dark");
 
-      // Act + Assert
-      expect(resolveTheme()).toBe("dark");
-    },
-    1000,
-  );
+    // Act + Assert
+    expect(resolveTheme()).toBe("dark");
+  }, 1000);
 
-  it(
-    "falls back to system after clearing the override",
-    () => {
-      expect.hasAssertions();
-      // Arrange
-      setupEnvironment(false);
-      storeTheme("dark");
-      clearStoredTheme();
+  it("falls back to system after clearing the override", () => {
+    expect.hasAssertions();
+    // Arrange
+    setupEnvironment(false);
+    storeTheme("dark");
+    clearStoredTheme();
 
-      // Act + Assert
-      expect(resolveTheme()).toBe("light");
-    },
-    1000,
-  );
+    // Act + Assert
+    expect(resolveTheme()).toBe("light");
+  }, 1000);
 });
 
 describe("applyTheme toggling dark", () => {
-  it(
-    "adds the dark class to <html> for dark theme",
-    () => {
-      expect.hasAssertions();
-      // Arrange
-      document.documentElement.classList.remove("dark");
+  it("adds the dark class to <html> for dark theme", () => {
+    expect.hasAssertions();
+    // Arrange
+    document.documentElement.classList.remove("dark");
 
-      // Act
-      applyTheme("dark");
+    // Act
+    applyTheme("dark");
 
-      // Assert
-      expect(document.documentElement.classList.contains("dark")).toBe(true);
-    },
-    1000,
-  );
+    // Assert
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+  }, 1000);
 });
 
 describe("applyTheme toggling light", () => {
-  it(
-    "removes the dark class from <html> for light theme",
-    () => {
-      expect.hasAssertions();
-      // Arrange
-      document.documentElement.classList.add("dark");
+  it("removes the dark class from <html> for light theme", () => {
+    expect.hasAssertions();
+    // Arrange
+    document.documentElement.classList.add("dark");
 
-      // Act
-      applyTheme("light");
+    // Act
+    applyTheme("light");
 
-      // Assert
-      expect(document.documentElement.classList.contains("dark")).toBe(false);
-    },
-    1000,
-  );
+    // Assert
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+  }, 1000);
 });
 
 describe("onSystemThemeChange subscription", () => {
@@ -183,23 +155,19 @@ describe("onSystemThemeChange subscription", () => {
     return listeners;
   }
 
-  it(
-    "calls the handler when the system theme changes",
-    () => {
-      expect.hasAssertions();
-      // Arrange
-      const listeners = setupChangeMediaMock();
-      const handler = vi.fn<(theme: Theme) => void>();
+  it("calls the handler when the system theme changes", () => {
+    expect.hasAssertions();
+    // Arrange
+    const listeners = setupChangeMediaMock();
+    const handler = vi.fn<(theme: Theme) => void>();
 
-      // Act
-      onSystemThemeChange(handler);
-      for (const listener of listeners) {
-        listener({ matches: true } as MediaQueryListEvent);
-      }
+    // Act
+    onSystemThemeChange(handler);
+    for (const listener of listeners) {
+      listener({ matches: true } as MediaQueryListEvent);
+    }
 
-      // Assert
-      expect(handler).toHaveBeenCalledWith("dark");
-    },
-    1000,
-  );
+    // Assert
+    expect(handler).toHaveBeenCalledWith("dark");
+  }, 1000);
 });
