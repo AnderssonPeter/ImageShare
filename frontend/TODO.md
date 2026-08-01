@@ -54,8 +54,9 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [X] Create `src/routes/browse.$.tsx` — splat route, reconstruct `RelativePath` from segments, prefetch first page in `loader`
 - [X] Create `src/routes/admin.tsx` — `beforeLoad` isAdmin gate (403 redirect)
 - [X] Create `src/routes/admin/share.$token.tsx` — create link to `/api/login/jwt/{token}`
-- [ ] Verify `src/routeTree.gen.ts` auto-generates via Vite plugin
+- [X] Verify `src/routeTree.gen.ts` auto-generates via Vite plugin
 - [ ] Wire `router.tsx` with `createRouter` + `scrollRestoration`
+- [ ] Do not use @/ when importing, add linting that stops this pattern, add new rows in tsconfig under paths
 
 ---
 
