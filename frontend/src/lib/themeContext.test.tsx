@@ -1,85 +1,8 @@
 import { ThemeProvider, useThemeContext } from './themeContext'
 import { act, renderHook } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { type ReactNode } from 'react'
-
-type StorageReturn = string | undefined
-
-interface MatchMediaResult {
-  matches: boolean
-  media: string
-  addEventListener: ReturnType<typeof vi.fn>
-  removeEventListener: ReturnType<typeof vi.fn>
-}
-
-type ChangeListener = (event: MediaQueryListEvent) => void
-
-function createLocalStorage() {
-  const store = new Map<string, string>()
-  return {
-    getItem: vi.fn<(key: string) => StorageReturn>((key) => store.get(key)),
-    setItem: vi.fn<(key: string, value: string) => void>((key, value) => {
-      store.set(key, value)
-    }),
-    removeItem: vi.fn<(key: string) => void>((key) => {
-      store.delete(key)
-    }),
-    clear: vi.fn<() => void>(() => {
-      store.clear()
-    }),
-    key: vi.fn<(index: number) => StorageReturn>((index) => [...store.keys()][index]),
-    get length() {
-      return store.size
-    },
-  }
-}
-
-function createChangeableMatchMedia(systemDark: boolean) {
-  const listeners: ChangeListener[] = []
-  let matches = systemDark
-  const addEventListener = vi
-    .fn<(event: string, listener: ChangeListener) => void>()
-    .mockImplementation((event, listener) => {
-      if (event === 'change') {
-        listeners.push(listener)
-      }
-    })
-  const removeEventListener = vi
-    .fn<(event: string, listener: ChangeListener) => void>()
-    .mockImplementation((event, listener) => {
-      if (event === 'change') {
-        const index = listeners.indexOf(listener)
-        if (index !== -1) {
-          listeners.splice(index, 1)
-        }
-      }
-    })
-  vi.stubGlobal(
-    'matchMedia',
-    vi.fn<(query: string) => MatchMediaResult>().mockImplementation((query: string) => ({
-      matches,
-      media: query,
-      addEventListener,
-      removeEventListener,
-    })),
-  )
-  return {
-    addEventListener,
-    removeEventListener,
-    setSystemTheme(isDark: boolean) {
-      matches = isDark
-      for (const listener of listeners) {
-        listener({ matches } as MediaQueryListEvent)
-      }
-    },
-    listenerCount: () => listeners.length,
-  }
-}
-
-function setupEnvironment(systemDark: boolean) {
-  vi.stubGlobal('localStorage', createLocalStorage())
-  return createChangeableMatchMedia(systemDark)
-}
+import setupThemeEnvironment from '@/test/themeEnvironment'
 
 function wrapper({ children }: { children: ReactNode }) {
   return <ThemeProvider>{children}</ThemeProvider>
@@ -95,7 +18,7 @@ describe('themeProvider applies the resolved system theme on mount', () => {
     () => {
       expect.assertions(2)
       // Arrange + Act
-      setupEnvironment(false)
+      setupThemeEnvironment(false)
       document.documentElement.classList.remove('dark')
       const { result } = renderThemeHook()
 
@@ -113,7 +36,7 @@ describe('themeProvider applies a stored override on mount', () => {
     () => {
       expect.assertions(2)
       // Arrange + Act
-      setupEnvironment(false)
+      setupThemeEnvironment(false)
       document.documentElement.classList.remove('dark')
       localStorage.setItem('theme', 'dark')
       const { result } = renderThemeHook()
@@ -132,7 +55,7 @@ describe('themeProvider follows the system theme when no override is set', () =>
     () => {
       expect.assertions(2)
       // Arrange
-      const media = setupEnvironment(false)
+      const media = setupThemeEnvironment(false)
       document.documentElement.classList.remove('dark')
       const { result } = renderThemeHook()
       expect(result.current.theme).toBe('light')
@@ -155,7 +78,7 @@ describe('themeProvider ignores system changes when an override is set', () => {
     () => {
       expect.assertions(1)
       // Arrange
-      const media = setupEnvironment(false)
+      const media = setupThemeEnvironment(false)
       document.documentElement.classList.remove('dark')
       localStorage.setItem('theme', 'dark')
       const { result } = renderThemeHook()
@@ -178,7 +101,7 @@ describe('themeProvider unsubscribes on unmount', () => {
     () => {
       expect.assertions(2)
       // Arrange
-      const media = setupEnvironment(false)
+      const media = setupThemeEnvironment(false)
       const { unmount } = renderThemeHook()
       expect(media.listenerCount()).toBe(1)
 
@@ -198,7 +121,7 @@ describe('themeProvider setTheme persists the override and applies it', () => {
     () => {
       expect.assertions(3)
       // Arrange
-      setupEnvironment(false)
+      setupThemeEnvironment(false)
       document.documentElement.classList.remove('dark')
       const { result } = renderThemeHook()
 
@@ -222,7 +145,7 @@ describe('themeProvider setTheme makes subsequent system changes ignored', () =>
     () => {
       expect.assertions(2)
       // Arrange
-      const media = setupEnvironment(false)
+      const media = setupThemeEnvironment(false)
       document.documentElement.classList.remove('dark')
       const { result } = renderThemeHook()
 
@@ -248,7 +171,7 @@ describe('themeProvider clearOverride drops the override and re-follows the syst
     () => {
       expect.assertions(4)
       // Arrange
-      setupEnvironment(false)
+      setupThemeEnvironment(false)
       document.documentElement.classList.add('dark')
       localStorage.setItem('theme', 'dark')
       const { result } = renderThemeHook()
