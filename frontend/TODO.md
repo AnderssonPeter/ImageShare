@@ -62,14 +62,14 @@ Generated from `PLAN.md`. Check off items as you complete them.
 
 ## Phase 5 — Browse grid (TanStack Query × TanStack Virtual)
 
-- [ ] Implement `ContentGrid.tsx` — flatten infinite-query pages into flat item array
-- [ ] Implement responsive column count (ResizeObserver / `useMeasure`)
-- [ ] Implement `useVirtualizer` row-based virtualization (`estimateSize` = tile + gutter)
-- [ ] Implement autoload: trigger `fetchNextPage()` when last visible row near end; skeleton placeholder while fetching
+- [X] Implement `ContentGrid.tsx` — flatten infinite-query pages into flat item array
+- [X] Implement responsive column count (ResizeObserver / `useMeasure`)
+- [X] Implement `useVirtualizer` row-based virtualization (`estimateSize` = tile + gutter)
+- [X] Implement autoload: trigger `fetchNextPage()` when last visible row near end; skeleton placeholder while fetching
 - [ ] Implement `FolderTile` — cover from `randomFolderUrl(thumbnail, recursive)`, name overlay, navigate on click, download affordance
 - [ ] Implement `ImageTile` — thumbnail from `imageUrl(path, true)`, click opens carousel at index
 - [ ] Implement `Breadcrumb` in app bar from splat segments (clickable ancestors)
-
+- [ ] Move the styling of metro tile out of the index.css and use tailwind inside the component instead
 ---
 
 ## Phase 6 — Fullscreen carousel
