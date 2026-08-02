@@ -34,6 +34,22 @@ export function imageUrl(path: string, thumbnail: boolean): string {
 }
 
 /**
+ * Build the URL for `GET /content/random` — a random image from the root
+ * folder (recursive), used as the grid background when no folder is open.
+ *
+ * @param thumbnail - When true, request the thumbnail variant.
+ * @returns A URL string suitable for `<img src>` or CSS `background-image`.
+ */
+export function randomRootUrl(thumbnail: boolean): string {
+  const params = new URLSearchParams();
+  if (thumbnail) {
+    params.set("thumbnail", "true");
+  }
+  const query = params.toString();
+  return query ? `/api/content/random?${query}` : "/api/content/random";
+}
+
+/**
  * Build the URL for `GET /content/random/{folder}` — a random image from a
  * folder, used as a cover image for folder tiles.
  *

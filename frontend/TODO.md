@@ -80,9 +80,9 @@ Generated from `PLAN.md`. Check off items as you complete them.
 
 - [x] Implement `ImageViewer.tsx` — shadcn `carousel` (Embla), opens at clicked index
 - [X] Add keyboard navigation (←/→ navigate, Esc close)
-- [ ] Use full-res `imageUrl(path, false)` for slides
-- [ ] Preload neighbor images for smooth swiping
-- [ ] Use a random full resolution image as background in the gird, in dark mode make it dark and in light mode make it light so that its almost not visible
+- [X] Use full-res `imageUrl(path, false)` for slides
+- [X] Preload neighbor images for smooth swiping
+- [X] Use a random full resolution image as background in the gird, in dark mode make it dark and in light mode make it light so that its almost not visible
 
 ---
 

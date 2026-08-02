@@ -1,14 +1,4 @@
-/**
- * ContentGrid — virtualized grid of folder/file tiles for the browse view.
- *
- * Flattens the infinite-query pages into a flat item array, computes a
- * responsive column count from the container width (ResizeObserver), and
- * virtualizes rows (each row renders `columns` tiles). Auto-loads the next
- * page when the last visible row approaches the end.
- *
- * Tile interactions (folder navigation, image open) are provided via
- * `GridActionsContext` so they don't thread through every virtualized row.
- */
+/** ContentGrid — virtualized grid of folder/file tiles for the browse view. */
 import {
   type CSSProperties,
   type ReactNode,
@@ -24,6 +14,7 @@ import {
 import { EntryType, type FolderEntry } from "@lib/api/generated/imageShare.schemas";
 import { type ReactVirtualizer, type VirtualItem, useVirtualizer } from "@tanstack/react-virtual";
 import FolderTile from "@components/FolderTile";
+import GridBackground from "@components/GridBackground";
 import ImageTile from "@components/ImageTile";
 import { tw } from "@lib/utils";
 import { useFolderContent } from "@lib/api/contentQueries";
@@ -58,7 +49,8 @@ const ROW_POSITION_BASE_STYLE: CSSProperties = {
   left: 0,
   width: "100%",
 };
-const SCROLL_CONTAINER_CLASS = tw`overflow-auto h-[calc(100dvh-3rem)] p-gutter`;
+const SCROLL_CONTAINER_CLASS = tw`relative overflow-auto h-[calc(100dvh-3rem)] p-gutter`;
+const CONTENT_WRAPPER_CLASS = tw`relative z-10`;
 
 type GridVirtualizer = ReactVirtualizer<HTMLDivElement, Element>;
 
@@ -292,7 +284,8 @@ export default function ContentGrid({
   return (
     <GridActionsContext.Provider value={actions}>
       <div ref={scrollRef} className={SCROLL_CONTAINER_CLASS}>
-        {content}
+        <GridBackground path={path} />
+        <div className={CONTENT_WRAPPER_CLASS}>{content}</div>
       </div>
     </GridActionsContext.Provider>
   );

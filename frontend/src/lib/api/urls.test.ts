@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { downloadUrl, imageUrl, randomFolderUrl } from "@lib/api/urls";
+import { downloadUrl, imageUrl, randomFolderUrl, randomRootUrl } from "@lib/api/urls";
 
 describe("imageUrl builder", () => {
   it("builds a thumbnail URL with the thumbnail param", () => {
@@ -31,6 +31,20 @@ describe("randomFolderUrl builder", () => {
     expect.assertions(1);
     // Arrange + Act + Assert
     expect(randomFolderUrl("public", false, false)).toBe("/api/content/random/public");
+  }, 1000);
+});
+
+describe("randomRootUrl builder", () => {
+  it("builds a full-res root URL with no params", () => {
+    expect.assertions(1);
+    // Arrange + Act + Assert
+    expect(randomRootUrl(false)).toBe("/api/content/random");
+  }, 1000);
+
+  it("builds a thumbnail root URL with the thumbnail param", () => {
+    expect.assertions(1);
+    // Arrange + Act + Assert
+    expect(randomRootUrl(true)).toBe("/api/content/random?thumbnail=true");
   }, 1000);
 });
 
