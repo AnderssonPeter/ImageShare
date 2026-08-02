@@ -1,10 +1,11 @@
 /**
- * MetroTile — flat Metro/Windows 8 tile with press-nudge animation.
+ * MetroTile — flat Metro/Windows 8 tile that is always clickable.
  *
- * Uses Tailwind classes for layout, colors, and hover/active states. A
- * child `<div>` (positioned absolutely with overscan) renders the
- * background image and translates up on `group-active`, matching the
- * original `::before` behaviour without custom CSS.
+ * Renders a `<button>` so the whole tile is the click target. Uses Tailwind
+ * classes for layout, colors, and hover/active states. A child `<div>`
+ * (positioned absolutely with overscan) renders the background image and
+ * translates up on `group-active`, matching the original `::before`
+ * behaviour without custom CSS.
  *
  * The `--metro-tile-image` CSS custom property is replaced by an
  * `imageUrl` prop; tiles without a cover image render a flat fill.
@@ -14,7 +15,7 @@ import cn, { tw } from "@lib/utils";
 
 const BASE_CLASS = tw`group relative flex items-center justify-center overflow-hidden rounded-[var(--radius)] bg-tile text-tile-foreground hover:bg-muted active:bg-muted`;
 const OVERLAY_BASE_CLASS = tw`pointer-events-none absolute -inset-1 bg-cover bg-center transition-transform duration-100 ease-out group-active:translate-y-[-2px]`;
-const CONTENT_CLASS = tw`relative z-[1]`;
+const CONTENT_CLASS = tw`absolute inset-0 z-[1] flex items-center justify-center`;
 
 interface MetroTileProps {
   /** Background image URL for the tile cover (optional). */
@@ -23,14 +24,20 @@ interface MetroTileProps {
   className?: string;
   /** Inline style for the tile root element. */
   style?: CSSProperties;
+  /** Fired when the tile is clicked. */
+  onClick: () => void;
+  /** Accessible name for the tile button. */
+  ariaLabel: string;
   /** Tile content (icon, label, etc.). */
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 export default function MetroTile({
   imageUrl,
   className,
   style,
+  onClick,
+  ariaLabel,
   children,
 }: MetroTileProps): React.JSX.Element {
   const overlayStyle = useMemo<CSSProperties | undefined>(() => {
@@ -41,9 +48,15 @@ export default function MetroTile({
   }, [imageUrl]);
 
   return (
-    <div className={cn(BASE_CLASS, className)} style={style}>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      className={cn(BASE_CLASS, className)}
+      style={style}
+    >
       {overlayStyle !== undefined && <div className={OVERLAY_BASE_CLASS} style={overlayStyle} />}
       <div className={CONTENT_CLASS}>{children}</div>
-    </div>
+    </button>
   );
 }

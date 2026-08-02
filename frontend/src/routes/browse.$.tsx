@@ -11,10 +11,17 @@
  * `ensureInfiniteQueryData` so the grid has data on first paint (critical
  * data that must block navigation). The `useFolderContent` hook in the
  * component reads the same cache.
+ *
+ * Folder navigation is wired to the router; image open is a no-op here
+ * until the fullscreen carousel lands in Phase 6.
  */
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import ContentGrid from "@components/ContentGrid";
-import { createFileRoute } from "@tanstack/react-router";
 import { folderContentQueryOptions } from "@lib/api/contentQueries";
+import { useCallback } from "react";
+
+/** Phase 6 placeholder — opening an image will show the fullscreen carousel. */
+function handleImageOpen() {}
 
 export const Route = createFileRoute("/browse/$")({
   loader: async ({ context, params }) => {
@@ -31,5 +38,16 @@ function BrowseComponent(): React.JSX.Element {
   const segments = _splat === undefined ? [] : _splat.split("/");
   const relativePath = segments.join("/");
   const path = relativePath === "" ? undefined : relativePath;
-  return <ContentGrid path={path} />;
+  const navigate = useNavigate();
+  const handleNavigateFolder = useCallback(
+    (folderPath: string) => navigate({ to: "/browse/$", params: { _splat: folderPath } }),
+    [navigate],
+  );
+  return (
+    <ContentGrid
+      path={path}
+      onNavigateFolder={handleNavigateFolder}
+      onImageOpen={handleImageOpen}
+    />
+  );
 }

@@ -66,10 +66,12 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [X] Implement responsive column count (ResizeObserver / `useMeasure`)
 - [X] Implement `useVirtualizer` row-based virtualization (`estimateSize` = tile + gutter)
 - [X] Implement autoload: trigger `fetchNextPage()` when last visible row near end; skeleton placeholder while fetching
-- [ ] Implement `FolderTile` — cover from `randomFolderUrl(thumbnail, recursive)`, name overlay, navigate on click, download affordance
-- [ ] Implement `ImageTile` — thumbnail from `imageUrl(path, true)`, click opens carousel at index
+- [X] Implement `FolderTile` — cover from `randomFolderUrl(thumbnail, recursive)`, name overlay, navigate on click, download affordance
+- [X] Implement `ImageTile` — thumbnail from `imageUrl(path, true)`, click opens carousel at index
 - [ ] Implement `Breadcrumb` in app bar from splat segments (clickable ancestors)
+- [ ] Add folder download action to the app-bar/breadcrumb menu (zip of current folder via `downloadUrl`)
 - [X] Move the styling of metro tile out of the index.css and use tailwind inside the component instead
+- [ ] The metro tile should have a 3:2 aspect ratio, add a bit more space between metro tiles
 ---
 
 ## Phase 6 — Fullscreen carousel

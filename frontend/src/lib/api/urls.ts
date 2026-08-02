@@ -29,8 +29,8 @@ export function imageUrl(path: string, thumbnail: boolean): string {
   }
   const query = params.toString();
   return query
-    ? `/content/image/${encodePath(path)}?${query}`
-    : `/content/image/${encodePath(path)}`;
+    ? `/api/content/image/${encodePath(path)}?${query}`
+    : `/api/content/image/${encodePath(path)}`;
 }
 
 /**
@@ -52,8 +52,8 @@ export function randomFolderUrl(folder: string, thumbnail: boolean, recursive: b
   }
   const query = params.toString();
   return query
-    ? `/content/random/${encodePath(folder)}?${query}`
-    : `/content/random/${encodePath(folder)}`;
+    ? `/api/content/random/${encodePath(folder)}?${query}`
+    : `/api/content/random/${encodePath(folder)}`;
 }
 
 /**
@@ -72,6 +72,6 @@ export function downloadUrl(folder: string, formats: readonly string[]): string 
   }
   const query = params.toString();
   return query
-    ? `/content/download/${encodePath(folder)}?${query}`
-    : `/content/download/${encodePath(folder)}`;
+    ? `/api/content/download/${encodePath(folder)}?${query}`
+    : `/api/content/download/${encodePath(folder)}`;
 }

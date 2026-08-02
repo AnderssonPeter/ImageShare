@@ -5,20 +5,26 @@
  * responsive column count from the container width (ResizeObserver), and
  * virtualizes rows (each row renders `columns` tiles). Auto-loads the next
  * page when the last visible row approaches the end.
+ *
+ * Tile interactions (folder navigation, image open) are provided via
+ * `GridActionsContext` so they don't thread through every virtualized row.
  */
 import {
   type CSSProperties,
   type ReactNode,
   type RefObject,
+  createContext,
+  useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { EntryType, type FolderEntry } from "@lib/api/generated/imageShare.schemas";
 import { type ReactVirtualizer, type VirtualItem, useVirtualizer } from "@tanstack/react-virtual";
-import { type FolderEntry } from "@lib/api/generated/imageShare.schemas";
-import MetroTile from "@components/MetroTile";
+import FolderTile from "@components/FolderTile";
+import ImageTile from "@components/ImageTile";
 import { tw } from "@lib/utils";
 import { useFolderContent } from "@lib/api/contentQueries";
 
@@ -52,6 +58,14 @@ const ROW_POSITION_BASE_STYLE: CSSProperties = {
 const SCROLL_CONTAINER_CLASS = tw`overflow-auto h-[calc(100dvh-3rem)] p-gutter`;
 
 type GridVirtualizer = ReactVirtualizer<HTMLDivElement, Element>;
+
+/** Tile interactions supplied by `ContentGrid` and consumed by `GridTile`. */
+interface GridActions {
+  onNavigateFolder: (path: string) => void;
+  onImageOpen: (path: string) => void;
+}
+
+const GridActionsContext = createContext<GridActions | undefined>(undefined);
 
 function useColumnCount(containerRef: RefObject<HTMLDivElement | null>): number {
   const [columns, setColumns] = useState(1);
@@ -111,11 +125,15 @@ function useAutoload({
 }
 
 function GridTile({ entry }: { entry: FolderEntry }) {
-  return (
-    <MetroTile className={TILE_SIZE_CLASS}>
-      <span className="absolute bottom-1 left-1 text-sm leading-none">{entry.name}</span>
-    </MetroTile>
-  );
+  const actions = useContext(GridActionsContext);
+  if (actions === undefined) {
+    throw new Error("GridTile must be used within a ContentGrid");
+  }
+  const { onNavigateFolder, onImageOpen } = actions;
+  if (entry.type === EntryType.Folder) {
+    return <FolderTile entry={entry} onNavigate={onNavigateFolder} className={TILE_SIZE_CLASS} />;
+  }
+  return <ImageTile entry={entry} onOpen={onImageOpen} className={TILE_SIZE_CLASS} />;
 }
 
 function GridRow({ items }: { items: FolderEntry[] }) {
@@ -128,14 +146,17 @@ function GridRow({ items }: { items: FolderEntry[] }) {
   );
 }
 
-interface VirtualRowProps {
+function VirtualRow({
+  virtualRow,
+  items,
+  startIndex,
+  columns,
+}: {
   virtualRow: VirtualItem;
   items: FolderEntry[];
   startIndex: number;
   columns: number;
-}
-
-function VirtualRow({ virtualRow, items, startIndex, columns }: VirtualRowProps) {
+}) {
   const style = useMemo<CSSProperties>(
     () => ({
       ...ROW_POSITION_BASE_STYLE,
@@ -157,13 +178,15 @@ function VirtualRow({ virtualRow, items, startIndex, columns }: VirtualRowProps)
   );
 }
 
-interface VirtualGridBodyProps {
+function VirtualGridBody({
+  rowVirtualizer,
+  items,
+  columns,
+}: {
   rowVirtualizer: GridVirtualizer;
   items: FolderEntry[];
   columns: number;
-}
-
-function VirtualGridBody({ rowVirtualizer, items, columns }: VirtualGridBodyProps) {
+}) {
   const virtualItems = rowVirtualizer.getVirtualItems();
   const sizerStyle = useMemo<CSSProperties>(
     () => ({
@@ -188,52 +211,57 @@ function VirtualGridBody({ rowVirtualizer, items, columns }: VirtualGridBodyProp
   );
 }
 
-function SkeletonRow({ columns }: { columns: number }) {
-  const tiles: ReactNode[] = [];
-  for (let column = 0; column < columns; column++) {
-    tiles.push(<div key={column} className={SKELETON_TILE_CLASS} />);
-  }
-  return <div className="flex gap-gutter">{tiles}</div>;
-}
-
 function SkeletonGrid({ columns }: { columns: number }): ReactNode[] {
   const rows: ReactNode[] = [];
   for (let row = 0; row < SKELETON_ROWS; row++) {
+    const tiles: ReactNode[] = [];
+    for (let column = 0; column < columns; column++) {
+      tiles.push(<div key={column} className={SKELETON_TILE_CLASS} />);
+    }
     rows.push(
       <div key={row} className="mb-gutter">
-        <SkeletonRow columns={columns} />
+        <div className="flex gap-gutter">{tiles}</div>
       </div>,
     );
   }
   return rows;
 }
 
-function EmptyState() {
-  return (
-    <div className="flex h-full items-center justify-center p-8">
-      <p className="text-sm text-muted-foreground">This folder is empty.</p>
-    </div>
-  );
-}
-
-interface ContentOptions {
+function renderContent({
+  isPending,
+  items,
+  columns,
+  rowVirtualizer,
+}: {
   isPending: boolean;
   items: FolderEntry[];
   columns: number;
   rowVirtualizer: GridVirtualizer;
-}
-
-function renderContent({ isPending, items, columns, rowVirtualizer }: ContentOptions): ReactNode {
+}): ReactNode {
   if (isPending) {
     return <SkeletonGrid columns={columns} />;
   }
   if (items.length === 0) {
-    return <EmptyState />;
+    return (
+      <div className="flex h-full items-center justify-center p-8">
+        <p className="text-sm text-muted-foreground">This folder is empty.</p>
+      </div>
+    );
   }
   return <VirtualGridBody rowVirtualizer={rowVirtualizer} items={items} columns={columns} />;
 }
 
-export default function ContentGrid({ path }: { path?: string }): React.JSX.Element {
+interface ContentGridProps {
+  path?: string;
+  onNavigateFolder: (path: string) => void;
+  onImageOpen: (path: string) => void;
+}
+
+export default function ContentGrid({
+  path,
+  onNavigateFolder,
+  onImageOpen,
+}: ContentGridProps): React.JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null);
   const columns = useColumnCount(scrollRef);
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isPending } =
@@ -253,10 +281,16 @@ export default function ContentGrid({ path }: { path?: string }): React.JSX.Elem
     isFetchingNextPage,
     fetchNextPage,
   });
+  const actions = useMemo<GridActions>(
+    () => ({ onNavigateFolder, onImageOpen }),
+    [onNavigateFolder, onImageOpen],
+  );
   const content = renderContent({ isPending, items, columns, rowVirtualizer });
   return (
-    <div ref={scrollRef} className={SCROLL_CONTAINER_CLASS}>
-      {content}
-    </div>
+    <GridActionsContext.Provider value={actions}>
+      <div ref={scrollRef} className={SCROLL_CONTAINER_CLASS}>
+        {content}
+      </div>
+    </GridActionsContext.Provider>
   );
 }
