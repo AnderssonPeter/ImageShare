@@ -117,9 +117,11 @@
   [X] Add frontend proxy
   [ ] Chrome MCP server? / Playwright MCP
   [ ] Download log
+  [ ] Images aren't being converted when added by rapidraw?
   [X] Create unit tests that tries to forge an jwt token
   [X] Add rate limit to unauthenticated endpoints
   [X] Break up the agent.md into skills to lower the token usage
+  [ ] Add a usage agreement function
 [ ] FE
   [X] Add mcp server for tanstack
   [X] Add mcp server for shadcn

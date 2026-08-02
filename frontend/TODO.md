@@ -72,17 +72,18 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [x] Implement `Breadcrumb` in app bar from splat segments (clickable ancestors)
 - [x] Add folder download action to the app-bar/breadcrumb menu (zip of current folder via `downloadUrl`)
 - [x] Move the styling of metro tile out of the index.css and use tailwind inside the component instead
-- [X] The metro tile should have a 3:2 aspect ratio, add a bit more space between metro tiles
+- [x] The metro tile should have a 3:2 aspect ratio, add a bit more space between metro tiles
 
 ---
 
 ## Phase 6 — Fullscreen carousel
 
-- [ ] Implement `ImageViewer.tsx` — shadcn `carousel` (Embla), opens at clicked index
+- [x] Implement `ImageViewer.tsx` — shadcn `carousel` (Embla), opens at clicked index
 - [ ] Add `react-zoom-pan-pinch` `TransformWrapper` / `TransformComponent` for pan/zoom; reset on slide change
 - [ ] Add keyboard navigation (←/→ navigate, Esc close, +/- zoom)
 - [ ] Use full-res `imageUrl(path, false)` for slides
 - [ ] Preload neighbor images for smooth swiping
+- [ ] Use a random full resolution image as background in the gird, in dark mode make it dark and in light mode make it light so that its almost not visible
 
 ---
 
@@ -112,4 +113,3 @@ Generated from `PLAN.md`. Check off items as you complete them.
 ## Phase 9 - Extra features
 
 - [ ] Add cast functionality to chrome cast or airplay
-- [ ]

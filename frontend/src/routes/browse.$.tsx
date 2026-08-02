@@ -12,16 +12,15 @@
  * data that must block navigation). The `useFolderContent` hook in the
  * component reads the same cache.
  *
- * Folder navigation is wired to the router; image open is a no-op here
- * until the fullscreen carousel lands in Phase 6.
+ * Folder navigation is wired to the router; opening an image shows the
+ * fullscreen carousel (`ImageViewer`), controlled by `imagePath` state
+ * (`null` = closed, a `RelativePath` = open at that image's index).
  */
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useCallback, useState } from "react";
 import ContentGrid from "@components/ContentGrid";
+import ImageViewer from "@components/ImageViewer";
 import { folderContentQueryOptions } from "@lib/api/contentQueries";
-import { useCallback } from "react";
-
-/** Phase 6 placeholder — opening an image will show the fullscreen carousel. */
-function handleImageOpen() {}
 
 export const Route = createFileRoute("/browse/$")({
   loader: async ({ context, params }) => {
@@ -39,15 +38,23 @@ function BrowseComponent(): React.JSX.Element {
   const relativePath = segments.join("/");
   const path = relativePath === "" ? undefined : relativePath;
   const navigate = useNavigate();
+  const [imagePath, setImagePath] = useState<string | undefined>();
   const handleNavigateFolder = useCallback(
     (folderPath: string) => navigate({ to: "/browse/$", params: { _splat: folderPath } }),
     [navigate],
   );
+  const handleImageOpen = useCallback((openedPath: string) => setImagePath(openedPath), []);
+  const handleClose = useCallback(() => setImagePath(undefined), []);
   return (
-    <ContentGrid
-      path={path}
-      onNavigateFolder={handleNavigateFolder}
-      onImageOpen={handleImageOpen}
-    />
+    <>
+      <ContentGrid
+        path={path}
+        onNavigateFolder={handleNavigateFolder}
+        onImageOpen={handleImageOpen}
+      />
+      {imagePath !== undefined && (
+        <ImageViewer folderPath={path} imagePath={imagePath} onClose={handleClose} />
+      )}
+    </>
   );
 }
