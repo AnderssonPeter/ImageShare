@@ -133,10 +133,10 @@ function ImageSlides({
   );
 }
 
-function ImageCarousel({ images, startIndex }: { images: FolderEntry[]; startIndex: number }) {
-  const clampedStart = Math.max(0, startIndex);
-  const opts = useMemo(() => ({ startIndex: clampedStart }), [clampedStart]);
-  const [currentIndex, setCurrentIndex] = useState(clampedStart);
+function useProgressiveLoading(
+  currentIndex: number,
+  count: number,
+): { handleSlideLoaded: (index: number) => void; effectiveRange: number } {
   const [loadedIndices, setLoadedIndices] = useState<ReadonlySet<number>>(new Set());
   const [outerReady, setOuterReady] = useState(false);
 
@@ -150,21 +150,42 @@ function ImageCarousel({ images, startIndex }: { images: FolderEntry[]; startInd
     setLoadedIndices((prev) => (prev.has(index) ? prev : new Set(prev).add(index)));
   }, []);
 
-  const handleSetApi = useCallback((api: CarouselApi) => {
-    if (api === undefined) {
-      return;
-    }
-    const embla = api;
-    function onSelect() {
-      setCurrentIndex(embla.selectedScrollSnap());
-    }
-    setCurrentIndex(embla.selectedScrollSnap());
-    embla.on("select", onSelect);
-  }, []);
-
   const effectiveRange = Math.min(
-    loadedRing(currentIndex, images.length, loadedIndices) + 1,
+    loadedRing(currentIndex, count, loadedIndices) + 1,
     outerReady ? MAX_RANGE : 1,
+  );
+
+  return { handleSlideLoaded, effectiveRange };
+}
+
+function ImageCarousel({
+  images,
+  startIndex,
+  onCarouselReady,
+}: {
+  images: FolderEntry[];
+  startIndex: number;
+  onCarouselReady?: (api: CarouselApi | undefined) => void;
+  }) {
+  const clampedStart = Math.max(0, startIndex);
+  const opts = useMemo(() => ({ startIndex: clampedStart }), [clampedStart]);
+  const [currentIndex, setCurrentIndex] = useState(clampedStart);
+  const { handleSlideLoaded, effectiveRange } = useProgressiveLoading(currentIndex, images.length);
+
+  const handleSetApi = useCallback(
+    (api: CarouselApi) => {
+      onCarouselReady?.(api);
+      if (api === undefined) {
+        return;
+      }
+      const embla = api;
+      function onSelect() {
+        setCurrentIndex(embla.selectedScrollSnap());
+      }
+      setCurrentIndex(embla.selectedScrollSnap());
+      embla.on("select", onSelect);
+    },
+    [onCarouselReady],
   );
 
   return (
@@ -206,10 +227,42 @@ export default function ImageViewer({
     [data],
   );
   const startIndex = images.findIndex((entry) => entry.path === imagePath);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | undefined>();
+  const handleCarouselReady = useCallback((api: CarouselApi | undefined) => {
+    setCarouselApi(api);
+  }, []);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+      const api = carouselApi;
+      if (api === undefined) {
+        return;
+      }
+      if (event.key === "ArrowLeft") {
+        api.scrollPrev();
+      } else if (event.key === "ArrowRight") {
+        api.scrollNext();
+      }
+    }
+
+    globalThis.addEventListener("keydown", onKeyDown);
+    return () => globalThis.removeEventListener("keydown", onKeyDown);
+  }, [onClose, carouselApi]);
+
   return (
     <div className={OVERLAY_CLASS}>
       <CloseButton onClose={onClose} />
-      {images.length > 0 && <ImageCarousel images={images} startIndex={startIndex} />}
+      {images.length > 0 && (
+        <ImageCarousel
+          images={images}
+          startIndex={startIndex}
+          onCarouselReady={handleCarouselReady}
+        />
+      )}
     </div>
   );
 }

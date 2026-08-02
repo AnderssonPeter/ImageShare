@@ -127,3 +127,35 @@ describe("imageViewer slides", () => {
     expect(screen.getByAltText("a")).toBeInTheDocument();
   }, 2000);
 });
+
+describe("imageViewer keyboard navigation", () => {
+  it("fires onClose when Escape is pressed", async () => {
+    expect.assertions(1);
+    // Arrange
+    setupContent([imageEntry("a", "a.jpg")]);
+    const onClose = vi.fn<() => void>();
+
+    // Act
+    renderViewer({ folderPath: "photos", imagePath: "a.jpg", onClose });
+    await screen.findByAltText("a");
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    // Assert
+    expect(onClose).toHaveBeenCalledTimes(1);
+  }, 2000);
+
+  it("does not fire onClose for other keys", async () => {
+    expect.assertions(1);
+    // Arrange
+    setupContent([imageEntry("a", "a.jpg")]);
+    const onClose = vi.fn<() => void>();
+
+    // Act
+    renderViewer({ folderPath: "photos", imagePath: "a.jpg", onClose });
+    await screen.findByAltText("a");
+    fireEvent.keyDown(document, { key: "ArrowRight" });
+
+    // Assert
+    expect(onClose).not.toHaveBeenCalled();
+  }, 2000);
+});

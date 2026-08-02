@@ -122,6 +122,7 @@
   [X] Add rate limit to unauthenticated endpoints
   [X] Break up the agent.md into skills to lower the token usage
   [ ] Add a usage agreement function
+  [ ] Add support for negative glob
 [ ] FE
   [X] Add mcp server for tanstack
   [X] Add mcp server for shadcn

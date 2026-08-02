@@ -79,8 +79,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
 ## Phase 6 — Fullscreen carousel
 
 - [x] Implement `ImageViewer.tsx` — shadcn `carousel` (Embla), opens at clicked index
-- [ ] Add `react-zoom-pan-pinch` `TransformWrapper` / `TransformComponent` for pan/zoom; reset on slide change
-- [ ] Add keyboard navigation (←/→ navigate, Esc close, +/- zoom)
+- [X] Add keyboard navigation (←/→ navigate, Esc close)
 - [ ] Use full-res `imageUrl(path, false)` for slides
 - [ ] Preload neighbor images for smooth swiping
 - [ ] Use a random full resolution image as background in the gird, in dark mode make it dark and in light mode make it light so that its almost not visible
