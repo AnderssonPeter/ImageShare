@@ -24,6 +24,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [ ]  Add an id-denylist rule with common abbreviations (val, args, prev, req, res, err, cb, fn, etc.) and rename val → value in the schema
   - `val → value` rename complete (zod/mini `refine` callbacks in `ShareLinkDialog.tsx`).
   - **Blocked**: oxlint v1.74.0 has no `id-denylist`, no `no-restricted-syntax`, and `id-match` uses Rust regex (no lookaround) so a negative-lookahead denylist is impossible. Revisit when oxlint adds one of these.
+- [ ] Remove orval and use @hey-api/openapi-ts instead, as it generates useQuery, useMutation, suspense, infinity queries and so on for us
 ---
 
 ## Phase 2 — API client generation (orval)
@@ -98,7 +99,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
     * If the all folders is not selected then selecting a root folder is an allow
     * Separator between folders are |
     * all folders should be encoded as *
-- [ ] The share button should move up on hover like all other buttons
+- [X] The share button should move up on hover like all other buttons
 - [ ] Build shareable URL `${origin}/login/jwt/${token}`
 - [ ] Render QR code via `qrcode.react` `<QRCodeSVG>` add logo to qrcode
 - [ ] Add "Copy link" + "Download QR" (SVG→PNG) actions
