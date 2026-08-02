@@ -62,6 +62,20 @@ describe("downloadButton download", () => {
   }, 2000);
 });
 
+describe("downloadButton root folder", () => {
+  it("renders nothing when path is undefined (root listing)", () => {
+    expect.assertions(1);
+    render(<DownloadButton path={undefined} />);
+    expect(screen.queryByRole("button", { name: "Download folder" })).not.toBeInTheDocument();
+  }, 1000);
+
+  it("renders nothing when path is empty (root listing)", () => {
+    expect.assertions(1);
+    render(<DownloadButton path="" />);
+    expect(screen.queryByRole("button", { name: "Download folder" })).not.toBeInTheDocument();
+  }, 1000);
+});
+
 describe("downloadButton format selection", () => {
   it("passes the selected format to the download URL", async () => {
     expect.hasAssertions();

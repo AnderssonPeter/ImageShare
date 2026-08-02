@@ -40,6 +40,7 @@
     "typescript/no-unused-vars": "warn",
     "typescript/no-explicit-any": "warn",
     "typescript/no-non-null-assertion": "warn",
+    "typescript/no-deprecated": "warn",
     "import/exports-last": "off",
     "import/consistent-type-specifier-style": ["warn", "prefer-inline"],
     "eslint/sort-imports": "warn",

@@ -22,6 +22,8 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [x] Update all dependencies
 - [x] Exclude generated files from git and docker
 - [ ]  Add an id-denylist rule with common abbreviations (val, args, prev, req, res, err, cb, fn, etc.) and rename val → value in the schema
+  - `val → value` rename complete (zod/mini `refine` callbacks in `ShareLinkDialog.tsx`).
+  - **Blocked**: oxlint v1.74.0 has no `id-denylist`, no `no-restricted-syntax`, and `id-match` uses Rust regex (no lookaround) so a negative-lookahead denylist is impossible. Revisit when oxlint adds one of these.
 ---
 
 ## Phase 2 — API client generation (orval)
@@ -73,7 +75,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [x] Add folder download action to the app-bar/breadcrumb menu (zip of current folder via `downloadUrl`)
 - [x] Move the styling of metro tile out of the index.css and use tailwind inside the component instead
 - [x] The metro tile should have a 3:2 aspect ratio, add a bit more space between metro tiles
-- [ ] Disallow download on the root folder
+- [X] Disallow download on the root folder
 
 ---
 

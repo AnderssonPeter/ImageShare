@@ -7,6 +7,10 @@
  * — the backend responds with a zip stream (`Content-Disposition:
  * attachment`), so the browser downloads without leaving the page.
  *
+ * Downloads are disallowed at the root folder (no path) — the entire
+ * library is never zipped. When `path` is undefined or empty the
+ * component renders nothing.
+ *
  * Form state (recursive, format) is managed by TanStack Form inside
  * `DownloadDialog`; this component only controls dialog open/close and
  * starts the download on submit.
@@ -31,7 +35,11 @@ function startDownload(folder: string, formats: readonly string[]): void {
   globalThis.location.href = downloadUrl(folder, formats);
 }
 
-export default function DownloadButton({ path }: DownloadButtonProps): React.JSX.Element {
+function isRootPath(path: string | undefined): boolean {
+  return path === undefined || path === "";
+}
+
+export default function DownloadButton({ path }: DownloadButtonProps): React.JSX.Element | undefined {
   const folder = path ?? "";
   const [open, setOpen] = useState(false);
   const handleDownload = useCallback(
@@ -41,6 +49,9 @@ export default function DownloadButton({ path }: DownloadButtonProps): React.JSX
     },
     [folder],
   );
+  if (isRootPath(path)) {
+    return;
+  }
   return (
     <Dialog.Dialog open={open} onOpenChange={setOpen}>
       <Dialog.DialogTrigger className={TRIGGER_CLASS} aria-label="Download folder">
