@@ -28,11 +28,14 @@ import ImageTile from "@components/ImageTile";
 import { tw } from "@lib/utils";
 import { useFolderContent } from "@lib/api/contentQueries";
 
-/** Square tile size in pixels (Metro medium tile). */
-const TILE_SIZE = 160;
+/** Tile width in pixels (Metro wide tile, 3:2 aspect ratio). */
+const TILE_WIDTH = 180;
+
+/** Tile height in pixels (TILE_WIDTH * 2/3 = 120, 3:2 aspect ratio). */
+const TILE_HEIGHT = 120;
 
 /** Gap between tiles in pixels (matches --spacing-gutter). */
-const GUTTER = 2;
+const GUTTER = 4;
 
 /** Rows from the end before auto-loading the next page. */
 const AUTOLOAD_THRESHOLD = 3;
@@ -41,14 +44,14 @@ const AUTOLOAD_THRESHOLD = 3;
 const OVERSCAN = 4;
 
 /** Total row height including the gutter below each row. */
-const ROW_HEIGHT = TILE_SIZE + GUTTER;
+const ROW_HEIGHT = TILE_HEIGHT + GUTTER;
 
 /** Skeleton placeholder rows while the first page loads. */
 const SKELETON_ROWS = 4;
 
 /** Static styles — module-level so react-perf/jsx-no-new-object-as-prop is satisfied. */
-const TILE_SIZE_CLASS = tw`w-[160px] h-[160px]`;
-const SKELETON_TILE_CLASS = tw`animate-pulse bg-muted rounded-sm w-[160px] h-[160px]`;
+const TILE_SIZE_CLASS = tw`w-[180px] h-[120px]`;
+const SKELETON_TILE_CLASS = tw`animate-pulse bg-muted rounded-sm w-[180px] h-[120px]`;
 const ROW_POSITION_BASE_STYLE: CSSProperties = {
   position: "absolute",
   top: 0,
@@ -81,7 +84,7 @@ function useColumnCount(containerRef: RefObject<HTMLDivElement | null>): number 
         return;
       }
       const width = current.clientWidth;
-      setColumns(Math.max(1, Math.floor((width + GUTTER) / (TILE_SIZE + GUTTER))));
+      setColumns(Math.max(1, Math.floor((width + GUTTER) / (TILE_WIDTH + GUTTER))));
     }
     update();
     const observer = new ResizeObserver(update);

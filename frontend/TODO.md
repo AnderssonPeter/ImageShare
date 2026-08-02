@@ -72,7 +72,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [x] Implement `Breadcrumb` in app bar from splat segments (clickable ancestors)
 - [x] Add folder download action to the app-bar/breadcrumb menu (zip of current folder via `downloadUrl`)
 - [x] Move the styling of metro tile out of the index.css and use tailwind inside the component instead
-- [ ] The metro tile should have a 3:2 aspect ratio, add a bit more space between metro tiles
+- [X] The metro tile should have a 3:2 aspect ratio, add a bit more space between metro tiles
 
 ---
 
