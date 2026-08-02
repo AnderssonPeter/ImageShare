@@ -124,11 +124,12 @@
   [ ] Add a usage agreement function
   [ ] Add support for negative glob
   [X] Verify that the random function wont return images for folders where the user dosen't have access
-[ ] FE
-  [X] Add mcp server for tanstack
-  [X] Add mcp server for shadcn
-  [X] Client Generation
-  [X] editorconfig
-  [X] Add linting
-  [X] Add UI
-  [X] Add to dockerfile
+  [ ] Microsoft.AspNetCore.Hosting.Diagnostics[11]
+      Hosting startup assembly exception
+      System.InvalidOperationException: Startup assembly Microsoft.WebTools.ApiEndpointDiscovery failed to execute. See the inner exception for more details.
+       ---> System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.WebTools.ApiEndpointDiscovery, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.
+      File name: 'Microsoft.WebTools.ApiEndpointDiscovery, Culture=neutral, PublicKeyToken=null'
+         at System.Reflection.RuntimeAssembly.InternalLoad(AssemblyName assemblyName, StackCrawlMark& stackMark, AssemblyLoadContext assemblyLoadContext, RuntimeAssembly requestingAssembly, Boolean throwOnFileNotFound)
+         at System.Reflection.Assembly.Load(AssemblyName assemblyRef)
+         at Microsoft.AspNetCore.Hosting.GenericWebHostBuilder.ExecuteHostingStartups()
+         --- End of inner exception stack trace ---

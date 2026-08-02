@@ -3,100 +3,43 @@
  *
  * Renders the `DialogContent` for the folder download flow: a recursive
  * toggle, a format radio group (avif/webp/jpg/all), and a Download action.
- * This is a controlled component — the owning trigger button holds the
- * open/format/recursive state and passes it in.
+ * Form state (recursive, format) is managed by TanStack Form — the owning
+ * trigger (`DownloadButton`) just receives the values on submit.
  *
  * The backend currently always downloads recursively (the `recursive`
  * toggle is a forward-looking UI option; it has no effect until the
  * download endpoint gains a `recursive` query parameter).
  */
-import { type ChangeEvent, type ReactElement, useCallback, useMemo } from "react";
+import { type SyntheticEvent, useCallback } from "react";
 import Button from "@components/ui/Button";
+import Checkbox from "@components/ui/Checkbox";
 import Dialog from "@components/ui/Dialog";
+import RadioGroup from "@components/ui/RadioGroup";
+import { useForm } from "@tanstack/react-form";
 
-/** Supported image formats from the backend config (appsettings.json). */
-const FORMATS = ["avif", "webp", "jpg"] as const;
+interface DownloadFormValues {
+  recursive: boolean;
+  format: string;
+}
+
+interface RadioOption {
+  value: string;
+  label: string;
+}
 
 interface DownloadDialogProps {
-  /** Whether subfolders should be included (forward-looking; backend ignores). */
-  recursive: boolean;
-  /** Currently selected format ("" = all formats). */
-  format: string;
-  /** Fired when the recursive toggle changes. */
-  onRecursiveChange: (recursive: boolean) => void;
-  /** Fired when the format selection changes. */
-  onFormatChange: (format: string) => void;
-  /** Fired when the user confirms the download. */
-  onDownload: () => void;
+  /** Fired with form values when the user confirms the download. */
+  onDownload: (values: DownloadFormValues) => void;
 }
 
-function FormatOption({
-  format,
-  label,
-  checked,
-  onChange,
-}: {
-  format: string;
-  label: string;
-  checked: boolean;
-  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
-}) {
-  return (
-    <label className="flex items-center gap-2 text-sm">
-      <input type="radio" name="format" value={format} checked={checked} onChange={onChange} />
-      {label}
-    </label>
-  );
-}
+const FORMAT_OPTIONS: readonly RadioOption[] = [
+  { value: "avif", label: "AVIF" },
+  { value: "webp", label: "WEBP" },
+  { value: "jpg", label: "JPG" },
+  { value: "", label: "All formats" },
+];
 
-function FormatRadioGroup({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (format: string) => void;
-}) {
-  const handleChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value),
-    [onChange],
-  );
-  return (
-    <fieldset className="flex flex-col gap-1">
-      <legend className="mb-1 text-sm text-muted-foreground">Format</legend>
-      {FORMATS.map((format) => (
-        <FormatOption
-          key={format}
-          format={format}
-          label={format.toUpperCase()}
-          checked={value === format}
-          onChange={handleChange}
-        />
-      ))}
-      <FormatOption format="" label="All formats" checked={value === ""} onChange={handleChange} />
-    </fieldset>
-  );
-}
-
-function RecursiveToggle({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: (recursive: boolean) => void;
-}) {
-  const handleChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => onChange(event.target.checked),
-    [onChange],
-  );
-  return (
-    <label className="flex items-center gap-2 text-sm">
-      <input type="checkbox" checked={checked} onChange={handleChange} />
-      Recursive (include subfolders)
-    </label>
-  );
-}
-
-function DownloadDialogHeader() {
+function DownloadDialogHeader(): React.JSX.Element {
   return (
     <Dialog.DialogHeader>
       <Dialog.DialogTitle>Download folder</Dialog.DialogTitle>
@@ -107,54 +50,73 @@ function DownloadDialogHeader() {
   );
 }
 
-function DownloadDialogBody({
-  recursive,
-  format,
-  onRecursiveChange,
-  onFormatChange,
-}: {
-  recursive: boolean;
-  format: string;
-  onRecursiveChange: (recursive: boolean) => void;
-  onFormatChange: (format: string) => void;
-}) {
+type DownloadForm = ReturnType<typeof useDownloadForm>["form"];
+
+interface DownloadDialogBodyProps {
+  form: DownloadForm;
+}
+
+function DownloadDialogBody({ form }: DownloadDialogBodyProps): React.JSX.Element {
   return (
     <div className="flex flex-col gap-3">
-      <RecursiveToggle checked={recursive} onChange={onRecursiveChange} />
-      <FormatRadioGroup value={format} onChange={onFormatChange} />
+      <form.Field name="recursive">
+        {(field) => (
+          <Checkbox
+            checked={field.state.value}
+            onChange={field.handleChange}
+            label="Recursive (include subfolders)"
+          />
+        )}
+      </form.Field>
+      <form.Field name="format">
+        {(field) => (
+          <RadioGroup
+            value={field.state.value}
+            onChange={field.handleChange}
+            options={FORMAT_OPTIONS}
+            name="format"
+            legend="Format"
+          />
+        )}
+      </form.Field>
     </div>
   );
 }
 
-function DownloadDialogFooter({ onDownload }: { onDownload: () => void }) {
-  const downloadButton = useMemo<ReactElement>(
-    () => <Button variant="ghost" onClick={onDownload} />,
-    [onDownload],
-  );
+function DownloadDialogFooter(): React.JSX.Element {
   return (
     <Dialog.DialogFooter>
-      <Dialog.DialogClose render={downloadButton}>Download</Dialog.DialogClose>
+      <Button type="submit">Download</Button>
     </Dialog.DialogFooter>
   );
 }
 
-export default function DownloadDialog({
-  recursive,
-  format,
-  onRecursiveChange,
-  onFormatChange,
-  onDownload,
-}: DownloadDialogProps): React.JSX.Element {
+function useDownloadForm(onDownload: (values: DownloadFormValues) => void) {
+  const form = useForm({
+    defaultValues: { recursive: true, format: "" } as DownloadFormValues,
+    onSubmit: ({ value }) => {
+      onDownload(value);
+    },
+  });
+  const handleSubmit = useCallback(
+    (event: SyntheticEvent) => {
+      event.preventDefault();
+      void form.handleSubmit();
+    },
+    [form],
+  );
+  return { form, handleSubmit };
+}
+
+export default function DownloadDialog({ onDownload }: DownloadDialogProps): React.JSX.Element {
+  const { form, handleSubmit } = useDownloadForm(onDownload);
   return (
     <Dialog.DialogContent>
-      <DownloadDialogHeader />
-      <DownloadDialogBody
-        recursive={recursive}
-        format={format}
-        onRecursiveChange={onRecursiveChange}
-        onFormatChange={onFormatChange}
-      />
-      <DownloadDialogFooter onDownload={onDownload} />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <DownloadDialogHeader />
+        <DownloadDialogBody form={form} />
+        <DownloadDialogFooter />
+      </form>
     </Dialog.DialogContent>
   );
 }

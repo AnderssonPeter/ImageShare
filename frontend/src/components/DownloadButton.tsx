@@ -6,6 +6,10 @@
  * download is triggered by navigating to `downloadUrl(folder, formats)`
  * — the backend responds with a zip stream (`Content-Disposition:
  * attachment`), so the browser downloads without leaving the page.
+ *
+ * Form state (recursive, format) is managed by TanStack Form inside
+ * `DownloadDialog`; this component only controls dialog open/close and
+ * starts the download on submit.
  */
 import { useCallback, useState } from "react";
 import Button from "@components/ui/Button";
@@ -30,26 +34,19 @@ function startDownload(folder: string, formats: readonly string[]): void {
 export default function DownloadButton({ path }: DownloadButtonProps): React.JSX.Element {
   const folder = path ?? "";
   const [open, setOpen] = useState(false);
-  const [recursive, setRecursive] = useState(true);
-  const [format, setFormat] = useState("");
-
-  const handleDownload = useCallback(() => {
-    setOpen(false);
-    startDownload(folder, format === "" ? [] : [format]);
-  }, [folder, format]);
-
+  const handleDownload = useCallback(
+    (values: { recursive: boolean; format: string }) => {
+      setOpen(false);
+      startDownload(folder, values.format === "" ? [] : [values.format]);
+    },
+    [folder],
+  );
   return (
     <Dialog.Dialog open={open} onOpenChange={setOpen}>
       <Dialog.DialogTrigger className={TRIGGER_CLASS} aria-label="Download folder">
         <Download className={ICON_CLASS} />
       </Dialog.DialogTrigger>
-      <DownloadDialog
-        recursive={recursive}
-        format={format}
-        onRecursiveChange={setRecursive}
-        onFormatChange={setFormat}
-        onDownload={handleDownload}
-      />
+      <DownloadDialog onDownload={handleDownload} />
     </Dialog.Dialog>
   );
 }

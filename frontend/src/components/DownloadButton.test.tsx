@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import DownloadButton from "@components/DownloadButton";
 import { type downloadUrl } from "@lib/api/urls";
 
@@ -42,7 +42,7 @@ describe("downloadButton trigger", () => {
 
 describe("downloadButton download", () => {
   it("navigates to the download URL with all formats by default", async () => {
-    expect.assertions(2);
+    expect.hasAssertions();
     // Arrange
     mockDownloadUrl.mockReset();
     mockDownloadUrl.mockReturnValue("/api/content/download/Birds");
@@ -55,14 +55,16 @@ describe("downloadButton download", () => {
     fireEvent.click(downloadButton);
 
     // Assert
-    expect(mockDownloadUrl).toHaveBeenCalledWith("Birds", []);
+    await waitFor(() => {
+      expect(mockDownloadUrl).toHaveBeenCalledWith("Birds", []);
+    });
     expect(mockHref.value).toBe("/api/content/download/Birds");
   }, 2000);
 });
 
 describe("downloadButton format selection", () => {
   it("passes the selected format to the download URL", async () => {
-    expect.assertions(1);
+    expect.hasAssertions();
     // Arrange
     mockDownloadUrl.mockReset();
     mockDownloadUrl.mockReturnValue("/api/content/download/Birds?formats=webp");
@@ -75,6 +77,8 @@ describe("downloadButton format selection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Download" }));
 
     // Assert
-    expect(mockDownloadUrl).toHaveBeenCalledWith("Birds", ["webp"]);
+    await waitFor(() => {
+      expect(mockDownloadUrl).toHaveBeenCalledWith("Birds", ["webp"]);
+    });
   }, 2000);
 });

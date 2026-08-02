@@ -1,6 +1,7 @@
 ﻿## General
 When there are multiple solutions to a problem ask the user what solution to pick.
 When you detect that I have made changes that you don't recognition don't just undo them, instead create a new plan how to resolve your task while keeping them in place.
+Before trying to solve a issue where there are common packages to solve it, ask the user if they want to use a package, give them a list with some pros and cons.
 
 ## Domain modeling (no helper / service / util / manager modules)
 
