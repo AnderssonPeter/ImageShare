@@ -17,6 +17,7 @@ import Button from "@components/ui/Button";
 import { type IUser } from "@lib/api/generated/imageShare.schemas";
 import Logo from "@components/Logo";
 import { type ReactNode } from "react";
+import ShareButton from "@components/ShareButton";
 import ThemeToggle from "@components/ThemeToggle";
 import Tooltip from "@components/ui/Tooltip";
 
@@ -39,6 +40,17 @@ function AdminButton({ visible }: AdminButtonProps) {
       <Tooltip.TooltipContent>Admin</Tooltip.TooltipContent>
     </Tooltip.Tooltip>
   );
+}
+
+interface ShareButtonSlotProps {
+  visible: boolean;
+}
+
+function ShareButtonSlot({ visible }: ShareButtonSlotProps) {
+  if (!visible) {
+    return;
+  }
+  return <ShareButton />;
 }
 
 function UserChip({ name }: { name: string | undefined }) {
@@ -74,6 +86,7 @@ function AppBarRight({ user }: AppBarRightProps) {
   return (
     <div className="flex shrink-0 items-center gap-1">
       <ThemeToggle />
+      <ShareButtonSlot visible={user.isAdmin === true} />
       <AdminButton visible={user.isAdmin === true} />
       <UserChip name={user.name ?? undefined} />
     </div>

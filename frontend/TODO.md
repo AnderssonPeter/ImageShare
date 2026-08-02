@@ -92,12 +92,13 @@ Generated from `PLAN.md`. Check off items as you complete them.
 ## Phase 7 — Admin share (token + QR)
 
 - [X] Implement `ShareLinkDialog.tsx` — Name, Filter, EndDate form with validation
-- [ ] Wire `useGenerateToken` mutation (orval) → JWT string
+- [X] Wire `useGenerateToken` mutation (orval) → JWT string
+- [ ] The share button should move up on hover like all other buttons
 - [ ] Build shareable URL `${origin}/login/jwt/${token}`
 - [ ] Render QR code via `qrcode.react` `<QRCodeSVG>` add logo to qrcode
 - [ ] Add "Copy link" + "Download QR" (SVG→PNG) actions
 - [ ] Handle 400/403 RFC 7807 errors in UI
-- [ ] Gate visibility on `user.isAdmin`
+- [X] Gate visibility on `user.isAdmin`
 
 ---
 

@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { type IUser } from "@lib/api/generated/imageShare.schemas";
@@ -6,12 +7,18 @@ import { type ReactNode } from "react";
 import { ThemeProvider } from "@lib/themeContext";
 import setupThemeEnvironment from "@test/themeEnvironment";
 
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
 function authenticatedUser(overrides: Partial<IUser> = {}): IUser {
   return { isAuthenticated: true, isAdmin: false, name: "Jane", ...overrides };
 }
 
 function wrapper({ children }: { children: ReactNode }) {
-  return <ThemeProvider>{children}</ThemeProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>{children}</ThemeProvider>
+    </QueryClientProvider>
+  );
 }
 
 interface RenderOptions {
@@ -111,6 +118,30 @@ describe("metroAppBar hides the admin button when isAdmin is undefined", () => {
 
     // Assert
     expect(screen.queryByRole("button", { name: "Admin" })).toBeNull();
+  }, 1000);
+});
+
+describe("metroAppBar shows the share button for admin users", () => {
+  it("renders a Share button when isAdmin is true", () => {
+    expect.assertions(1);
+    // Arrange + Act
+    setupThemeEnvironment(false);
+    renderAppBar({ user: authenticatedUser({ isAdmin: true }) });
+
+    // Assert
+    expect(screen.getByRole("button", { name: "Share" })).toBeInTheDocument();
+  }, 1000);
+});
+
+describe("metroAppBar hides the share button for non-admin users", () => {
+  it("does not render a Share button when isAdmin is false", () => {
+    expect.assertions(1);
+    // Arrange + Act
+    setupThemeEnvironment(false);
+    renderAppBar({ user: authenticatedUser({ isAdmin: false }) });
+
+    // Assert
+    expect(screen.queryByRole("button", { name: "Share" })).toBeNull();
   }, 1000);
 });
 
