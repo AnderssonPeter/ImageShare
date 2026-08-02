@@ -3,7 +3,6 @@ import babel from '@rolldown/plugin-babel'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import svgr from 'vite-plugin-svgr'
 import tailwindcss from '@tailwindcss/vite'
-import tsconfigPaths from 'vite-tsconfig-paths'
 import { defineConfig } from 'vitest/config'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 
@@ -18,8 +17,10 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     svgr(),
-    tsconfigPaths(),
   ],
+  resolve: {
+    tsconfigPaths: true
+  },
   server: {
     port: 5000
   },
