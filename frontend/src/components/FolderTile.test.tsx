@@ -50,7 +50,9 @@ describe("folderTile navigate on click", () => {
     expect.assertions(1);
     // Arrange
     const onNavigate = vi.fn<(path: string) => void>();
-    render(<FolderTile entry={folderEntry("Holidays", "photos/holidays")} onNavigate={onNavigate} />);
+    render(
+      <FolderTile entry={folderEntry("Holidays", "photos/holidays")} onNavigate={onNavigate} />,
+    );
 
     // Act
     fireEvent.click(screen.getByRole("button", { name: "Open folder Holidays" }));

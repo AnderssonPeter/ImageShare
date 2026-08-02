@@ -4,7 +4,7 @@
  * Renders a `<button>` so the whole tile is the click target. Uses Tailwind
  * classes for layout, colors, and hover/active states. A child `<div>`
  * (positioned absolutely with overscan) renders the background image and
- * translates up on `group-active`, matching the original `::before`
+ * translates up on `group-hover`, matching the original `::before`
  * behaviour without custom CSS.
  *
  * The `--metro-tile-image` CSS custom property is replaced by an
@@ -14,7 +14,7 @@ import { type CSSProperties, type ReactNode, useMemo } from "react";
 import cn, { tw } from "@lib/utils";
 
 const BASE_CLASS = tw`group relative flex items-center justify-center overflow-hidden rounded-[var(--radius)] bg-tile text-tile-foreground hover:bg-muted active:bg-muted`;
-const OVERLAY_BASE_CLASS = tw`pointer-events-none absolute -inset-1 bg-cover bg-center transition-transform duration-100 ease-out group-active:translate-y-[-2px]`;
+const OVERLAY_BASE_CLASS = tw`pointer-events-none absolute -inset-1 bg-cover bg-center transition-transform duration-100 ease-out group-hover:translate-y-[-2px]`;
 const CONTENT_CLASS = tw`absolute inset-0 z-[1] flex items-center justify-center`;
 
 interface MetroTileProps {

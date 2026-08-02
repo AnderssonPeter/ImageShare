@@ -1,7 +1,7 @@
 {
   "name": "shareimage",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "start": "vite",
@@ -56,14 +56,14 @@
     "vitest": "^4.1.10"
   },
   "devEngines": {
-    "runtime": {
-      "name": "node",
-      "version": "^26.4.0",
-      "onFail": "error"
-    },
     "packageManager": {
       "name": "pnpm",
       "version": "11.15.1",
+      "onFail": "error"
+    },
+    "runtime": {
+      "name": "node",
+      "version": "^26.4.0",
       "onFail": "error"
     }
   }

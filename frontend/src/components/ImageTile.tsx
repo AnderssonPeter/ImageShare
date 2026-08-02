@@ -27,11 +27,7 @@ function openLabel(name: string): string {
   return `Open image ${name}`;
 }
 
-export default function ImageTile({
-  entry,
-  onOpen,
-  className,
-}: ImageTileProps): React.JSX.Element {
+export default function ImageTile({ entry, onOpen, className }: ImageTileProps): React.JSX.Element {
   const thumbnail = imageUrl(entry.path, true);
   const handleOpen = useCallback(() => onOpen(entry.path), [onOpen, entry.path]);
   return (

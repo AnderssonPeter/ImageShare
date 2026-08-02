@@ -1,6 +1,16 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "eslint", "react-perf", "typescript", "oxc", "unicorn", "import", "promise", "vitest"],
+  "plugins": [
+    "react",
+    "eslint",
+    "react-perf",
+    "typescript",
+    "oxc",
+    "unicorn",
+    "import",
+    "promise",
+    "vitest"
+  ],
   "categories": {
     "correctness": "error",
     "perf": "warn",
@@ -21,7 +31,10 @@
     "react/jsx-filename-extension": ["warn", { "extensions": [".tsx", ".jsx"] }],
     "react/jsx-props-no-spreading": "off",
     "react/jsx-no-constructed-context-values": "off",
-    "unicorn/filename-case": ["warn", { "cases": { "camelCase": true, "pascalCase": false, "kebabCase": false } }],
+    "unicorn/filename-case": [
+      "warn",
+      { "cases": { "camelCase": true, "pascalCase": false, "kebabCase": false } }
+    ],
     "react/no-direct-mutation-state": "error",
     "react/no-unknown-property": "warn",
     "typescript/no-unused-vars": "warn",
@@ -43,18 +56,23 @@
     "react-perf/jsx-no-new-object-as-prop": "warn",
     "react-perf/jsx-no-jsx-as-prop": "warn",
     "import/group-exports": "off",
-    "no-restricted-imports": ["error", {
-      "patterns": [{
-        "regex": "^\\.{1,2}/",
-        "message": "Relative imports are not allowed — use a @ path alias instead (e.g. @lib/utils)."
-      }]
-    }]
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "regex": "^\\.{1,2}/",
+            "message": "Relative imports are not allowed — use a @ path alias instead (e.g. @lib/utils)."
+          }
+        ]
+      }
+    ]
   },
   "overrides": [
     {
       "files": ["vite.config.ts"],
       "rules": {
-        "eslint/no-inline-comments": "off",
+        "eslint/no-inline-comments": "off"
       }
     },
     {
@@ -90,7 +108,10 @@
     {
       "files": ["src/components/**"],
       "rules": {
-        "unicorn/filename-case": ["warn", { "cases": { "camelCase": false, "pascalCase": true, "kebabCase": false } }]
+        "unicorn/filename-case": [
+          "warn",
+          { "cases": { "camelCase": false, "pascalCase": true, "kebabCase": false } }
+        ]
       }
     },
     {
@@ -101,7 +122,12 @@
       }
     },
     {
-      "files": ["vite.config.ts", "vitest.config.ts", "orval.config.ts", "*.config.{ts,mts,js,mjs}"],
+      "files": [
+        "vite.config.ts",
+        "vitest.config.ts",
+        "orval.config.ts",
+        "*.config.{ts,mts,js,mjs}"
+      ],
       "rules": {
         "import/no-nodejs-modules": "off",
         "import/no-unassigned-import": "off",

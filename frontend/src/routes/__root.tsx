@@ -14,6 +14,7 @@
  */
 import { Outlet, createRootRouteWithContext, useMatches } from "@tanstack/react-router";
 import Breadcrumb from "@components/Breadcrumb";
+import DownloadButton from "@components/DownloadButton";
 import { type IUser } from "@lib/api/generated/imageShare.schemas";
 import MetroAppBar from "@components/MetroAppBar";
 import { type QueryClient } from "@tanstack/react-query";
@@ -49,7 +50,13 @@ function RootComponent(): React.JSX.Element {
   const { user } = Route.useMatch().context;
   const { onBrowse, splat } = useBrowseSplat();
   const breadcrumb = useMemo(
-    () => (onBrowse ? <Breadcrumb path={splat} /> : undefined),
+    () =>
+      onBrowse ? (
+        <div className="flex min-w-0 flex-1 items-center gap-1">
+          <Breadcrumb path={splat} />
+          <DownloadButton path={splat} />
+        </div>
+      ) : undefined,
     [onBrowse, splat],
   );
   return (

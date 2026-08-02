@@ -1,4 +1,4 @@
-﻿import { defineConfig } from 'orval'
+﻿import { defineConfig } from "orval";
 
 /**
  * Orval configuration — generates a typed TanStack Query client from the
@@ -13,20 +13,20 @@
  */
 export default defineConfig({
   imageShare: {
-    input: '../ImageShare/openapi.json',
+    input: "../ImageShare/openapi.json",
     output: {
-      target: 'src/lib/api/generated/imageShare.ts',
-      mode: 'tags-split',
-      httpClient: 'fetch',
-      client: 'react-query',
-      baseUrl: '',
+      target: "src/lib/api/generated/imageShare.ts",
+      mode: "tags-split",
+      httpClient: "fetch",
+      client: "react-query",
+      baseUrl: "",
       clean: true,
       prettier: false,
       mock: false,
       override: {
         mutator: {
-          path: './src/lib/api/customFetcher.ts',
-          name: 'customFetcher',
+          path: "./src/lib/api/customFetcher.ts",
+          name: "customFetcher",
         },
         query: {
           useQuery: true,
@@ -37,7 +37,7 @@ export default defineConfig({
       },
     },
     hooks: {
-      afterAllFilesWrite: 'oxlint --fix',
+      afterAllFilesWrite: "oxlint --fix",
     },
   },
-})
+});

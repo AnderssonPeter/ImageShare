@@ -41,7 +41,11 @@ function buildCrumbs(path: string | undefined): Crumb[] {
     const segment = segments[index];
     cumulative = cumulative === "" ? segment : `${cumulative}/${segment}`;
     const isLast = index === segments.length - 1;
-    crumbs.push({ name: segment, params: { _splat: isLast ? undefined : cumulative }, current: isLast });
+    crumbs.push({
+      name: segment,
+      params: { _splat: isLast ? undefined : cumulative },
+      current: isLast,
+    });
   }
   return crumbs;
 }

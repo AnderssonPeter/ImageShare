@@ -47,36 +47,36 @@ qrcode.react                       # QR code for admin share link
 Add Tailwind + Router plugins, `@` alias, and a hardcoded dev proxy port:
 
 ```ts
-import { defineConfig } from 'vite'
-import { resolve } from 'node:path'
-import react, { reactCompilerPreset } from '@vitejs/plugin-react'
-import babel from '@rolldown/plugin-babel'
-import tailwindcss from '@tailwindcss/vite'
-import { tanstackRouter } from '@tanstack/router-plugin/vite'
+import { defineConfig } from "vite";
+import { resolve } from "node:path";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
+import tailwindcss from "@tailwindcss/vite";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
 
-const BACKEND_PORT = 5000 // hardcoded dev backend port
+const BACKEND_PORT = 5000; // hardcoded dev backend port
 
 export default defineConfig({
   plugins: [
     tailwindcss(),
     tanstackRouter({
-      routesDirectory: './src/routes',
-      generatedRouteTree: './src/routeTree.gen.ts',
+      routesDirectory: "./src/routes",
+      generatedRouteTree: "./src/routeTree.gen.ts",
     }),
     react(),
     babel({ presets: [reactCompilerPreset()] }),
   ],
-  resolve: { alias: { '@': resolve(__dirname, 'src') } },
+  resolve: { alias: { "@": resolve(__dirname, "src") } },
   server: {
     proxy: {
-      '/content': `http://localhost:${BACKEND_PORT}`,
-      '/user': `http://localhost:${BACKEND_PORT}`,
-      '/login': `http://localhost:${BACKEND_PORT}`,
-      '/logout': `http://localhost:${BACKEND_PORT}`,
-      '/token': `http://localhost:${BACKEND_PORT}`,
+      "/content": `http://localhost:${BACKEND_PORT}`,
+      "/user": `http://localhost:${BACKEND_PORT}`,
+      "/login": `http://localhost:${BACKEND_PORT}`,
+      "/logout": `http://localhost:${BACKEND_PORT}`,
+      "/token": `http://localhost:${BACKEND_PORT}`,
     },
   },
-})
+});
 ```
 
 ### 1.3 tsconfig
@@ -109,20 +109,20 @@ Add to `package.json`:
 ### 2.1 `orval.config.ts` (repo root)
 
 ```ts
-import { defineConfig } from 'orval'
+import { defineConfig } from "orval";
 
 export default defineConfig({
   imageShare: {
-    input: '../ImageShare/openapi.json',
+    input: "../ImageShare/openapi.json",
     output: {
-      target: 'src/lib/api/generated/imageShare.ts',
-      httpClient: 'fetch',
-      mode: 'tags-split',
-      baseUrl: '', // same-origin via Vite proxy
+      target: "src/lib/api/generated/imageShare.ts",
+      httpClient: "fetch",
+      mode: "tags-split",
+      baseUrl: "", // same-origin via Vite proxy
       override: {
         mutator: {
-          path: './src/lib/api/custom-fetcher.ts',
-          name: 'customFetcher',
+          path: "./src/lib/api/custom-fetcher.ts",
+          name: "customFetcher",
         },
         query: {
           useQuery: true,
@@ -132,7 +132,7 @@ export default defineConfig({
       },
     },
   },
-})
+});
 ```
 
 ### 2.2 Custom fetcher (`src/lib/api/custom-fetcher.ts`)
@@ -145,6 +145,7 @@ export default defineConfig({
 ### 2.3 Manual `useInfiniteQuery` wrappers (`src/lib/api/content-queries.ts`)
 
 `useFolderContent(path?: string)`:
+
 - Calls generated `getContent` (root) or `getContentPath` (subfolder) with the **correct page param casing** per endpoint (`page`/`pageSize` vs `Page`/`PageSize`).
 - `getNextPageParam: last => (last.page * last.pageSize < last.totalCount) ? last.page + 1 : undefined`.
 - `queryKey`: `['content', path ?? 'root']`.
@@ -176,10 +177,11 @@ Windows 8 / Windows Phone 8 "Metro" aesthetic, layered onto shadcn primitives.
 CSS variables (both themes), Windows 8 blue accent `#0078D4`:
 
 ```css
-:root, .light {
+:root,
+.light {
   --background: 0 0% 100%;
   --foreground: 0 0% 13%;
-  --accent: 202 90% 50%;        /* #0078D4 */
+  --accent: 202 90% 50%; /* #0078D4 */
   --accent-foreground: 0 0% 100%;
   --radius: 2px;
 }
@@ -340,13 +342,13 @@ src/
 
 ## Phase summary
 
-| # | Phase | Outcome |
-|---|-------|---------|
-| 1 | Project setup & tooling | Tailwind, Router plugin, alias, proxy, deps |
-| 2 | API client generation | orval → typed TanStack Query hooks + URL builders |
-| 3 | Metro UI design system + theming | blue accent, light/dark auto-detect (fallback dark), flat tiles |
-| 4 | Routing | file-based splat routes, beforeLoad auth, theme init |
-| 5 | Browse grid | infinite query × virtual rows, autoload, folder/image tiles |
-| 6 | Fullscreen carousel | Embla + zoom/pan, keyboard nav, neighbor preload |
-| 7 | Admin share | token form + QR + copy link, isAdmin-gated |
-| 8 | Errors / loading / polish | global error handlers, skeletons, toasts, CI lint+typecheck |
+| #   | Phase                            | Outcome                                                         |
+| --- | -------------------------------- | --------------------------------------------------------------- |
+| 1   | Project setup & tooling          | Tailwind, Router plugin, alias, proxy, deps                     |
+| 2   | API client generation            | orval → typed TanStack Query hooks + URL builders               |
+| 3   | Metro UI design system + theming | blue accent, light/dark auto-detect (fallback dark), flat tiles |
+| 4   | Routing                          | file-based splat routes, beforeLoad auth, theme init            |
+| 5   | Browse grid                      | infinite query × virtual rows, autoload, folder/image tiles     |
+| 6   | Fullscreen carousel              | Embla + zoom/pan, keyboard nav, neighbor preload                |
+| 7   | Admin share                      | token form + QR + copy link, isAdmin-gated                      |
+| 8   | Errors / loading / polish        | global error handlers, skeletons, toasts, CI lint+typecheck     |

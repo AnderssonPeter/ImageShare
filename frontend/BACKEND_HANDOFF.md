@@ -1,17 +1,20 @@
 ﻿# ImageShare — Backend Handoff for Frontend
 
 ## What it is
+
 ImageShare is an ASP.NET Core minimal-API service that lets authenticated users browse a server-side directory tree of images, view them (in client-preferred formats with auto-generated thumbnails), download images as a zip, and get random images. It exposes an OpenAPI spec for client generation.
 
 The frontend (`/app/frontend`) is a fresh Vite + React 19 + TypeScript scaffold with `oxlint` — currently only the starter template. Nothing image-share related has been built yet.
 
 ## Base URL & dev access
+
 - In **Development**, the API serves Scalar at `/api/scalar` and the OpenAPI JSON at `/api/openapi/v1.json` (`ImageShare/Program.cs`). All backend endpoints live under the `/api` prefix so they cannot collide with frontend routes.
 - All `/content/**` and `/user` endpoints require authorization (`ContentEndpoints.cs:11`, `AuthenticationEndpoints.cs:30`).
 - Health check: `GET /api/health` → `"pong"` (`HealthEndpoints.cs:7`).
 - CORS is **not** configured. If the FE runs on a different origin during dev, ask backend to enable it (or proxy via Vite `server.proxy`).
 
 ## Authentication — three coexisting schemes
+
 Configured in `AuthenticationExtensions.cs`. The policy scheme picks one per request:
 
 1. **OpenID Connect (Cookie)** — interactive browser login. Endpoints:
@@ -27,61 +30,76 @@ Configured in `AuthenticationExtensions.cs`. The policy scheme picks one per req
    - `GET /api/authentication/login/jwt/{token}` → validates the JWT and signs the caller in via cookie, then redirects. This is the browser-friendly way to "sign in with a token" (`AuthenticationEndpoints.cs:44`, `LoginWithJwtCommand.cs`).
 
 ### Claims the FE-developer-relevant user object
+
 `GET /api/authentication/user` returns `IUser` (`IUser.cs`):
+
 ```json
 { "isAuthenticated": true, "isAdmin": false, "name": "Jane" }
 ```
+
 `isAdmin` is `true` only when the user has the admin role configured under `OpenIdConnect:AdminRole` (default `"admin"`).
 
 ### ImageShareFilter (authorization scoping)
+
 Every authenticated user has an `image_share_filter` claim — a glob-like pattern (`*` = within a segment, `|` = OR, `?` = single char, case-insensitive, matches whole relative path). It determines which root folders the user can see/download. Example: `photos/*|public/*`. Folders outside the filter are silently hidden from listings and return 404 on direct access. Implemented in `ImageShareFilterCompiler.cs`.
 
 ## Path convention: `RelativePath`
+
 All folder/file paths in the API are **relative, forward-slash-delimited** strings, never rooted, never containing `..` (`RelativePath.cs:9-18`). When sent as a path parameter they must be URL-encoded (e.g. `/` → `%2F`). The OpenAPI schema for `RelativePath` is just `type: string`. Examples:
+
 - Root listing: `GET /api/content` (no path).
 - Subfolder: `GET /api/content/photos%2F2024` or `GET /api/content/photos/2024` (use encodeURI on the segment).
 - Thumbnail infix is a fixed string in file names — thumbnails appear as `{name}{ThumbnailInfix}.{ext}`. The FE never needs to construct these; listings hide thumbnails and show files by name without extension.
 
 ## Endpoints (all under the `ImageShare` tag in OpenAPI)
 
-| Method & path | Query params | Returns | Notes |
-|---|---|---|---|
-| `GET /api/health` | — | `text "pong"` | health |
-| `GET /api/authentication/login` | `returnUrl` | 302 | OIDC challenge |
-| `GET /api/authentication/logout` | — | 302 | sign out |
-| `GET /api/authentication/user` | — | `IUser` (401) | current user |
-| `GET /api/authentication/token/generate` | `Name`, `Filter`, `EndDate` (date-time) | `string` JWT (401/403/400) | admin only |
-| `GET /api/authentication/login/jwt/{token}` | — | 302 redirect (400) | sign in via JWT |
-| `GET /api/content` | `page=1`, `pageSize=50` | `PaginatedResult<FolderEntry>` (401/400/404) | list root |
-| `GET /api/content/{path}` | `Page=1`, `PageSize=50` | `PaginatedResult<FolderEntry>` (401/400/404) | list folder |
-| `GET /api/content/download/{folder}` | `Format` (string[], repeated) | `application/zip` stream (401/400/403/404) | recursive zip download of `Format` files |
-| `GET /api/content/random/{folder}` | `Thumbnail` (bool), `Recursive` (bool) | image bytes (401/400/403/404/**406**) | uses `Accept` header to pick format |
-| `GET /api/content/image/{path}` | `Thumbnail` (bool) | image bytes (401/400/403/404/**406**) | uses `Accept` header to pick format |
+| Method & path                               | Query params                            | Returns                                      | Notes                                    |
+| ------------------------------------------- | --------------------------------------- | -------------------------------------------- | ---------------------------------------- |
+| `GET /api/health`                           | —                                       | `text "pong"`                                | health                                   |
+| `GET /api/authentication/login`             | `returnUrl`                             | 302                                          | OIDC challenge                           |
+| `GET /api/authentication/logout`            | —                                       | 302                                          | sign out                                 |
+| `GET /api/authentication/user`              | —                                       | `IUser` (401)                                | current user                             |
+| `GET /api/authentication/token/generate`    | `Name`, `Filter`, `EndDate` (date-time) | `string` JWT (401/403/400)                   | admin only                               |
+| `GET /api/authentication/login/jwt/{token}` | —                                       | 302 redirect (400)                           | sign in via JWT                          |
+| `GET /api/content`                          | `page=1`, `pageSize=50`                 | `PaginatedResult<FolderEntry>` (401/400/404) | list root                                |
+| `GET /api/content/{path}`                   | `Page=1`, `PageSize=50`                 | `PaginatedResult<FolderEntry>` (401/400/404) | list folder                              |
+| `GET /api/content/download/{folder}`        | `Format` (string[], repeated)           | `application/zip` stream (401/400/403/404)   | recursive zip download of `Format` files |
+| `GET /api/content/random/{folder}`          | `Thumbnail` (bool), `Recursive` (bool)  | image bytes (401/400/403/404/**406**)        | uses `Accept` header to pick format      |
+| `GET /api/content/image/{path}`             | `Thumbnail` (bool)                      | image bytes (401/400/403/404/**406**)        | uses `Accept` header to pick format      |
 
 ### Response shapes
+
 `FolderEntry` (`FolderEntry.cs`):
+
 ```json
-{ "name": "2024", "path": "photos/2024", "type": "Folder" }   // type: "Folder" | "File"
+{ "name": "2024", "path": "photos/2024", "type": "Folder" } // type: "Folder" | "File"
 ```
+
 `PaginatedResult<FolderEntry>` (`PaginatedResult.cs`):
+
 ```json
 { "items": [ ... ], "page": 1, "pageSize": 50, "totalCount": 137 }
 ```
+
 - `pageSize` max is **500** (`GetEntriesQueryHandler.cs:14`).
 - Folders are listed first, then files, each sorted ordinally (`GetEntriesQueryHandler.cs:92`).
 - Empty folders are hidden; only files with a supported image extension are shown; file names are returned **without extension**.
 - Root folder listing shows only folders the user's filter allows; subfolder listings show both folders and image files.
 
 ### Image serving & content negotiation
+
 Image endpoints use the **`Accept`** header to pick a format from the server's `ImageFormats:SupportedFormats` (`appsettings.json:25`, currently `avif`, `webp`, `jpg`). If none match → **406 Not Acceptable**. Send e.g. `Accept: image/avif,image/webp`. Use `thumbnail=true` for the 200×200 (max) version. Supported MIME: `image/avif`, `image/webp`, `image/jpeg`, `image/png` (`Program.cs:44-49`).
 
 A background `ImageConverterJob` automatically generates all configured formats and thumbnails for every source image on startup and on filesystem changes — the FE just requests whichever format it prefers.
 
 ### Download
+
 `GET /api/content/download/{folder}?format=avif&format=webp` streams a zip. Per the README, when only a single top-level folder is requested, the zip does **not** wrap it in a subfolder. `Format` is a repeated query param.
 
 ### Errors
+
 All error responses use RFC 7807 **`application/problem+json`** (`ProblemDetails`): `{ type, title, status, detail, instance }`. Map on `status`:
+
 - `400` bad request (validation, bad path, etc.)
 - `401` not authenticated (redirect to `/api/authentication/login` for browser flows)
 - `403` forbidden (e.g. folder outside filter, non-admin calling `/api/authentication/token/generate`)
@@ -89,7 +107,9 @@ All error responses use RFC 7807 **`application/problem+json`** (`ProblemDetails
 - `406` no acceptable image format
 
 ## Frontend stack & next steps (from README `FE` section)
+
 Already scaffolded: Vite + React 19 + TS, `oxlint`. Outstanding FE work (per `README.md:116-123`):
+
 1. Add MCP servers for TanStack and shadcn.
 2. **Client generation** from `openapi.json` (e.g. `openapi-typescript` / `orval` / HeyApi).
 3. `.editorconfig` + linting pass.
@@ -97,6 +117,7 @@ Already scaffolded: Vite + React 19 + TS, `oxlint`. Outstanding FE work (per `RE
 5. Add the FE to the backend `Dockerfile`.
 
 Suggested flow for the UI:
+
 - On 401, redirect to `/api/authentication/login?returnUrl=<current>`.
 - Use `GET /api/authentication/user` to read `isAdmin` and gate admin features (token generation form).
 - `GET /api/content` for root, then `GET /api/content/{path}` to navigate; render folders as cards using `GET /api/content/random/{path}?thumbnail=true&recursive=true` for cover images.
