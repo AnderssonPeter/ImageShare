@@ -12,12 +12,14 @@
  * client-side auth redirect is needed. Session-expiry mid-session is handled
  * by the global `QueryClient` `onError` handler (Phase 8).
  */
-import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
+import { Outlet, createRootRouteWithContext, useMatches } from "@tanstack/react-router";
+import Breadcrumb from "@components/Breadcrumb";
 import { type IUser } from "@lib/api/generated/imageShare.schemas";
 import MetroAppBar from "@components/MetroAppBar";
 import { type QueryClient } from "@tanstack/react-query";
 import { ThemeProvider } from "@lib/themeContext";
 import { getApiAuthenticationUser } from "@lib/api/generated/authentication/authentication";
+import { useMemo } from "react";
 
 /**
  * Initial router context — supplied at `createRouter` time (see `router.tsx`).
@@ -28,11 +30,31 @@ export interface RouterContext {
   queryClient: QueryClient;
 }
 
+/**
+ * Read the browse route's splat from the match chain so the root layout can
+ * render the app-bar breadcrumb. Returns `onBrowse: false` on non-browse
+ * routes (e.g. admin) so the breadcrumb slot stays empty there.
+ */
+function useBrowseSplat(): { onBrowse: boolean; splat: string | undefined } {
+  const matches = useMatches();
+  for (const match of matches) {
+    if (match.routeId === "/browse/$") {
+      return { onBrowse: true, splat: (match.params as { _splat?: string })._splat };
+    }
+  }
+  return { onBrowse: false, splat: undefined };
+}
+
 function RootComponent(): React.JSX.Element {
   const { user } = Route.useMatch().context;
+  const { onBrowse, splat } = useBrowseSplat();
+  const breadcrumb = useMemo(
+    () => (onBrowse ? <Breadcrumb path={splat} /> : undefined),
+    [onBrowse, splat],
+  );
   return (
     <ThemeProvider>
-      <MetroAppBar user={user}>
+      <MetroAppBar user={user} breadcrumb={breadcrumb}>
         <Outlet />
       </MetroAppBar>
     </ThemeProvider>
