@@ -16,9 +16,18 @@ internal sealed class GetRandomImageQueryHandler(
         GetRandomImageQuery request,
         CancellationToken cancellationToken)
     {
-        user.EnsureCanAccessFolder(request.Folder);
+        if (request.Folder == RelativePath.Root && !request.Recursive)
+        {
+            throw new BadRequestException("Recursive must be true when requesting a random image across all root folders.");
+        }
 
-        var baseNames = imageEnumerator.EnumerateImages(request.Folder, request.Recursive)
+        if (request.Folder != RelativePath.Root)
+        {
+            user.EnsureCanAccessFolder(request.Folder);
+        }
+
+        var baseNames = imageEnumerator.EnumerateImages(request.Folder, request.Recursive, thumbnails: false)
+            .Where(file => user.CanAccessFolder(file.Path.RootFolder))
             .Select(file => file.Path.FileNameWithoutExtension)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -31,7 +40,7 @@ internal sealed class GetRandomImageQueryHandler(
         var randomBaseName = baseNames[Random.Shared.Next(baseNames.Count)];
         var targetName = request.Thumbnail ? imageEnumerator.BuildThumbnailName(randomBaseName) : randomBaseName;
 
-        var candidates = imageEnumerator.EnumerateImages(request.Folder, request.Recursive, thumbnails: request.Thumbnail)
+        var candidates = imageEnumerator.EnumerateImages(request.Folder, request.Recursive, request.Thumbnail)
             .Where(file => string.Equals(file.Path.FileNameWithoutExtension, targetName, StringComparison.OrdinalIgnoreCase))
             .Select(file => file.Info)
             .OrderBy(file => file.Length)

@@ -31,6 +31,16 @@ public static class ContentEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        group.MapGet("/random", async (IMediator mediator,
+                [FromQuery] bool thumbnail = false,
+                [FromHeader(Name = "Accept")] string accept = "") =>
+            await mediator.Send(new GetRandomImageQuery(RelativePath.Root, thumbnail, true, accept)))
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status406NotAcceptable);
+
         group.MapGet("/random/{**folder}", async (IMediator mediator, [AsParameters] GetRandomImageQuery request) =>
             await mediator.Send(request))
             .ProducesProblem(StatusCodes.Status401Unauthorized)

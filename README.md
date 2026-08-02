@@ -123,6 +123,7 @@
   [X] Break up the agent.md into skills to lower the token usage
   [ ] Add a usage agreement function
   [ ] Add support for negative glob
+  [X] Verify that the random function wont return images for folders where the user dosen't have access
 [ ] FE
   [X] Add mcp server for tanstack
   [X] Add mcp server for shadcn

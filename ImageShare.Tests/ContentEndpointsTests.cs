@@ -776,6 +776,202 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
     }
 
     [Test]
+    public async Task GetRandomImageFromRoots_Unauthenticated_ReturnsUnauthorized()
+    {
+        // Arrange
+        user.IsAuthenticated = false;
+
+        // Act
+        // Assert
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(RelativePath.Root, Recursive: true, Accept: ""))).Throws<NotAuthenticatedException>();
+    }
+
+    [Test]
+    public async Task GetRandomImageFromRoots_RecursiveFalse_ThrowsBadRequest()
+    {
+        // Arrange
+        fileProvider.AddFile("vacation/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        user.Allow("vacation");
+
+        // Act
+        // Assert
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(RelativePath.Root, Recursive: false))).Throws<BadRequestException>();
+    }
+
+    [Test]
+    public async Task GetRandomImageFromRoots_NoAccessibleFolders_ReturnsNotFound()
+    {
+        // Arrange
+        fileProvider.AddFile("secret/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+
+        // Act
+        // Assert
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(RelativePath.Root, Recursive: true, Accept: ""))).Throws<NotFoundException>();
+    }
+
+    [Test]
+    public async Task GetRandomImageFromRoots_NoImages_ReturnsNotFound()
+    {
+        // Arrange
+        fileProvider.AddFile("empty/readme.txt");
+        user.Allow("empty");
+
+        // Act
+        // Assert
+        await Assert.That(async () => await mediator.Send(new GetRandomImageQuery(RelativePath.Root, Recursive: true, Accept: ""))).Throws<NotFoundException>();
+    }
+
+    [Test]
+    public async Task GetRandomImageFromRoots_ReturnsImage()
+    {
+        // Arrange
+        fileProvider.AddFile("vacation/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        user.Allow("vacation");
+
+        // Act
+        var result = await mediator.Send(new GetRandomImageQuery(RelativePath.Root, Recursive: true, Accept: ""));
+
+        // Assert
+        await Assert.That(result.IsStatusCode(200)).IsTrue();
+        await Assert.That(result.GetFileResult().ContentType).IsEqualTo("image/avif");
+    }
+
+    [Test]
+    public async Task GetRandomImageFromRoots_NeverReturnsImagesFromBlockedFolders()
+    {
+        // Arrange
+        var allowedImage = imageFactory.CreateTestImage(MagickFormat.Avif);
+        var blockedImage = imageFactory.CreateTestImage(MagickFormat.Jpeg);
+        fileProvider.AddFile("vacation/allowed.avif", allowedImage);
+        fileProvider.AddFile("secret/blocked.jpg", blockedImage);
+        user.Allow("vacation");
+        var blockedBytes = fileProvider.GetFileInfo("secret/blocked.jpg").ReadAllBytes();
+
+        // Act
+        // Assert
+        for (var i = 0; i < 50; i++)
+        {
+            var result = await mediator.Send(new GetRandomImageQuery(RelativePath.Root, Recursive: true, Accept: "*/*"));
+            await Assert.That(result.IsStatusCode(200)).IsTrue();
+            var served = result.GetFileResult().FileStream.ReadAllBytes();
+            await Assert.That(served.SequenceEqual(blockedBytes)).IsFalse();
+        }
+    }
+
+    [Test]
+    public async Task GetRandomImageFromRoots_PicksAcrossMultipleAccessibleFolders()
+    {
+        // Arrange
+        fileProvider.AddFile("album-a/a.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.AddFile("album-b/sub/b.jpg", imageFactory.CreateTestImage(MagickFormat.Jpeg));
+        user.Allow("album-a").Allow("album-b");
+        var gotA = false;
+        var gotB = false;
+
+        // Act
+        for (var i = 0; i < 50; i++)
+        {
+            var result = await mediator.Send(new GetRandomImageQuery(RelativePath.Root, Recursive: true, Accept: "*/*"));
+            await Assert.That(result.IsStatusCode(200)).IsTrue();
+            var served = result.GetFileResult().FileStream.ReadAllBytes();
+            if (served.SequenceEqual(fileProvider.GetFileInfo("album-a/a.avif").ReadAllBytes()))
+            {
+                gotA = true;
+            }
+            else if (served.SequenceEqual(fileProvider.GetFileInfo("album-b/sub/b.jpg").ReadAllBytes()))
+            {
+                gotB = true;
+            }
+
+            if (gotA && gotB)
+            {
+                break;
+            }
+        }
+
+        // Assert
+        await Assert.That(gotA).IsTrue();
+        await Assert.That(gotB).IsTrue();
+    }
+
+    [Test]
+    public async Task GetRandomImageFromRoots_Thumbnail_ReturnsThumbnail()
+    {
+        // Arrange
+        fileProvider.AddFile("vacation/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.AddFile("vacation/photo.thumb.jpg", imageFactory.CreateThumbnail());
+        user.Allow("vacation");
+
+        // Act
+        var result = await mediator.Send(new GetRandomImageQuery(RelativePath.Root, Thumbnail: true, Recursive: true, Accept: "*/*"));
+
+        // Assert
+        await Assert.That(result.IsStatusCode(200)).IsTrue();
+        await Assert.That(result.GetFileResult().ContentType).IsEqualTo("image/jpeg");
+    }
+
+    [Test]
+    public async Task GetRandomImageFromRoots_Thumbnail_OnlyReturnsFromAccessibleFolders()
+    {
+        // Arrange
+        var allowedThumbnail = imageFactory.CreateThumbnail(MagickColors.DodgerBlue);
+        var blockedThumbnail = imageFactory.CreateThumbnail(MagickColors.Crimson);
+        fileProvider.AddFile("vacation/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.AddFile("vacation/photo.thumb.jpg", allowedThumbnail);
+        fileProvider.AddFile("secret/hidden.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.AddFile("secret/hidden.thumb.jpg", blockedThumbnail);
+        user.Allow("vacation");
+        var blockedBytes = fileProvider.GetFileInfo("secret/hidden.thumb.jpg").ReadAllBytes();
+
+        // Act
+        // Assert
+        for (var i = 0; i < 50; i++)
+        {
+            var result = await mediator.Send(new GetRandomImageQuery(RelativePath.Root, Thumbnail: true, Recursive: true, Accept: "*/*"));
+            await Assert.That(result.IsStatusCode(200)).IsTrue();
+            var served = result.GetFileResult().FileStream.ReadAllBytes();
+            await Assert.That(served.SequenceEqual(blockedBytes)).IsFalse();
+        }
+    }
+
+    [Test]
+    public async Task GetRandomImage_NeverLeaksImagesFromBlockedFolders()
+    {
+        // Arrange — several blocked root folders each holding multiple images, plus one
+        // allowed folder. Across many random draws over root-spanning and single-folder
+        // recursive requests, no served image may originate from a blocked folder.
+        var blockedRoots = new[] { "secret", "private", "hidden" };
+        var blockedBytes = new List<byte[]>();
+        foreach (var root in blockedRoots)
+        {
+            for (var i = 0; i < 3; i++)
+            {
+                var bytes = imageFactory.CreateTestImage(MagickFormat.Jpeg);
+                fileProvider.AddFile($"{root}/img-{i}.jpg", bytes);
+                blockedBytes.Add(bytes);
+            }
+        }
+
+        var allowedBytes = imageFactory.CreateTestImage(MagickFormat.Avif);
+        fileProvider.AddFile("vacation/allowed.avif", allowedBytes);
+        user.Allow("vacation");
+
+        // Act
+        // Assert — root-spanning recursive draws must only ever serve the allowed image.
+        for (var i = 0; i < 100; i++)
+        {
+            var result = await mediator.Send(new GetRandomImageQuery(RelativePath.Root, Recursive: true, Accept: "*/*"));
+            await Assert.That(result.IsStatusCode(200)).IsTrue();
+            var served = result.GetFileResult().FileStream.ReadAllBytes();
+            await Assert.That(served.SequenceEqual(allowedBytes)).IsTrue();
+            foreach (var blocked in blockedBytes)
+            {
+                await Assert.That(served.SequenceEqual(blocked)).IsFalse();
+            }
+        }
+    }
+
+    [Test]
     [Arguments("", "image/jpeg", true)]
     [Arguments("image/avif", "image/avif", true)]
     [Arguments("image/*", "image/avif", true)]
