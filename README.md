@@ -122,7 +122,7 @@
   [X] Add rate limit to unauthenticated endpoints
   [X] Break up the agent.md into skills to lower the token usage
   [ ] Add a usage agreement function
-  [ ] Add support for negative glob
+  [X] Add support for negative glob
   [X] Verify that the random function wont return images for folders where the user dosen't have access
   [ ] Microsoft.AspNetCore.Hosting.Diagnostics[11]
       Hosting startup assembly exception

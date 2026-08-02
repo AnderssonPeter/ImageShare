@@ -18,17 +18,36 @@ public class ImageShareFilterCompiler
             }
 
             var patterns = imageShareFilter.Split('|');
-            var regexParts = new List<string>();
+            var allowParts = new List<string>();
+            var denyParts = new List<string>();
 
             foreach (var pattern in patterns)
             {
-                var escaped = Regex.Escape(pattern);
+                var isDeny = pattern.StartsWith('!');
+                var body = isDeny ? pattern[1..] : pattern;
+                if (string.IsNullOrWhiteSpace(body))
+                {
+                    throw new ArgumentException($"Filter contains an empty pattern: '{imageShareFilter}'", nameof(imageShareFilter));
+                }
+
+                var escaped = Regex.Escape(body);
                 escaped = escaped.Replace("\\*", "[^/]*");
                 escaped = escaped.Replace("\\?", "[^/]");
-                regexParts.Add(escaped);
+
+                (isDeny ? denyParts : allowParts).Add(escaped);
             }
 
-            var regex = new Regex("^(" + string.Join('|', regexParts) + ")$", RegexOptions.Compiled | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(0.25));
+            if (allowParts.Count == 0)
+            {
+                throw new ArgumentException($"Filter must contain at least one allow pattern: '{imageShareFilter}'", nameof(imageShareFilter));
+            }
+
+            var allowPattern = string.Join('|', allowParts);
+            var patternText = denyParts.Count == 0
+                ? "^(" + allowPattern + ")$"
+                : "^(?!(" + string.Join('|', denyParts) + ")$)(" + allowPattern + ")$";
+
+            var regex = new Regex(patternText, RegexOptions.Compiled | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(0.25));
             cache[imageShareFilter] = regex;
             return regex;
         }
