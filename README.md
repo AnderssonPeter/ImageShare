@@ -113,7 +113,8 @@
   [ ] Fork WritableFileProvider and add cancellationToken to ReadAsBytesAsync
   [X] Write openapi spec to disk on build
   [X] Include full path in /content and /content/{path}
-  [ ] Add frontend proxy
+  [ ] Require the user to be logged in to get the frontend!
+  [X] Add frontend proxy
   [ ] Chrome MCP server? / Playwright MCP
   [ ] Download log
   [X] Create unit tests that tries to forge an jwt token

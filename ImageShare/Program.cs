@@ -58,12 +58,10 @@ if (!Directory.Exists(baseDirectory))
 }
 #pragma warning restore RS0030
 
-var api = app.MapGroup("/api");
-
 if (app.Environment.IsDevelopment())
 {
-    api.MapOpenApi();
-    api.MapScalarApiReference(options =>
+    app.MapOpenApi();
+    app.MapScalarApiReference(options =>
     {
         options.Title = "ImageShare";
         options.Telemetry = false;
@@ -73,7 +71,7 @@ if (app.Environment.IsDevelopment())
         {
             Disabled = true
         };
-        options.WithOpenApiRoutePattern("/api/openapi/{documentName}.json");
+        options.WithOpenApiRoutePattern("/openapi/{documentName}.json");
     });
 }
 
@@ -84,6 +82,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseSpaHosting(app.Environment);
 
+var api = app.MapGroup("/api");
 api.MapHealthEndpoints();
 api.MapAuthEndpoints();
 api.MapTokenEndpoints();
