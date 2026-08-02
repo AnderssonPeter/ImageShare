@@ -16,9 +16,11 @@ import { type ChangeEvent, type SyntheticEvent, useCallback, useState } from "re
 import { refine, string } from "zod/mini";
 import Button from "@components/ui/Button";
 import Dialog from "@components/ui/Dialog";
+import FilterBuilder from "@components/FilterBuilder";
 import Input from "@components/ui/Input";
 import Label from "@components/ui/Label";
 import { useForm } from "@tanstack/react-form";
+import { useRootFolders } from "@lib/api/contentQueries";
 
 interface ShareFormValues {
   name: string;
@@ -42,6 +44,8 @@ const endDateSchema = string().check(
 const nameValidators = { onChange: nameSchema, onSubmit: nameSchema };
 const filterValidators = { onChange: filterSchema, onSubmit: filterSchema };
 const endDateValidators = { onChange: endDateSchema, onSubmit: endDateSchema };
+
+const EMPTY_FOLDERS: string[] = [];
 
 interface ShareFieldProps {
   id: string;
@@ -119,6 +123,8 @@ interface ShareFormFieldsProps {
 }
 
 function ShareFormFields({ form, showErrors }: ShareFormFieldsProps): React.JSX.Element {
+  const { data: folders } = useRootFolders();
+  const folderNames = folders ?? EMPTY_FOLDERS;
   return (
     <div className="flex flex-col gap-3">
       <form.Field name="name" validators={nameValidators}>
@@ -135,13 +141,11 @@ function ShareFormFields({ form, showErrors }: ShareFormFieldsProps): React.JSX.
       </form.Field>
       <form.Field name="filter" validators={filterValidators}>
         {(field) => (
-          <ShareField
-            id={field.name}
-            label="Filter"
+          <FilterBuilder
+            folders={folderNames}
             value={field.state.value}
             error={showErrors ? fieldErrorMessage(field.state.meta.errors) : undefined}
             onChange={field.handleChange}
-            onBlur={field.handleBlur}
           />
         )}
       </form.Field>

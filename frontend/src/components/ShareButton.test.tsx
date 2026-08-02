@@ -17,6 +17,17 @@ vi.mock(import("@lib/api/customFetcher"), async (importOriginal) => {
 const TOKEN = "eyJhbGciOiJIUzI1NiJ9.payload.signature";
 const FUTURE_DATE = "2099-12-31T23:59";
 
+/** Route content-listing calls to an empty folder page, everything else to the token. */
+function stubFetcher(): void {
+  mockFetcher.mockImplementation((url: string) =>
+    Promise.resolve(
+      url.startsWith("/api/content")
+        ? ({ status: 200, data: { items: [], page: 1, pageSize: 500, totalCount: 0 }, headers: new Headers() } as never)
+        : ({ status: 200, data: TOKEN, headers: new Headers() } as never),
+    ),
+  );
+}
+
 function renderShareButton(onToken?: (token: string) => void): void {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   function Wrapper({ children }: { children: ReactNode }) {
@@ -27,15 +38,17 @@ function renderShareButton(onToken?: (token: string) => void): void {
 
 function fillAndSubmitForm(): void {
   fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Test User" } });
-  fireEvent.change(screen.getByLabelText("Filter"), { target: { value: "photos/2024" } });
+  fireEvent.click(screen.getByLabelText("All folders"));
   fireEvent.change(screen.getByLabelText("End date"), { target: { value: FUTURE_DATE } });
   fireEvent.click(screen.getByRole("button", { name: "Generate" }));
 }
 
 function assertTokenUrl(): void {
-  const [[url]] = mockFetcher.mock.calls;
+  const tokenCall = mockFetcher.mock.calls.find(([url]) => url.includes("/token/generate"));
+  expect(tokenCall).toBeDefined();
+  const url = tokenCall?.[0] ?? "";
   expect(url).toContain("name=Test+User");
-  expect(url).toContain("filter=photos%2F2024");
+  expect(url).toContain("filter=*&");
   expect(url).toContain(`endDate=${encodeURIComponent(FUTURE_DATE)}`);
 }
 
@@ -43,6 +56,7 @@ describe("shareButton trigger", () => {
   it("renders the Share trigger button", () => {
     expect.assertions(1);
     // Arrange + Act + Assert
+    stubFetcher();
     renderShareButton();
     expect(screen.getByRole("button", { name: "Share" })).toBeInTheDocument();
   }, 1000);
@@ -52,27 +66,22 @@ describe("shareButton token generation", () => {
   it("calls the token endpoint and shows the JWT in the result dialog", async () => {
     expect.hasAssertions();
     // Arrange
-    mockFetcher.mockReset();
-    mockFetcher.mockResolvedValue({ status: 200, data: TOKEN, headers: new Headers() });
+    stubFetcher();
     renderShareButton();
     // Act — open the form and submit a valid form
     fireEvent.click(screen.getByRole("button", { name: "Share" }));
     fillAndSubmitForm();
-    // Assert — the fetcher is hit with the encoded query params
-    await waitFor(() => {
-      expect(mockFetcher).toHaveBeenCalledTimes(1);
-    });
-    assertTokenUrl();
+    // Assert — the JWT appears and the fetcher was hit with the encoded query params
     await waitFor(() => {
       expect(screen.getByText(TOKEN)).toBeInTheDocument();
     });
+    assertTokenUrl();
   }, 2000);
 
   it("fires onToken with the JWT once generation succeeds", async () => {
     expect.hasAssertions();
     // Arrange
-    mockFetcher.mockReset();
-    mockFetcher.mockResolvedValue({ status: 200, data: TOKEN, headers: new Headers() });
+    stubFetcher();
     const onToken = vi.fn<(token: string) => void>();
     renderShareButton(onToken);
     // Act

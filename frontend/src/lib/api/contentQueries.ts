@@ -6,15 +6,15 @@
  * (root) and `getContentPath` (subfolder) functions instead.
  */
 
+import { EntryType, type PaginatedResultOfFolderEntry } from "@lib/api/generated/imageShare.schemas";
 import {
   getApiContent,
   getApiContentPath,
   type getApiContentPathResponse,
   type getApiContentResponse,
 } from "@lib/api/generated/content/content";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ApiError } from "@lib/api/customFetcher";
-import { type PaginatedResultOfFolderEntry } from "@lib/api/generated/imageShare.schemas";
-import { useInfiniteQuery } from "@tanstack/react-query";
 
 export type {
   FolderEntry,
@@ -96,4 +96,37 @@ export function folderContentQueryOptions(path: string | undefined) {
  */
 export function useFolderContent(path?: string) {
   return useInfiniteQuery(folderContentQueryOptions(path));
+}
+
+/**
+ * Root-folder listing for the share-link filter builder. Fetches a single
+ * large page (backend max is 500) of the root content and keeps only the
+ * folder entries, returning their names.
+ */
+const ROOT_PAGE_SIZE = 500;
+
+async function fetchRootFolderNames(signal: AbortSignal): Promise<string[]> {
+  const response = await getApiContent({ page: 1, pageSize: ROOT_PAGE_SIZE }, { signal });
+  const data = extractPageData(response);
+  return data.items.filter((entry) => entry.type === EntryType.Folder).map((entry) => entry.name);
+}
+
+/** Query key for the root-folder list consumed by the share-link builder. */
+export function rootFoldersQueryKey(): readonly [string] {
+  return ["root-folders"] as const;
+}
+
+export function rootFoldersQueryOptions() {
+  return {
+    queryKey: rootFoldersQueryKey(),
+    queryFn: ({ signal }: { signal: AbortSignal }) => fetchRootFolderNames(signal),
+  };
+}
+
+/** Hook returning the alphabetically sorted names of all root folders. */
+export function useRootFolders() {
+  return useQuery({
+    ...rootFoldersQueryOptions(),
+    select: (names: string[]) => [...names].toSorted((left, right) => left.localeCompare(right)),
+  });
 }

@@ -93,7 +93,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
 
 - [X] Implement `ShareLinkDialog.tsx` — Name, Filter, EndDate form with validation
 - [X] Wire `useGenerateToken` mutation (orval) → JWT string
-- [ ] Instead of having a input to define the filter, there should be a builder, it should list an "all folders" option and then each folder
+- [X] Instead of having a input to define the filter, there should be a builder, it should list an "all folders" option and then each folder
     * If all folders is selected, then any root folder selected is a deny and should have a deny icon (prefix the folder name with an !)
     * If the all folders is not selected then selecting a root folder is an allow
     * Separator between folders are |
