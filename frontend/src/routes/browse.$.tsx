@@ -7,10 +7,11 @@
  * URL-decoded by the router, so they are joined with `/` to reconstruct the
  * `RelativePath` for the content-listing query.
  *
- * The `loader` prefetches the first page of folder content via
- * `ensureInfiniteQueryData` so the grid has data on first paint (critical
- * data that must block navigation). The `useFolderContent` hook in the
- * component reads the same cache.
+ * The `loader` kicks off the first-page fetch via `ensureInfiniteQueryData`
+ * without awaiting it, so navigation commits immediately and the grid shows
+ * its skeleton while the request is in flight (the `useFolderContent` hook
+ * subscribes to the same in-flight query — TanStack Query dedupes). Cached
+ * revisits resolve instantly and skip the skeleton.
  *
  * Folder navigation is wired to the router; opening an image shows the
  * fullscreen carousel (`ImageViewer`), controlled by `imagePath` state
@@ -23,11 +24,11 @@ import ImageViewer from "@components/ImageViewer";
 import { folderContentQueryOptions } from "@lib/api/contentQueries";
 
 export const Route = createFileRoute("/browse/$")({
-  loader: async ({ context, params }) => {
+  loader: ({ context, params }) => {
     const segments = params._splat === undefined ? [] : params._splat.split("/");
     const relativePath = segments.join("/");
     const path = relativePath === "" ? undefined : relativePath;
-    await context.queryClient.ensureInfiniteQueryData(folderContentQueryOptions(path));
+    void context.queryClient.ensureInfiniteQueryData(folderContentQueryOptions(path));
   },
   component: BrowseComponent,
 });

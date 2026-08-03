@@ -113,7 +113,9 @@ Generated from `PLAN.md`. Check off items as you complete them.
 ## Phase 8 — Error handling, loading, polish
 
 - [x] Global QueryClient `onError`: 401 → `/login`, 404 → empty state, 403/406 → toast
-- [/] Skeletons for initial grid load
+- [x] Skeletons for initial grid load
+  - Use shadcn skeleton component, the normal component and the skeleton should share as much variables and css as possible
+  - Hide the scrollbar while rendering the skeleton
 - [ ] There are raw http calls in contentQueries.ts, if possible move them to use tanstack query, there should be generated code for it in the output of hey-api opents, the current solution is a ugly hack
 - [ ] Empty-state tiles for folders with no images
 - [ ] Per-route error boundaries
@@ -121,6 +123,9 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [ ] Review code for React-Compiler friendliness (stable refs, no unnecessary `useMemo`)
 - [ ] Run `pnpm lint` (oxlint) and `tsc -b`; fix any issues
 - [ ] Create a better icon
+- [ ] Preload the random image when changing folder, before changing it
+- [ ] The arrow keys move more than one image when a hot reload happens
+- [ ] The share dialog should show a loading animation using suspense when fetching the root folders
 
 ## Phase 9 - Extra features
 

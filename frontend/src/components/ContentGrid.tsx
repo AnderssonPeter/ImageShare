@@ -16,40 +16,33 @@ import { type FolderEntry } from "@lib/api/generated";
 import FolderTile from "@components/FolderTile";
 import GridBackground from "@components/GridBackground";
 import ImageTile from "@components/ImageTile";
+import Skeleton from "@components/ui/Skeleton";
 import { tw } from "@lib/utils";
 import { useFolderContent } from "@lib/api/contentQueries";
 
 /** Tile width in pixels (Metro wide tile, 3:2 aspect ratio). */
 const TILE_WIDTH = 180;
-
 /** Tile height in pixels (TILE_WIDTH * 2/3 = 120, 3:2 aspect ratio). */
 const TILE_HEIGHT = 120;
-
 /** Gap between tiles in pixels (matches --spacing-gutter). */
 const GUTTER = 4;
-
 /** Rows from the end before auto-loading the next page. */
 const AUTOLOAD_THRESHOLD = 3;
-
 /** Rows rendered beyond the viewport for smooth scrolling. */
 const OVERSCAN = 4;
-
 /** Total row height including the gutter below each row. */
 const ROW_HEIGHT = TILE_HEIGHT + GUTTER;
 
-/** Skeleton placeholder rows while the first page loads. */
-const SKELETON_ROWS = 4;
-
 /** Static styles — module-level so react-perf/jsx-no-new-object-as-prop is satisfied. */
 const TILE_SIZE_CLASS = tw`w-[180px] h-[120px]`;
-const SKELETON_TILE_CLASS = tw`animate-pulse bg-muted rounded-sm w-[180px] h-[120px]`;
 const ROW_POSITION_BASE_STYLE: CSSProperties = {
   position: "absolute",
   top: 0,
   left: 0,
   width: "100%",
 };
-const SCROLL_CONTAINER_CLASS = tw`relative overflow-auto h-[calc(100dvh-3rem)] p-gutter`;
+const SCROLL_ACTIVE_CLASS = tw`relative h-[calc(100dvh-3rem)] p-gutter overflow-auto`;
+const SCROLL_LOCKED_CLASS = tw`relative h-[calc(100dvh-3rem)] p-gutter overflow-hidden`;
 const CONTENT_WRAPPER_CLASS = tw`relative z-10`;
 
 type GridVirtualizer = ReactVirtualizer<HTMLDivElement, Element>;
@@ -62,8 +55,18 @@ interface GridActions {
 
 const GridActionsContext = createContext<GridActions | undefined>(undefined);
 
-function useColumnCount(containerRef: RefObject<HTMLDivElement | null>): number {
-  const [columns, setColumns] = useState(1);
+interface GridShape {
+  columns: number;
+  skeletonRows: number;
+}
+
+/**
+ * Measure the scroll container to derive grid columns and the skeleton row
+ * count that covers the full viewport (ceil, min 1; `overflow-hidden` during
+ * load clips any overshoot). Recomputed on resize via a single observer.
+ */
+function useGridShape(containerRef: RefObject<HTMLDivElement | null>): GridShape {
+  const [shape, setShape] = useState<GridShape>({ columns: 1, skeletonRows: 1 });
 
   useLayoutEffect(() => {
     const element = containerRef.current;
@@ -75,8 +78,11 @@ function useColumnCount(containerRef: RefObject<HTMLDivElement | null>): number 
       if (current === null) {
         return;
       }
-      const width = current.clientWidth;
-      setColumns(Math.max(1, Math.floor((width + GUTTER) / (TILE_WIDTH + GUTTER))));
+      const innerHeight = current.clientHeight - 2 * GUTTER;
+      setShape({
+        columns: Math.max(1, Math.floor((current.clientWidth + GUTTER) / (TILE_WIDTH + GUTTER))),
+        skeletonRows: Math.max(1, Math.ceil(innerHeight / ROW_HEIGHT)),
+      });
     }
     update();
     const observer = new ResizeObserver(update);
@@ -84,7 +90,7 @@ function useColumnCount(containerRef: RefObject<HTMLDivElement | null>): number 
     return () => observer.disconnect();
   }, [containerRef]);
 
-  return columns;
+  return shape;
 }
 
 interface AutoloadOptions {
@@ -206,35 +212,37 @@ function VirtualGridBody({
   );
 }
 
-function SkeletonGrid({ columns }: { columns: number }): ReactNode[] {
-  const rows: ReactNode[] = [];
-  for (let row = 0; row < SKELETON_ROWS; row++) {
+function SkeletonGrid({ columns, rows }: { columns: number; rows: number }): ReactNode[] {
+  const renderedRows: ReactNode[] = [];
+  for (let row = 0; row < rows; row++) {
     const tiles: ReactNode[] = [];
     for (let column = 0; column < columns; column++) {
-      tiles.push(<div key={column} className={SKELETON_TILE_CLASS} />);
+      tiles.push(<Skeleton key={column} className={TILE_SIZE_CLASS} />);
     }
-    rows.push(
+    renderedRows.push(
       <div key={row} className="mb-gutter">
         <div className="flex gap-gutter">{tiles}</div>
       </div>,
     );
   }
-  return rows;
+  return renderedRows;
 }
 
 function renderContent({
   isPending,
   items,
   columns,
+  skeletonRows,
   rowVirtualizer,
 }: {
   isPending: boolean;
   items: FolderEntry[];
   columns: number;
+  skeletonRows: number;
   rowVirtualizer: GridVirtualizer;
 }): ReactNode {
   if (isPending) {
-    return <SkeletonGrid columns={columns} />;
+    return <SkeletonGrid columns={columns} rows={skeletonRows} />;
   }
   if (items.length === 0) {
     return (
@@ -258,7 +266,7 @@ export default function ContentGrid({
   onImageOpen,
 }: ContentGridProps): React.JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const columns = useColumnCount(scrollRef);
+  const { columns, skeletonRows } = useGridShape(scrollRef);
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isPending } =
     useFolderContent(path);
   const items = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data]);
@@ -280,10 +288,10 @@ export default function ContentGrid({
     () => ({ onNavigateFolder, onImageOpen }),
     [onNavigateFolder, onImageOpen],
   );
-  const content = renderContent({ isPending, items, columns, rowVirtualizer });
+  const content = renderContent({ isPending, items, columns, skeletonRows, rowVirtualizer });
   return (
     <GridActionsContext.Provider value={actions}>
-      <div ref={scrollRef} className={SCROLL_CONTAINER_CLASS}>
+      <div ref={scrollRef} className={isPending ? SCROLL_LOCKED_CLASS : SCROLL_ACTIVE_CLASS}>
         <GridBackground path={path} />
         <div className={CONTENT_WRAPPER_CLASS}>{content}</div>
       </div>
