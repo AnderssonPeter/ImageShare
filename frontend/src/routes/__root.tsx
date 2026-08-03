@@ -12,7 +12,7 @@
  * client-side auth redirect is needed. Session-expiry mid-session is handled
  * by the global `QueryClient` `onError` handler (Phase 8).
  */
-import { type Iuser as IUser, getCurrentUser } from "@lib/api/generated";
+import { type User, getCurrentUser } from "@lib/api/generated";
 import { Outlet, createRootRouteWithContext, useMatches } from "@tanstack/react-router";
 import { type QueryClient, queryOptions } from "@tanstack/react-query";
 import Breadcrumb from "@components/Breadcrumb";
@@ -71,9 +71,9 @@ function RootComponent(): React.JSX.Element {
 function currentUserQueryOptions() {
   return queryOptions({
     queryKey: ["current-user"] as const,
-    queryFn: async ({ signal }): Promise<IUser> => {
+    queryFn: async ({ signal }): Promise<User> => {
       const { data } = await getCurrentUser({ signal });
-      return data as unknown as IUser;
+      return data as unknown as User;
     },
   });
 }
@@ -81,7 +81,7 @@ function currentUserQueryOptions() {
 export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: async ({ context }) => {
     const user = await context.queryClient.ensureQueryData(currentUserQueryOptions());
-    return { user: user satisfies IUser };
+    return { user: user satisfies User };
   },
   component: RootComponent,
 });

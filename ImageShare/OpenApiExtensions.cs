@@ -1,6 +1,8 @@
 ﻿using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using ImageShare.Browsing;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 
 namespace ImageShare;
@@ -10,6 +12,7 @@ public static class OpenApiExtensions
     public static IServiceCollection AddImageShareOpenApi(this IServiceCollection services) =>
         services.AddOpenApi(options =>
         {
+            options.CreateSchemaReferenceId = CreateSchemaReferenceId;
             options.AddSchemaTransformer(async (schema, context, cancellationToken) =>
             {
                 if (context.JsonTypeInfo.Type == typeof(RelativePath))
@@ -60,4 +63,21 @@ public static class OpenApiExtensions
                 return Task.CompletedTask;
             });
         });
+
+    private static string? CreateSchemaReferenceId(JsonTypeInfo typeInfo)
+    {
+        var referenceId = OpenApiOptions.CreateDefaultSchemaReferenceId(typeInfo);
+        if (referenceId is null || referenceId.Length < 2)
+        {
+            return referenceId;
+        }
+
+        var type = typeInfo.Type;
+        if (type.IsInterface && referenceId[0] == 'I' && char.IsUpper(referenceId[1]))
+        {
+            return referenceId[1..];
+        }
+
+        return referenceId;
+    }
 }
