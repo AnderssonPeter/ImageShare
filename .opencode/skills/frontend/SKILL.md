@@ -56,7 +56,7 @@ Import alias: **`@`** → `src/` (configured in `vite.config.ts` and `tsconfig`)
 - Keep JSDoc on exported modules/functions that document non-obvious contracts (the codebase uses block-comment headers per module).
 - Don't use `any` or `unknown`.
 - Don't use abbreviations in variable names, parameter names, or field names (e.g. `directory` not `dir`, `extension` not `ext`).
-- Don't `as unknown as` instead create a guard and a ensure method that throws if the type is not correct.
+- Don't `as unknown as` instead create a guard and a ensure method that throws if the type is not correct, the exception is mocks in unit tests.
 
 ## Verification
 

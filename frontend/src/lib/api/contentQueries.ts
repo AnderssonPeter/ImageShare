@@ -5,10 +5,11 @@
  * `*Responses` interfaces don't extend `Record<string, unknown>`, so the SDK
  * `data` is typed as the whole `{ 200: ... }` object instead of the narrowed
  * response) leaks when the generated options are spread. To keep things robust
- * we build the query options manually with plain serializable query keys and a
- * single cast from the SDK `data` to `PaginatedResultOfFolderEntry` (at
- * runtime the body is the page object directly). Errors throw `ApiError`
- * (mapped by the hey-api client error interceptor in `httpClient.ts`).
+ * we build the query options manually with plain serializable query keys and
+ * narrow the SDK `data` back to `PaginatedResultOfFolderEntry` with a runtime
+ * guard (`ensurePage` in `guards.ts`) rather than an unchecked cast. Errors
+ * throw `ApiError` (mapped by the hey-api client error interceptor in
+ * `httpClient.ts`).
  */
 import {
   type PaginatedResultOfFolderEntry,
@@ -16,22 +17,13 @@ import {
   getContentByPath,
 } from "@lib/api/generated";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-
-export type { FolderEntry, PaginatedResultOfFolderEntry } from "@lib/api/generated";
+import { ensurePage } from "@lib/api/guards";
 
 /** Page size used for all content listing requests (backend max is 500). */
 const PAGE_SIZE = 50;
 
 /** Single large page for the root-folder list consumed by the share builder. */
 const ROOT_PAGE_SIZE = 500;
-
-/**
- * The SDK types `data` as the whole `*Responses` object (see module note); at
- * runtime it is the page object directly, so this cast narrows it back.
- */
-function asPage(data: unknown): PaginatedResultOfFolderEntry {
-  return data as unknown as PaginatedResultOfFolderEntry;
-}
 
 /** Coerce a `number | string` field from the API into a finite number. */
 function toNumber(value: number | string): number {
@@ -52,7 +44,7 @@ async function fetchContentPage(
     path === undefined
       ? await getContent({ query: { page, pageSize: PAGE_SIZE }, signal })
       : await getContentByPath({ path: { path }, query: { page, pageSize: PAGE_SIZE }, signal });
-  return asPage(result.data);
+  return ensurePage(result.data);
 }
 
 /**
@@ -91,7 +83,7 @@ export function useFolderContent(path?: string) {
 
 async function fetchRootFolderNames(signal: AbortSignal): Promise<string[]> {
   const result = await getContent({ query: { page: 1, pageSize: ROOT_PAGE_SIZE }, signal });
-  const data = asPage(result.data);
+  const data = ensurePage(result.data);
   return data.items
     .filter((entry) => entry.type === "Folder")
     .map((entry) => entry.name)

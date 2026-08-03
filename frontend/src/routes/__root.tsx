@@ -20,6 +20,7 @@ import DownloadButton from "@components/DownloadButton";
 import MetroAppBar from "@components/MetroAppBar";
 import Sonner from "@components/ui/Sonner";
 import { ThemeProvider } from "@lib/themeContext";
+import { ensureUser } from "@lib/api/guards";
 import { useMemo } from "react";
 
 /**
@@ -75,7 +76,7 @@ function currentUserQueryOptions() {
     queryKey: ["current-user"] as const,
     queryFn: async ({ signal }): Promise<User> => {
       const { data } = await getCurrentUser({ signal });
-      return data as unknown as User;
+      return ensureUser(data);
     },
   });
 }
