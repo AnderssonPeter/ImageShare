@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Reflection;
+using System.Text.Json;
 using ImageShare.Browsing;
 using Microsoft.OpenApi;
 
@@ -22,6 +23,19 @@ public static class OpenApiExtensions
             });
             options.AddOperationTransformer((operation, context, cancellationToken) =>
             {
+                if (string.IsNullOrEmpty(operation.OperationId))
+                {
+                    var methodInfo = context.Description.ActionDescriptor.EndpointMetadata.OfType<MethodInfo>().FirstOrDefault();
+                    if (methodInfo is not null)
+                    {
+                        operation.OperationId = methodInfo.Name;
+                        if (operation.OperationId.EndsWith("Async", StringComparison.Ordinal))
+                        {
+                            operation.OperationId = operation.OperationId[..^5];
+                        }
+                    }
+                }
+
                 if (operation.Parameters is null)
                 {
                     return Task.CompletedTask;

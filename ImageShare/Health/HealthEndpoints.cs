@@ -1,10 +1,14 @@
-﻿namespace ImageShare.Health;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+
+namespace ImageShare.Health;
 
 public static class HealthEndpoints
 {
     public static IEndpointRouteBuilder MapHealthEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/health", () => TypedResults.Ok("pong"));
+        endpoints.MapGet("/health", GetHealth);
         return endpoints;
     }
+
+    private static Ok<string> GetHealth() => TypedResults.Ok("pong");
 }
