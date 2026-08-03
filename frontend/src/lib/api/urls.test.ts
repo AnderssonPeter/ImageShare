@@ -1,4 +1,10 @@
-import { buildShareUrl, downloadUrl, imageUrl, randomFolderUrl, randomRootUrl } from "@lib/api/urls";
+import {
+  buildShareUrl,
+  downloadUrl,
+  imageUrl,
+  randomFolderUrl,
+  randomRootUrl,
+} from "@lib/api/urls";
 import { describe, expect, it } from "vitest";
 
 describe("imageUrl builder", () => {

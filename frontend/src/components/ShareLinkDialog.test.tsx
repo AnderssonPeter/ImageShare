@@ -1,11 +1,10 @@
+import { type FolderEntry, type getContent } from "@lib/api/generated";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import Dialog from "@components/ui/Dialog";
-import { type FolderEntry } from "@lib/api/generated/imageShare.schemas";
 import { type ReactNode } from "react";
 import ShareLinkDialog from "@components/ShareLinkDialog";
-import { type getApiContent } from "@lib/api/generated/content/content";
 
 type GenerateHandler = (params: { name: string; filter: string; endDate: string }) => void;
 
@@ -14,12 +13,12 @@ const FUTURE_DATE = "2099-12-31T23:59";
 const ROOT_FOLDER_NAMES = ["documents", "photos", "videos"];
 
 const { mockGetContent } = vi.hoisted(() => ({
-  mockGetContent: vi.fn<typeof getApiContent>(),
+  mockGetContent: vi.fn<typeof getContent>(),
 }));
 
-vi.mock(import("@lib/api/generated/content/content"), async (importOriginal) => {
+vi.mock(import("@lib/api/generated"), async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
-  return { ...actual, getApiContent: mockGetContent };
+  return { ...actual, getContent: mockGetContent as never };
 });
 
 function folderEntries(): FolderEntry[] {
@@ -28,10 +27,10 @@ function folderEntries(): FolderEntry[] {
 
 function contentResponse() {
   return {
-    status: 200 as const,
     data: { items: folderEntries(), page: 1, pageSize: 500, totalCount: ROOT_FOLDER_NAMES.length },
-    headers: new Headers(),
-  };
+    request: new Request("http://localhost/api/content"),
+    response: new Response(),
+  } as never;
 }
 
 function renderOpenDialog(onGenerate: GenerateHandler): void {
@@ -50,7 +49,11 @@ function renderOpenDialogWithOptions(
   }
   render(
     <Dialog.Dialog open>
-      <ShareLinkDialog onGenerate={onGenerate} submitError={options.submitError} isSubmitting={options.isSubmitting} />
+      <ShareLinkDialog
+        onGenerate={onGenerate}
+        submitError={options.submitError}
+        isSubmitting={options.isSubmitting}
+      />
     </Dialog.Dialog>,
     { wrapper: Wrapper },
   );
@@ -112,7 +115,9 @@ describe("shareLinkDialog validation", () => {
     fireEvent.change(screen.getByLabelText("End date"), { target: { value: "2020-01-01T00:00" } });
     fireEvent.click(screen.getByRole("button", { name: "Generate" }));
     // Assert
-    await expect(screen.findByText("The end date must be in the future.")).resolves.toBeInTheDocument();
+    await expect(
+      screen.findByText("The end date must be in the future."),
+    ).resolves.toBeInTheDocument();
   }, 2000);
 });
 
@@ -136,7 +141,9 @@ describe("shareLinkDialog submit error", () => {
   it("displays the submit error message when provided", () => {
     expect.assertions(1);
     // Arrange + Act
-    renderOpenDialogWithOptions(vi.fn<GenerateHandler>(), { submitError: "A filter must be specified." });
+    renderOpenDialogWithOptions(vi.fn<GenerateHandler>(), {
+      submitError: "A filter must be specified.",
+    });
     // Assert
     expect(screen.getByText("A filter must be specified.")).toBeInTheDocument();
   }, 1000);
@@ -192,7 +199,11 @@ describe("shareLinkDialog submission", () => {
     fireEvent.click(screen.getByRole("button", { name: "Generate" }));
     // Assert
     await waitFor(() => {
-      expect(onGenerate).toHaveBeenCalledWith({ name: "Test", filter: "*|!photos", endDate: FUTURE_DATE });
+      expect(onGenerate).toHaveBeenCalledWith({
+        name: "Test",
+        filter: "*|!photos",
+        endDate: FUTURE_DATE,
+      });
     });
   }, 2000);
 });

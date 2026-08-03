@@ -12,14 +12,13 @@
  * client-side auth redirect is needed. Session-expiry mid-session is handled
  * by the global `QueryClient` `onError` handler (Phase 8).
  */
+import { type Iuser as IUser, getCurrentUser } from "@lib/api/generated";
 import { Outlet, createRootRouteWithContext, useMatches } from "@tanstack/react-router";
+import { type QueryClient, queryOptions } from "@tanstack/react-query";
 import Breadcrumb from "@components/Breadcrumb";
 import DownloadButton from "@components/DownloadButton";
-import { type IUser } from "@lib/api/generated/imageShare.schemas";
 import MetroAppBar from "@components/MetroAppBar";
-import { type QueryClient } from "@tanstack/react-query";
 import { ThemeProvider } from "@lib/themeContext";
-import { getApiAuthenticationUser } from "@lib/api/generated/authentication/authentication";
 import { useMemo } from "react";
 
 /**
@@ -68,13 +67,21 @@ function RootComponent(): React.JSX.Element {
   );
 }
 
+/** Query options for the current user (prefetched in the root route loader). */
+function currentUserQueryOptions() {
+  return queryOptions({
+    queryKey: ["current-user"] as const,
+    queryFn: async ({ signal }): Promise<IUser> => {
+      const { data } = await getCurrentUser({ signal });
+      return data as unknown as IUser;
+    },
+  });
+}
+
 export const Route = createRootRouteWithContext<RouterContext>()({
-  beforeLoad: async () => {
-    const response = await getApiAuthenticationUser();
-    if (response.status !== 200) {
-      throw new Error(`Unexpected response status: ${response.status}`);
-    }
-    return { user: response.data satisfies IUser };
+  beforeLoad: async ({ context }) => {
+    const user = await context.queryClient.ensureQueryData(currentUserQueryOptions());
+    return { user: user satisfies IUser };
   },
   component: RootComponent,
 });

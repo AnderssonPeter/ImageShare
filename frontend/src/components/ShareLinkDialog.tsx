@@ -37,12 +37,18 @@ interface ShareLinkDialogProps {
   isSubmitting?: boolean;
 }
 
-const nameSchema = string().check(refine((value) => value.trim() !== "", { error: "A name must be specified." }));
-const filterSchema = string().check(refine((value) => value.trim() !== "", { error: "A filter must be specified." }));
+const nameSchema = string().check(
+  refine((value) => value.trim() !== "", { error: "A name must be specified." }),
+);
+const filterSchema = string().check(
+  refine((value) => value.trim() !== "", { error: "A filter must be specified." }),
+);
 const endDateSchema = string().check(
   refine((value) => value !== "", { error: "An end date must be specified." }),
   refine((value) => !Number.isNaN(new Date(value).getTime()), { error: "Invalid date." }),
-  refine((value) => new Date(value).getTime() > Date.now(), { error: "The end date must be in the future." }),
+  refine((value) => new Date(value).getTime() > Date.now(), {
+    error: "The end date must be in the future.",
+  }),
 );
 
 const nameValidators = { onChange: nameSchema, onSubmit: nameSchema };
@@ -61,7 +67,15 @@ interface ShareFieldProps {
   onBlur: () => void;
 }
 
-function ShareField({ id, label, type = "text", value, error, onChange, onBlur }: ShareFieldProps): React.JSX.Element {
+function ShareField({
+  id,
+  label,
+  type = "text",
+  value,
+  error,
+  onChange,
+  onBlur,
+}: ShareFieldProps): React.JSX.Element {
   const handleInputChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value),
     [onChange],
@@ -69,7 +83,14 @@ function ShareField({ id, label, type = "text", value, error, onChange, onBlur }
   return (
     <div className="flex flex-col gap-1">
       <Label htmlFor={id}>{label}</Label>
-      <Input id={id} type={type} value={value} onChange={handleInputChange} onBlur={onBlur} aria-invalid={error !== undefined} />
+      <Input
+        id={id}
+        type={type}
+        value={value}
+        onChange={handleInputChange}
+        onBlur={onBlur}
+        aria-invalid={error !== undefined}
+      />
       {error !== undefined && <span className="text-xs text-destructive">{error}</span>}
     </div>
   );
@@ -192,7 +213,11 @@ function ShareDialogFooter({ isSubmitting }: ShareDialogFooterProps): React.JSX.
   );
 }
 
-export default function ShareLinkDialog({ onGenerate, submitError, isSubmitting }: ShareLinkDialogProps): React.JSX.Element {
+export default function ShareLinkDialog({
+  onGenerate,
+  submitError,
+  isSubmitting,
+}: ShareLinkDialogProps): React.JSX.Element {
   const { form, showErrors, handleSubmit } = useShareForm(onGenerate);
   return (
     <Dialog.DialogContent>

@@ -9,7 +9,13 @@ interface CheckboxProps {
   children?: ReactNode;
 }
 
-function Checkbox({ checked, onChange, label, className, children }: CheckboxProps): React.JSX.Element {
+function Checkbox({
+  checked,
+  onChange,
+  label,
+  className,
+  children,
+}: CheckboxProps): React.JSX.Element {
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => onChange(event.target.checked),
     [onChange],

@@ -74,11 +74,13 @@ interface FilterFolderRowProps {
   onToggle: (name: string, checked: boolean) => void;
 }
 
-function FilterFolderRow({ name, checked, deny, onToggle }: FilterFolderRowProps): React.JSX.Element {
-  const handleChange = useCallback(
-    (next: boolean) => onToggle(name, next),
-    [onToggle, name],
-  );
+function FilterFolderRow({
+  name,
+  checked,
+  deny,
+  onToggle,
+}: FilterFolderRowProps): React.JSX.Element {
+  const handleChange = useCallback((next: boolean) => onToggle(name, next), [onToggle, name]);
   const className = deny ? "text-muted-foreground" : "";
   return (
     <Checkbox checked={checked} onChange={handleChange} label={name} className={className}>
@@ -94,7 +96,12 @@ interface FilterFolderListProps {
   onToggle: (name: string, checked: boolean) => void;
 }
 
-function FilterFolderList({ folders, selected, deny, onToggle }: FilterFolderListProps): React.JSX.Element {
+function FilterFolderList({
+  folders,
+  selected,
+  deny,
+  onToggle,
+}: FilterFolderListProps): React.JSX.Element {
   return (
     <div className="flex flex-col gap-1">
       {folders.map((name) => (
@@ -110,7 +117,12 @@ function FilterFolderList({ folders, selected, deny, onToggle }: FilterFolderLis
   );
 }
 
-export default function FilterBuilder({ folders, value, error, onChange }: FilterBuilderProps): React.JSX.Element {
+export default function FilterBuilder({
+  folders,
+  value,
+  error,
+  onChange,
+}: FilterBuilderProps): React.JSX.Element {
   const parsed = parseFilter(value);
   const handleAllFolders = useCallback(
     (checked: boolean) => onChange(buildFilter(checked, parsed.folders)),

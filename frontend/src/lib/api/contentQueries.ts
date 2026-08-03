@@ -1,38 +1,36 @@
 /**
  * Manual TanStack Query wrappers for the content-listing endpoints.
  *
- * Orval's `useInfinite` is disabled in `orval.config.ts`; this module
- * provides the infinite-query wrapper around the generated `getContent`
- * (root) and `getContentPath` (subfolder) functions instead.
+ * hey-api generates infinite-query options, but a typing quirk (the response
+ * `*Responses` interfaces don't extend `Record<string, unknown>`, so the SDK
+ * `data` is typed as the whole `{ 200: ... }` object instead of the narrowed
+ * response) leaks when the generated options are spread. To keep things robust
+ * we build the query options manually with plain serializable query keys and a
+ * single cast from the SDK `data` to `PaginatedResultOfFolderEntry` (at
+ * runtime the body is the page object directly). Errors throw `ApiError`
+ * (mapped by the hey-api client error interceptor in `httpClient.ts`).
  */
-
-import { EntryType, type PaginatedResultOfFolderEntry } from "@lib/api/generated/imageShare.schemas";
 import {
-  getApiContent,
-  getApiContentPath,
-  type getApiContentPathResponse,
-  type getApiContentResponse,
-} from "@lib/api/generated/content/content";
+  type PaginatedResultOfFolderEntry,
+  getContent,
+  getContentByPath,
+} from "@lib/api/generated";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { ApiError } from "@lib/api/customFetcher";
 
-export type {
-  FolderEntry,
-  PaginatedResultOfFolderEntry,
-} from "@lib/api/generated/imageShare.schemas";
+export type { FolderEntry, PaginatedResultOfFolderEntry } from "@lib/api/generated";
 
 /** Page size used for all content listing requests (backend max is 500). */
 const PAGE_SIZE = 50;
 
-/** Union of both listing response types (each is a success/error union). */
-type ContentResponse = getApiContentResponse | getApiContentPathResponse;
+/** Single large page for the root-folder list consumed by the share builder. */
+const ROOT_PAGE_SIZE = 500;
 
-/** Narrow a response union to its success branch and return the page data. */
-function extractPageData(response: ContentResponse): PaginatedResultOfFolderEntry {
-  if (response.status !== 200) {
-    throw new ApiError(response.status, response.data as never);
-  }
-  return response.data;
+/**
+ * The SDK types `data` as the whole `*Responses` object (see module note); at
+ * runtime it is the page object directly, so this cast narrows it back.
+ */
+function asPage(data: unknown): PaginatedResultOfFolderEntry {
+  return data as unknown as PaginatedResultOfFolderEntry;
 }
 
 /** Coerce a `number | string` field from the API into a finite number. */
@@ -50,18 +48,11 @@ async function fetchContentPage(
   page: number,
   signal: AbortSignal,
 ): Promise<PaginatedResultOfFolderEntry> {
-  const params = { page, pageSize: PAGE_SIZE };
-  const response: ContentResponse =
-    path === undefined || path === ""
-      ? await getApiContent(params, { signal })
-      : await getApiContentPath(path, params, { signal });
-
-  return extractPageData(response);
-}
-
-/** Query key factory: stable, serializable key per folder path. */
-export function contentQueryKey(path: string | undefined): readonly [string, string] {
-  return ["content", path ?? ""] as const;
+  const result =
+    path === undefined
+      ? await getContent({ query: { page, pageSize: PAGE_SIZE }, signal })
+      : await getContentByPath({ path: { path }, query: { page, pageSize: PAGE_SIZE }, signal });
+  return asPage(result.data);
 }
 
 /**
@@ -73,16 +64,16 @@ export function contentQueryKey(path: string | undefined): readonly [string, str
  * - With `path`          -> `GET /content/{path}?page=N&pageSize=50` (subfolder).
  */
 export function folderContentQueryOptions(path: string | undefined) {
+  const folderPath = path === undefined || path === "" ? undefined : path;
   return {
-    queryKey: contentQueryKey(path),
-    queryFn: ({ pageParam, signal }: { pageParam: unknown; signal: AbortSignal }) =>
-      fetchContentPage(path, pageParam as number, signal),
+    queryKey: ["content", folderPath ?? ""] as const,
+    queryFn: ({ pageParam, signal }: { pageParam: number; signal: AbortSignal }) =>
+      fetchContentPage(folderPath, pageParam, signal),
     initialPageParam: 1,
-    getNextPageParam: (lastPage: PaginatedResultOfFolderEntry) => {
+    getNextPageParam: (lastPage: PaginatedResultOfFolderEntry): number | undefined => {
       const currentPage = toNumber(lastPage.page);
       const totalCount = toNumber(lastPage.totalCount);
       const loadedCount = toNumber(lastPage.pageSize) * currentPage;
-
       return loadedCount < totalCount ? currentPage + 1 : undefined;
     },
   };
@@ -98,35 +89,24 @@ export function useFolderContent(path?: string) {
   return useInfiniteQuery(folderContentQueryOptions(path));
 }
 
-/**
- * Root-folder listing for the share-link filter builder. Fetches a single
- * large page (backend max is 500) of the root content and keeps only the
- * folder entries, returning their names.
- */
-const ROOT_PAGE_SIZE = 500;
-
 async function fetchRootFolderNames(signal: AbortSignal): Promise<string[]> {
-  const response = await getApiContent({ page: 1, pageSize: ROOT_PAGE_SIZE }, { signal });
-  const data = extractPageData(response);
-  return data.items.filter((entry) => entry.type === EntryType.Folder).map((entry) => entry.name);
+  const result = await getContent({ query: { page: 1, pageSize: ROOT_PAGE_SIZE }, signal });
+  const data = asPage(result.data);
+  return data.items
+    .filter((entry) => entry.type === "Folder")
+    .map((entry) => entry.name)
+    .toSorted((left, right) => left.localeCompare(right));
 }
 
-/** Query key for the root-folder list consumed by the share-link builder. */
-export function rootFoldersQueryKey(): readonly [string] {
-  return ["root-folders"] as const;
-}
-
+/** Query options for the root-folder list consumed by the share-link builder. */
 export function rootFoldersQueryOptions() {
   return {
-    queryKey: rootFoldersQueryKey(),
+    queryKey: ["root-folders"] as const,
     queryFn: ({ signal }: { signal: AbortSignal }) => fetchRootFolderNames(signal),
   };
 }
 
 /** Hook returning the alphabetically sorted names of all root folders. */
 export function useRootFolders() {
-  return useQuery({
-    ...rootFoldersQueryOptions(),
-    select: (names: string[]) => [...names].toSorted((left, right) => left.localeCompare(right)),
-  });
+  return useQuery(rootFoldersQueryOptions());
 }

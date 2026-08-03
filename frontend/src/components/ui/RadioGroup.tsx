@@ -15,7 +15,14 @@ interface RadioGroupProps {
   className?: string;
 }
 
-function RadioGroup({ value, onChange, options, name, legend, className }: RadioGroupProps): React.JSX.Element {
+function RadioGroup({
+  value,
+  onChange,
+  options,
+  name,
+  legend,
+  className,
+}: RadioGroupProps): React.JSX.Element {
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value),
     [onChange],

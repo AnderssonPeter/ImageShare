@@ -1,4 +1,4 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": ["src/lib/api/generated/**", "src/routeTree.gen.ts"]
+  "ignorePatterns": ["src/routeTree.gen.ts"]
 }

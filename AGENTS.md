@@ -42,7 +42,7 @@ When working on a frontend task read `frontend\TODO.md`
    - Verify the change
    - **Always run `pnpm lint:fix`, `pnpm test`, `pnpm test:ui` and `pnpm build` and fix every resulting error** before marking the item done. Warnings are not acceptable, all unit tests and linting errors must be fixed even if they have nothing to do with what was changed. (If you know of a permanent fix to the issue, suggest it to me.)
    - **Never disable lint rules.** Always fix warnings/errors by changing the code you own. Only if you have exhausted every possible code-level fix may you ask the user for permission to disable a rule — never do it without asking first.
-   - Mark it done by changing `[/]` → `[X]`.
+   - Mark it done by changing `[/]` → `[x]`.
 4. Ask the user to review the change, and allow them to tell you what can be done better.
 5. Wait for the user's feedback before moving to the next item. Incorporate any requested fixes before proceeding.
 6. Repeat from step 1.

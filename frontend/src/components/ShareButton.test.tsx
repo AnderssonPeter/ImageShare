@@ -1,64 +1,60 @@
-import { ApiError, type customFetcher } from "@lib/api/customFetcher";
+import { type FolderEntry, type generateToken, type getContent } from "@lib/api/generated";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { ApiError } from "@lib/api/errors";
 import { type ReactNode } from "react";
 import ShareButton from "@components/ShareButton";
 
-const { mockFetcher } = vi.hoisted(() => ({
-  mockFetcher: vi.fn<typeof customFetcher>(),
+const { mockGenerateToken, mockGetContent } = vi.hoisted(() => ({
+  mockGenerateToken: vi.fn<typeof generateToken>(),
+  mockGetContent: vi.fn<typeof getContent>(),
 }));
 
-vi.mock(import("@lib/api/customFetcher"), async (importOriginal) => {
+vi.mock(import("@lib/api/generated"), async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
-  return { ...actual, customFetcher: mockFetcher as unknown as typeof customFetcher };
+  return {
+    ...actual,
+    generateToken: mockGenerateToken as never,
+    getContent: mockGetContent as never,
+  };
 });
 
 const TOKEN = "eyJhbGciOiJIUzI1NiJ9.payload.signature";
 const FUTURE_DATE = "2099-12-31T23:59";
 
-const CONTENT_RESPONSE = {
-  status: 200,
-  data: { items: [], page: 1, pageSize: 500, totalCount: 0 },
-  headers: new Headers(),
-} as never;
-
-const TOKEN_RESPONSE = { status: 200, data: TOKEN, headers: new Headers() } as never;
-
-/** Resolve content calls to an empty page, token calls to the JWT. */
-function routeTokenSuccess(url: string): never {
-  return (url.startsWith("/api/content") ? CONTENT_RESPONSE : TOKEN_RESPONSE) as never;
+function emptyPageResponse() {
+  return {
+    data: { items: [] as FolderEntry[], page: 1, pageSize: 500, totalCount: 0 },
+    request: new Request("http://localhost/api/content"),
+    response: new Response(),
+  } as never;
 }
 
-/** Resolve content calls to an empty page, reject token calls with an ApiError. */
-function routeTokenError(url: string, error: ApiError): never {
-  if (url.startsWith("/api/content")) {
-    return CONTENT_RESPONSE;
-  }
-  throw error;
-}
-
-/** Resolve content calls, leave token calls pending indefinitely. */
-function routeTokenPending(url: string): never {
-  if (url.startsWith("/api/content")) {
-    return CONTENT_RESPONSE;
-  }
-  return Promise.race<never>([]) as never;
+function tokenResponse(token: string) {
+  return {
+    data: token,
+    request: new Request("http://localhost/api/authentication/token/generate"),
+    response: new Response(),
+  } as never;
 }
 
 /** Mock: content listing succeeds, token endpoint returns the JWT. */
 function stubTokenSuccess(): void {
-  mockFetcher.mockImplementation(routeTokenSuccess);
+  mockGetContent.mockResolvedValue(emptyPageResponse());
+  mockGenerateToken.mockResolvedValue(tokenResponse(TOKEN));
 }
 
 /** Mock: content listing succeeds, token endpoint rejects with an ApiError. */
 function stubTokenError(error: ApiError): void {
-  mockFetcher.mockImplementation((url) => routeTokenError(url, error));
+  mockGetContent.mockResolvedValue(emptyPageResponse());
+  mockGenerateToken.mockRejectedValue(error);
 }
 
 /** Mock: content listing succeeds, token endpoint never resolves (stays pending). */
 function stubTokenPending(): void {
-  mockFetcher.mockImplementation(routeTokenPending);
+  mockGetContent.mockResolvedValue(emptyPageResponse());
+  mockGenerateToken.mockReturnValue(Promise.race<never>([]) as never);
 }
 
 function renderShareButton(onToken?: (token: string) => void): void {
@@ -76,13 +72,12 @@ function fillAndSubmitForm(): void {
   fireEvent.click(screen.getByRole("button", { name: "Generate" }));
 }
 
-function assertTokenUrl(): void {
-  const tokenCall = mockFetcher.mock.calls.find(([url]) => url.includes("/token/generate"));
-  expect(tokenCall).toBeDefined();
-  const url = tokenCall?.[0] ?? "";
-  expect(url).toContain("name=Test+User");
-  expect(url).toContain("filter=*&");
-  expect(url).toContain(`endDate=${encodeURIComponent(FUTURE_DATE)}`);
+function assertTokenQuery(): void {
+  const [call] = mockGenerateToken.mock.calls;
+  expect(call).toBeDefined();
+  const query = call?.[0]?.query;
+  expect(query).toMatchObject({ name: "Test User", filter: "*" });
+  expect(query?.endDate).toBe(FUTURE_DATE);
 }
 
 describe("shareButton trigger", () => {
@@ -96,7 +91,7 @@ describe("shareButton trigger", () => {
 });
 
 describe("shareButton token generation", () => {
-  it("calls the token endpoint and shows the JWT in the result dialog", async () => {
+  it("calls the token endpoint and opens the result dialog", async () => {
     expect.hasAssertions();
     // Arrange
     stubTokenSuccess();
@@ -104,11 +99,11 @@ describe("shareButton token generation", () => {
     // Act — open the form and submit a valid form
     fireEvent.click(screen.getByRole("button", { name: "Share" }));
     fillAndSubmitForm();
-    // Assert — the JWT appears and the fetcher was hit with the encoded query params
+    // Assert — the result dialog opens (QR code appears) and the SDK was hit
     await waitFor(() => {
-      expect(screen.getByText(TOKEN)).toBeInTheDocument();
+      expect(screen.getByText("Share link generated")).toBeInTheDocument();
     });
-    assertTokenUrl();
+    assertTokenQuery();
   }, 2000);
 
   it("fires onToken with the JWT once generation succeeds", async () => {
@@ -140,8 +135,8 @@ describe("shareButton error handling", () => {
     await waitFor(() => {
       expect(screen.getByText("A filter must be specified.")).toBeInTheDocument();
     });
-    // The result dialog (JWT) should not appear
-    expect(screen.queryByText(TOKEN)).not.toBeInTheDocument();
+    // The result dialog should not appear
+    expect(screen.queryByText("Share link generated")).not.toBeInTheDocument();
   }, 2000);
 
   it("surfaces a 403 RFC 7807 error message in the form dialog", async () => {
@@ -156,7 +151,7 @@ describe("shareButton error handling", () => {
     await waitFor(() => {
       expect(screen.getByText("Forbidden.")).toBeInTheDocument();
     });
-    expect(screen.queryByText(TOKEN)).not.toBeInTheDocument();
+    expect(screen.queryByText("Share link generated")).not.toBeInTheDocument();
   }, 2000);
 
   it("shows a loading state on the Generate button while submitting", async () => {

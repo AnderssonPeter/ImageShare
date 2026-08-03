@@ -64,7 +64,13 @@ function useShareActions(url: string) {
   return { copied, handleCopy };
 }
 
-function CopyLinkButton({ copied, onClick }: { copied: boolean; onClick: () => void }): React.JSX.Element {
+function CopyLinkButton({
+  copied,
+  onClick,
+}: {
+  copied: boolean;
+  onClick: () => void;
+}): React.JSX.Element {
   return (
     <Button type="button" variant="outline" onClick={onClick}>
       {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
@@ -82,7 +88,11 @@ function ShareActions({ url }: ShareActionsProps): React.JSX.Element {
   );
 }
 
-export default function ShareLinkResult({ token, open, onOpenChange }: ShareLinkResultProps): React.JSX.Element {
+export default function ShareLinkResult({
+  token,
+  open,
+  onOpenChange,
+}: ShareLinkResultProps): React.JSX.Element {
   const svgRef = useRef<SVGSVGElement>(null);
   const shareUrl = buildShareUrl(token, globalThis.location.origin);
   return (

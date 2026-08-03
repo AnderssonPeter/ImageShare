@@ -1,18 +1,18 @@
 import {
   type FolderEntry,
   type PaginatedResultOfFolderEntry,
-} from "@lib/api/generated/imageShare.schemas";
+  type getContentByPath,
+} from "@lib/api/generated";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import ImageViewer from "@components/ImageViewer";
 import { type ReactNode } from "react";
-import { type getApiContentPath } from "@lib/api/generated/content/content";
 import { type imageUrl } from "@lib/api/urls";
 
-const { mockImageUrl, mockGetContentPath } = vi.hoisted(() => ({
+const { mockImageUrl, mockGetContentByPath } = vi.hoisted(() => ({
   mockImageUrl: vi.fn<typeof imageUrl>(),
-  mockGetContentPath: vi.fn<typeof getApiContentPath>(),
+  mockGetContentByPath: vi.fn<typeof getContentByPath>(),
 }));
 
 vi.mock(import("@lib/api/urls"), async (importOriginal) => {
@@ -20,32 +20,32 @@ vi.mock(import("@lib/api/urls"), async (importOriginal) => {
   return { ...actual, imageUrl: mockImageUrl };
 });
 
-vi.mock(import("@lib/api/generated/content/content"), async (importOriginal) => {
+vi.mock(import("@lib/api/generated"), async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
-  return { ...actual, getApiContentPath: mockGetContentPath };
+  return { ...actual, getContentByPath: mockGetContentByPath as never };
 });
 
 function imageEntry(name: string, path: string): FolderEntry {
   return { name, path, type: "File" };
 }
 
-function pageResponse(items: FolderEntry[]): {
-  status: 200;
-  data: PaginatedResultOfFolderEntry;
-  headers: Headers;
-} {
+function pageData(items: FolderEntry[]): PaginatedResultOfFolderEntry {
+  return { items, page: 1, pageSize: 50, totalCount: items.length };
+}
+
+function sdkResponse(items: FolderEntry[]) {
   return {
-    status: 200,
-    headers: new Headers(),
-    data: { items, page: 1, pageSize: 50, totalCount: items.length },
-  };
+    data: pageData(items),
+    request: new Request("http://localhost/api/content/photos"),
+    response: new Response(),
+  } as never;
 }
 
 function setupContent(images: FolderEntry[]): void {
   mockImageUrl.mockReset();
-  mockGetContentPath.mockReset();
+  mockGetContentByPath.mockReset();
   mockImageUrl.mockReturnValue("/img");
-  mockGetContentPath.mockResolvedValue(pageResponse(images));
+  mockGetContentByPath.mockResolvedValue(sdkResponse(images));
 }
 
 function noop(): void {}

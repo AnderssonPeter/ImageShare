@@ -21,10 +21,11 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [x] Build a favicon based on the svg icon
 - [x] Update all dependencies
 - [x] Exclude generated files from git and docker
-- [ ]  Add an id-denylist rule with common abbreviations (val, args, prev, req, res, err, cb, fn, etc.) and rename val → value in the schema
+- [ ] Add an id-denylist rule with common abbreviations (val, args, prev, req, res, err, cb, fn, etc.) and rename val → value in the schema
   - `val → value` rename complete (zod/mini `refine` callbacks in `ShareLinkDialog.tsx`).
   - **Blocked**: oxlint v1.74.0 has no `id-denylist`, no `no-restricted-syntax`, and `id-match` uses Rust regex (no lookaround) so a negative-lookahead denylist is impossible. Revisit when oxlint adds one of these.
-- [ ] Remove orval and use @hey-api/openapi-ts instead, as it generates useQuery, useMutation, suspense, infinity queries and so on for us
+- [x] Remove orval and use @hey-api/openapi-ts instead, as it generates useQuery, useMutation, suspense, infinity queries and so on for us
+- [ ] Remove all cases of `as unknown as`
 ---
 
 ## Phase 2 — API client generation (orval)
@@ -76,35 +77,35 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [x] Add folder download action to the app-bar/breadcrumb menu (zip of current folder via `downloadUrl`)
 - [x] Move the styling of metro tile out of the index.css and use tailwind inside the component instead
 - [x] The metro tile should have a 3:2 aspect ratio, add a bit more space between metro tiles
-- [X] Disallow download on the root folder
+- [x] Disallow download on the root folder
 
 ---
 
 ## Phase 6 — Fullscreen carousel
 
 - [x] Implement `ImageViewer.tsx` — shadcn `carousel` (Embla), opens at clicked index
-- [X] Add keyboard navigation (←/→ navigate, Esc close)
-- [X] Use full-res `imageUrl(path, false)` for slides
-- [X] Preload neighbor images for smooth swiping
-- [X] Use a random full resolution image as background in the gird, in dark mode make it dark and in light mode make it light so that its almost not visible
+- [x] Add keyboard navigation (←/→ navigate, Esc close)
+- [x] Use full-res `imageUrl(path, false)` for slides
+- [x] Preload neighbor images for smooth swiping
+- [x] Use a random full resolution image as background in the gird, in dark mode make it dark and in light mode make it light so that its almost not visible
 
 ---
 
 ## Phase 7 — Admin share (token + QR)
 
-- [X] Implement `ShareLinkDialog.tsx` — Name, Filter, EndDate form with validation
-- [X] Wire `useGenerateToken` mutation (orval) → JWT string
-- [X] Instead of having a input to define the filter, there should be a builder, it should list an "all folders" option and then each folder
-    * If all folders is selected, then any root folder selected is a deny and should have a deny icon (prefix the folder name with an !)
-    * If the all folders is not selected then selecting a root folder is an allow
-    * Separator between folders are |
-    * all folders should be encoded as *
-- [X] The share button should move up on hover like all other buttons
-- [X] Build shareable URL `${origin}/login/jwt/${token}`
-- [X] Render QR code via `qrcode.react` `<QRCodeSVG>` add logo to qrcode
-- [X] Add "Copy link" + "Download QR" (SVG→PNG) actions
-- [X] Handle 400/403 RFC 7807 errors in UI
-- [X] Gate visibility on `user.isAdmin`
+- [x] Implement `ShareLinkDialog.tsx` — Name, Filter, EndDate form with validation
+- [x] Wire `useGenerateToken` mutation (orval) → JWT string
+- [x] Instead of having a input to define the filter, there should be a builder, it should list an "all folders" option and then each folder
+  - If all folders is selected, then any root folder selected is a deny and should have a deny icon (prefix the folder name with an !)
+  - If the all folders is not selected then selecting a root folder is an allow
+  - Separator between folders are |
+  - all folders should be encoded as *
+- [x] The share button should move up on hover like all other buttons
+- [x] Build shareable URL `${origin}/login/jwt/${token}`
+- [x] Render QR code via `qrcode.react` `<QRCodeSVG>` add logo to qrcode
+- [x] Add "Copy link" + "Download QR" (SVG→PNG) actions
+- [x] Handle 400/403 RFC 7807 errors in UI
+- [x] Gate visibility on `user.isAdmin`
 
 ---
 

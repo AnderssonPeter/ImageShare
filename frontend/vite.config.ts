@@ -5,6 +5,7 @@ import svgr from "vite-plugin-svgr";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vitest/config";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
+import { heyApiPlugin } from "@hey-api/vite-plugin";
 
 export default defineConfig({
   plugins: [
@@ -17,6 +18,26 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     svgr(),
+    heyApiPlugin({
+      config: {
+        input: "../ImageShare/openapi.json",
+        output: {
+          path: "src/lib/api/generated",
+          clean: true,
+          postProcess: ["oxlint", "oxfmt"],
+        },
+        plugins: [
+          "@hey-api/typescript",
+          {
+            name: "@hey-api/client-fetch",
+            throwOnError: true,
+          },
+          {
+            name: "@hey-api/sdk",
+          },
+        ],
+      },
+    }),
   ],
   resolve: {
     tsconfigPaths: true,

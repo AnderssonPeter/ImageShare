@@ -17,10 +17,7 @@ const BACKGROUND_OVERLAY_CLASS = tw`pointer-events-none absolute inset-0 bg-back
 
 export default function GridBackground({ path }: { path?: string }): React.JSX.Element {
   const url = path ? randomFolderUrl(path, false, true) : randomRootUrl(false);
-  const style = useMemo<CSSProperties>(
-    () => ({ backgroundImage: `url(${url})` }),
-    [url],
-  );
+  const style = useMemo<CSSProperties>(() => ({ backgroundImage: `url(${url})` }), [url]);
   return (
     <>
       <div aria-hidden className={BACKGROUND_IMAGE_CLASS} style={style} />

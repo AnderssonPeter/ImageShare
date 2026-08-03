@@ -11,8 +11,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { EntryType, type FolderEntry } from "@lib/api/generated/imageShare.schemas";
 import { type ReactVirtualizer, type VirtualItem, useVirtualizer } from "@tanstack/react-virtual";
+import { type FolderEntry } from "@lib/api/generated";
 import FolderTile from "@components/FolderTile";
 import GridBackground from "@components/GridBackground";
 import ImageTile from "@components/ImageTile";
@@ -125,7 +125,7 @@ function GridTile({ entry }: { entry: FolderEntry }) {
     throw new Error("GridTile must be used within a ContentGrid");
   }
   const { onNavigateFolder, onImageOpen } = actions;
-  if (entry.type === EntryType.Folder) {
+  if (entry.type === "Folder") {
     return <FolderTile entry={entry} onNavigate={onNavigateFolder} className={TILE_SIZE_CLASS} />;
   }
   return <ImageTile entry={entry} onOpen={onImageOpen} className={TILE_SIZE_CLASS} />;

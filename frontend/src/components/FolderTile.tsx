@@ -12,7 +12,7 @@
  * route wires it to TanStack Router's `navigate`). The per-folder download
  * action lives in the app-bar/breadcrumb menu, not on the tile.
  */
-import { type FolderEntry } from "@lib/api/generated/imageShare.schemas";
+import { type FolderEntry } from "@lib/api/generated";
 import MetroTile from "@components/MetroTile";
 import { randomFolderUrl } from "@lib/api/urls";
 import { tw } from "@lib/utils";

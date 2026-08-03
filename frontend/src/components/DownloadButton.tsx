@@ -39,7 +39,9 @@ function isRootPath(path: string | undefined): boolean {
   return path === undefined || path === "";
 }
 
-export default function DownloadButton({ path }: DownloadButtonProps): React.JSX.Element | undefined {
+export default function DownloadButton({
+  path,
+}: DownloadButtonProps): React.JSX.Element | undefined {
   const folder = path ?? "";
   const [open, setOpen] = useState(false);
   const handleDownload = useCallback(

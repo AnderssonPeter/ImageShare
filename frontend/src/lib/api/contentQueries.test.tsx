@@ -1,22 +1,21 @@
+import { type FolderEntry, type getContent, type getContentByPath } from "@lib/api/generated";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
-import { type getApiContent, type getApiContentPath } from "@lib/api/generated/content/content";
 import { renderHook, waitFor } from "@testing-library/react";
-import { type FolderEntry } from "@lib/api/generated/imageShare.schemas";
 import { type ReactNode } from "react";
 import { useFolderContent } from "@lib/api/contentQueries";
 
-const { mockGetContent, mockGetContentPath } = vi.hoisted(() => ({
-  mockGetContent: vi.fn<typeof getApiContent>(),
-  mockGetContentPath: vi.fn<typeof getApiContentPath>(),
+const { mockGetContent, mockGetContentByPath } = vi.hoisted(() => ({
+  mockGetContent: vi.fn<typeof getContent>(),
+  mockGetContentByPath: vi.fn<typeof getContentByPath>(),
 }));
 
-vi.mock(import("@lib/api/generated/content/content"), async (importOriginal) => {
+vi.mock(import("@lib/api/generated"), async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
-    getApiContent: mockGetContent,
-    getApiContentPath: mockGetContentPath,
+    getContent: mockGetContent as never,
+    getContentByPath: mockGetContentByPath as never,
   };
 });
 
@@ -27,12 +26,12 @@ interface PageData {
   totalCount: number;
 }
 
-function pageResponse(pageData: PageData) {
+function sdkResponse(pageData: PageData) {
   return {
-    status: 200 as const,
     data: pageData,
-    headers: new Headers(),
-  };
+    request: new Request("http://localhost/api/content"),
+    response: new Response(),
+  } as never;
 }
 
 function renderContentHook(path?: string) {
@@ -50,9 +49,9 @@ describe("useFolderContent root routing", () => {
     expect.assertions(2);
     // Arrange
     mockGetContent.mockReset();
-    mockGetContentPath.mockReset();
+    mockGetContentByPath.mockReset();
     mockGetContent.mockResolvedValueOnce(
-      pageResponse({ items: [], page: 1, pageSize: 50, totalCount: 0 }),
+      sdkResponse({ items: [], page: 1, pageSize: 50, totalCount: 0 }),
     );
 
     // Act
@@ -62,31 +61,31 @@ describe("useFolderContent root routing", () => {
     });
 
     // Assert
-    expect(mockGetContent).toHaveBeenCalledWith({ page: 1, pageSize: 50 }, expect.any(Object));
+    expect(mockGetContent).toHaveBeenCalledWith(
+      expect.objectContaining({ query: { page: 1, pageSize: 50 } }),
+    );
   }, 2000);
 });
 
 describe("useFolderContent subfolder routing", () => {
-  it("calls getContentPath with lowercase page/pageSize for subfolder", async () => {
+  it("calls getContentByPath with lowercase page/pageSize for subfolder", async () => {
     expect.assertions(2);
     // Arrange
     mockGetContent.mockReset();
-    mockGetContentPath.mockReset();
-    mockGetContentPath.mockResolvedValueOnce(
-      pageResponse({ items: [], page: 1, pageSize: 50, totalCount: 0 }),
+    mockGetContentByPath.mockReset();
+    mockGetContentByPath.mockResolvedValueOnce(
+      sdkResponse({ items: [], page: 1, pageSize: 50, totalCount: 0 }),
     );
 
     // Act
     renderContentHook("photos/2024");
     await waitFor(() => {
-      expect(mockGetContentPath).toHaveBeenCalledTimes(1);
+      expect(mockGetContentByPath).toHaveBeenCalledTimes(1);
     });
 
     // Assert
-    expect(mockGetContentPath).toHaveBeenCalledWith(
-      "photos/2024",
-      { page: 1, pageSize: 50 },
-      expect.any(Object),
+    expect(mockGetContentByPath).toHaveBeenCalledWith(
+      expect.objectContaining({ path: { path: "photos/2024" }, query: { page: 1, pageSize: 50 } }),
     );
   }, 2000);
 });
@@ -96,9 +95,9 @@ describe("useFolderContent pagination has more", () => {
     expect.hasAssertions();
     // Arrange
     mockGetContent.mockReset();
-    mockGetContentPath.mockReset();
+    mockGetContentByPath.mockReset();
     mockGetContent.mockResolvedValueOnce(
-      pageResponse({
+      sdkResponse({
         items: [{ name: "a", path: "a", type: "Folder" as const }],
         page: 1,
         pageSize: 50,
@@ -122,9 +121,9 @@ describe("useFolderContent pagination last page", () => {
     expect.hasAssertions();
     // Arrange
     mockGetContent.mockReset();
-    mockGetContentPath.mockReset();
+    mockGetContentByPath.mockReset();
     mockGetContent.mockResolvedValueOnce(
-      pageResponse({ items: [], page: 1, pageSize: 50, totalCount: 30 }),
+      sdkResponse({ items: [], page: 1, pageSize: 50, totalCount: 30 }),
     );
 
     // Act

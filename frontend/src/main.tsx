@@ -4,11 +4,14 @@ import { queryClient, router } from "./router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { createRoot } from "react-dom/client";
+import { registerErrorInterceptor } from "@lib/api/httpClient";
 
 const rootElement: HTMLElement | null = document.querySelector("#root");
 if (rootElement === null) {
   throw new Error("Root element #root not found");
 }
+
+registerErrorInterceptor();
 
 const children: ReactNode = (
   <StrictMode>

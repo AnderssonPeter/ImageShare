@@ -9,7 +9,7 @@
  * of carousel coupling and unit-testable in isolation (the browse route
  * wires it to `ImageViewer` in Phase 6).
  */
-import { type FolderEntry } from "@lib/api/generated/imageShare.schemas";
+import { type FolderEntry } from "@lib/api/generated";
 import MetroTile from "@components/MetroTile";
 import { imageUrl } from "@lib/api/urls";
 import { useCallback } from "react";

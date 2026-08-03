@@ -123,12 +123,7 @@
       }
     },
     {
-      "files": [
-        "vite.config.ts",
-        "vitest.config.ts",
-        "orval.config.ts",
-        "*.config.{ts,mts,js,mjs}"
-      ],
+      "files": ["*.config.{ts,mts,js,mjs}"],
       "rules": {
         "import/no-nodejs-modules": "off",
         "import/no-unassigned-import": "off",

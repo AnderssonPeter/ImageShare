@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { type FolderEntry } from "@lib/api/generated/imageShare.schemas";
+import { type FolderEntry } from "@lib/api/generated";
 import FolderTile from "@components/FolderTile";
 import { type randomFolderUrl } from "@lib/api/urls";
 

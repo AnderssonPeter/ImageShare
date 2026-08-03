@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { type IUser } from "@lib/api/generated/imageShare.schemas";
+import { type Iuser as IUser } from "@lib/api/generated";
 import MetroAppBar from "@components/MetroAppBar";
 import { type ReactNode } from "react";
 import { ThemeProvider } from "@lib/themeContext";

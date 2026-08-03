@@ -16,7 +16,7 @@
 - **The OpenAPI spec has NO `200` response on the binary endpoints** (`/content/image/{path}`, `/content/random/{folder}`, `/content/download/{folder}` — only `400/401/403/404/406`). A code generator can't produce typed success hooks for those.
   - **Decision:** generate typed TanStack Query hooks only for `/user`, `/content`, `/content/{path}`, `/token/generate`; consume image/zip endpoints as **direct URLs** (the browser sends a correct `Accept` header for `<img>`, and `image/avif,image/webp` is in the default image Accept).
 - **Pagination param casing mismatch** (`page`/`pageSize` for `/content` vs `Page`/`PageSize` for `/content/{path}`). orval's `useInfiniteQueryParam` is global, so it can't drive both.
-  - **Decision:** generate the typed request functions + `useQuery` hooks with orval, then write our own thin `useInfiniteQuery` wrappers around the generated fetchers — full control, no casing conflict.
+  - **Decision:** generate the typed request functions + `useQuery` hooks with hey-api, then write our own thin `useInfiniteQuery` wrappers around the generated fetchers — full control, no casing conflict.
 - **No CORS configured.** Use a Vite `server.proxy` in dev (same-origin), and ship behind the backend in prod (handoff step 5).
 
 ---

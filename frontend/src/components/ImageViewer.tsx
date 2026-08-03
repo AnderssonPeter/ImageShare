@@ -19,11 +19,11 @@
  * `onClose` to dismiss (the browse route toggles `imagePath` between a
  * string and `undefined`).
  */
-import { EntryType, type FolderEntry } from "@lib/api/generated/imageShare.schemas";
 import { Loader2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Button from "@components/ui/Button";
 import Carousel from "@components/ui/Carousel";
+import { type FolderEntry } from "@lib/api/generated";
 import { type UseEmblaCarouselType } from "embla-carousel-react";
 import { imageUrl } from "@lib/api/urls";
 import { tw } from "@lib/utils";
@@ -59,7 +59,7 @@ interface ImageViewerProps {
 }
 
 function isImage(entry: FolderEntry): boolean {
-  return entry.type === EntryType.File;
+  return entry.type === "File";
 }
 
 /** Largest loaded ring (0 = only current, 1 = ±1, …) where every slide in the ring is loaded. */
@@ -166,7 +166,7 @@ function ImageCarousel({
   images: FolderEntry[];
   startIndex: number;
   onCarouselReady?: (api: CarouselApi | undefined) => void;
-  }) {
+}) {
   const clampedStart = Math.max(0, startIndex);
   const opts = useMemo(() => ({ startIndex: clampedStart }), [clampedStart]);
   const [currentIndex, setCurrentIndex] = useState(clampedStart);

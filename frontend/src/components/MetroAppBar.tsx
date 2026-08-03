@@ -14,7 +14,7 @@
  */
 import { Shield, User } from "lucide-react";
 import Button from "@components/ui/Button";
-import { type IUser } from "@lib/api/generated/imageShare.schemas";
+import { type Iuser as IUser } from "@lib/api/generated";
 import Logo from "@components/Logo";
 import { type ReactNode } from "react";
 import ShareButton from "@components/ShareButton";

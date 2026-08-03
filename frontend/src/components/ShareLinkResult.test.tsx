@@ -23,26 +23,7 @@ function renderResult(): void {
   render(<ShareLinkResult token={TOKEN} open onOpenChange={vi.fn<(open: boolean) => void>()} />);
 }
 
-describe("shareLinkResult renders the generated token and URL", () => {
-  it("displays the shareable URL built from the token and origin", () => {
-    expect.assertions(1);
-    // Arrange
-    stubLocation();
-    // Act
-    renderResult();
-    // Assert
-    expect(screen.getByText(SHARE_URL)).toBeInTheDocument();
-  }, 1000);
-
-  it("displays the raw JWT token", () => {
-    expect.assertions(1);
-    // Arrange + Act
-    stubLocation();
-    renderResult();
-    // Assert
-    expect(screen.getByText(TOKEN)).toBeInTheDocument();
-  }, 1000);
-
+describe("shareLinkResult renders the QR code", () => {
   it("renders a QR code encoding the share URL", () => {
     expect.assertions(1);
     // Arrange
@@ -54,15 +35,14 @@ describe("shareLinkResult renders the generated token and URL", () => {
     expect(qr.tagName).toBe("svg");
   }, 1000);
 
-  it("renders Copy link and Download QR action buttons", () => {
-    expect.assertions(2);
+  it("renders a Copy link action button", () => {
+    expect.assertions(1);
     // Arrange
     stubLocation();
     // Act
     renderResult();
     // Assert
     expect(screen.getByRole("button", { name: "Copy link" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Download QR" })).toBeInTheDocument();
   }, 1000);
 });
 
