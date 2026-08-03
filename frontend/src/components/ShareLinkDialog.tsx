@@ -31,6 +31,10 @@ interface ShareFormValues {
 interface ShareLinkDialogProps {
   /** Fired with validated, trimmed params when the form is submitted. */
   onGenerate: (params: ShareFormValues) => void;
+  /** RFC 7807 error message from the token endpoint, if the last submit failed. */
+  submitError?: string;
+  /** Whether the token request is in flight; disables the submit button. */
+  isSubmitting?: boolean;
 }
 
 const nameSchema = string().check(refine((value) => value.trim() !== "", { error: "A name must be specified." }));
@@ -166,22 +170,37 @@ function ShareFormFields({ form, showErrors }: ShareFormFieldsProps): React.JSX.
   );
 }
 
-function ShareDialogFooter(): React.JSX.Element {
+function ShareSubmitError({ message }: { message: string }): React.JSX.Element {
+  return (
+    <p role="alert" className="text-xs text-destructive">
+      {message}
+    </p>
+  );
+}
+
+interface ShareDialogFooterProps {
+  isSubmitting: boolean;
+}
+
+function ShareDialogFooter({ isSubmitting }: ShareDialogFooterProps): React.JSX.Element {
   return (
     <Dialog.DialogFooter>
-      <Button type="submit">Generate</Button>
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Generating…" : "Generate"}
+      </Button>
     </Dialog.DialogFooter>
   );
 }
 
-export default function ShareLinkDialog({ onGenerate }: ShareLinkDialogProps): React.JSX.Element {
+export default function ShareLinkDialog({ onGenerate, submitError, isSubmitting }: ShareLinkDialogProps): React.JSX.Element {
   const { form, showErrors, handleSubmit } = useShareForm(onGenerate);
   return (
     <Dialog.DialogContent>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <ShareDialogHeader />
         <ShareFormFields form={form} showErrors={showErrors} />
-        <ShareDialogFooter />
+        {submitError !== undefined && <ShareSubmitError message={submitError} />}
+        <ShareDialogFooter isSubmitting={isSubmitting ?? false} />
       </form>
     </Dialog.DialogContent>
   );

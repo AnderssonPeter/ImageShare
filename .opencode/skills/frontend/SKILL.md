@@ -62,6 +62,6 @@ Import alias: **`@`** → `src/` (configured in `vite.config.ts` and `tsconfig`)
 
 Before considering a frontend task complete, run from `/app/frontend`:
 
-1. `pnpm lint` (oxlint; `oxlint --fix` to auto-fix)
+1. `lint:fix`
 2. `pnpm test`
 3. `pnpm build` (regenerates the API client, type-checks, and builds)

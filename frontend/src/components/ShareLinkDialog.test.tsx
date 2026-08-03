@@ -35,6 +35,13 @@ function contentResponse() {
 }
 
 function renderOpenDialog(onGenerate: GenerateHandler): void {
+  renderOpenDialogWithOptions(onGenerate, {});
+}
+
+function renderOpenDialogWithOptions(
+  onGenerate: GenerateHandler,
+  options: { submitError?: string; isSubmitting?: boolean },
+): void {
   mockGetContent.mockReset();
   mockGetContent.mockResolvedValue(contentResponse());
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -43,7 +50,7 @@ function renderOpenDialog(onGenerate: GenerateHandler): void {
   }
   render(
     <Dialog.Dialog open>
-      <ShareLinkDialog onGenerate={onGenerate} />
+      <ShareLinkDialog onGenerate={onGenerate} submitError={options.submitError} isSubmitting={options.isSubmitting} />
     </Dialog.Dialog>,
     { wrapper: Wrapper },
   );
@@ -123,6 +130,26 @@ describe("shareLinkDialog error clearing", () => {
       expect(screen.queryByText("A name must be specified.")).not.toBeInTheDocument();
     });
   }, 2000);
+});
+
+describe("shareLinkDialog submit error", () => {
+  it("displays the submit error message when provided", () => {
+    expect.assertions(1);
+    // Arrange + Act
+    renderOpenDialogWithOptions(vi.fn<GenerateHandler>(), { submitError: "A filter must be specified." });
+    // Assert
+    expect(screen.getByText("A filter must be specified.")).toBeInTheDocument();
+  }, 1000);
+
+  it("disables the Generate button and shows loading text while submitting", () => {
+    expect.assertions(2);
+    // Arrange + Act
+    renderOpenDialogWithOptions(vi.fn<GenerateHandler>(), { isSubmitting: true });
+    // Assert
+    const button = screen.getByRole("button", { name: "Generating…" });
+    expect(button).toBeDisabled();
+    expect(button).toBeInTheDocument();
+  }, 1000);
 });
 
 describe("shareLinkDialog submission", () => {

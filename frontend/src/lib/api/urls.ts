@@ -1,9 +1,9 @@
 /**
- * Plain URL builders for the image, random, and download endpoints.
+ * Plain URL builders for the image, random, download, and share-login endpoints.
  *
- * These endpoints serve binary content (image bytes or a zip stream), so they
- * are consumed via `<img src>` / `<a href>` rather than the fetch mutator — the
- * browser handles Accept negotiation and streaming bytes better than fetch.
+ * These endpoints serve binary content (image bytes or a zip stream) or are
+ * consumed outside the fetch mutator (`<img src>` / `<a href>` / QR code), so
+ * the browser handles Accept negotiation and streaming bytes better than fetch.
  *
  * Path segments are URL-encoded per BACKEND_HANDOFF.md: a `RelativePath` is
  * relative, forward-slash-delimited, and must be encoded when used as a path
@@ -90,4 +90,20 @@ export function downloadUrl(folder: string, formats: readonly string[]): string 
   return query
     ? `/api/content/download/${encodePath(folder)}?${query}`
     : `/api/content/download/${encodePath(folder)}`;
+}
+
+/**
+ * Build the absolute shareable sign-in URL for `GET /authentication/login/jwt/{token}`.
+ *
+ * Unlike the other builders (which return relative paths for `<img src>` /
+ * `<a href>`), this returns an absolute URL because it is encoded into a QR
+ * code and copied to the clipboard — both need an origin the recipient's device
+ * can reach.
+ *
+ * @param token  - The JWT string returned by the token-generation endpoint.
+ * @param origin - The current page origin (e.g. `https://imageshare.example`).
+ * @returns An absolute sign-in URL.
+ */
+export function buildShareUrl(token: string, origin: string): string {
+  return `${origin}/api/authentication/login/jwt/${token}`;
 }

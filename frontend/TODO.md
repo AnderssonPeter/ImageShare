@@ -100,10 +100,10 @@ Generated from `PLAN.md`. Check off items as you complete them.
     * Separator between folders are |
     * all folders should be encoded as *
 - [X] The share button should move up on hover like all other buttons
-- [ ] Build shareable URL `${origin}/login/jwt/${token}`
-- [ ] Render QR code via `qrcode.react` `<QRCodeSVG>` add logo to qrcode
-- [ ] Add "Copy link" + "Download QR" (SVG→PNG) actions
-- [ ] Handle 400/403 RFC 7807 errors in UI
+- [X] Build shareable URL `${origin}/login/jwt/${token}`
+- [X] Render QR code via `qrcode.react` `<QRCodeSVG>` add logo to qrcode
+- [X] Add "Copy link" + "Download QR" (SVG→PNG) actions
+- [X] Handle 400/403 RFC 7807 errors in UI
 - [X] Gate visibility on `user.isAdmin`
 
 ---
@@ -122,3 +122,4 @@ Generated from `PLAN.md`. Check off items as you complete them.
 ## Phase 9 - Extra features
 
 - [ ] Add cast functionality to chrome cast or airplay
+- [ ] Add support to email share url

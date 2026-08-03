@@ -1,6 +1,5 @@
+import { buildShareUrl, downloadUrl, imageUrl, randomFolderUrl, randomRootUrl } from "@lib/api/urls";
 import { describe, expect, it } from "vitest";
-
-import { downloadUrl, imageUrl, randomFolderUrl, randomRootUrl } from "@lib/api/urls";
 
 describe("imageUrl builder", () => {
   it("builds a thumbnail URL with the thumbnail param", () => {
@@ -61,5 +60,15 @@ describe("downloadUrl builder", () => {
     expect.assertions(1);
     // Arrange + Act + Assert
     expect(downloadUrl("public", [])).toBe("/api/content/download/public");
+  }, 1000);
+});
+
+describe("buildShareUrl builder", () => {
+  it("builds an absolute sign-in URL from the token and origin", () => {
+    expect.assertions(1);
+    // Arrange + Act + Assert
+    expect(buildShareUrl("eyJ.token.sig", "https://imageshare.example")).toBe(
+      "https://imageshare.example/api/authentication/login/jwt/eyJ.token.sig",
+    );
   }, 1000);
 });
