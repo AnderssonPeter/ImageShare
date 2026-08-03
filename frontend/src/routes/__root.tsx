@@ -12,12 +12,13 @@
  * client-side auth redirect is needed. Session-expiry mid-session is handled
  * by the global `QueryClient` `onError` handler (Phase 8).
  */
-import { type User, getCurrentUser } from "@lib/api/generated";
 import { Outlet, createRootRouteWithContext, useMatches } from "@tanstack/react-router";
 import { type QueryClient, queryOptions } from "@tanstack/react-query";
+import { type User, getCurrentUser } from "@lib/api/generated";
 import Breadcrumb from "@components/Breadcrumb";
 import DownloadButton from "@components/DownloadButton";
 import MetroAppBar from "@components/MetroAppBar";
+import Sonner from "@components/ui/Sonner";
 import { ThemeProvider } from "@lib/themeContext";
 import { useMemo } from "react";
 
@@ -63,6 +64,7 @@ function RootComponent(): React.JSX.Element {
       <MetroAppBar user={user} breadcrumb={breadcrumb}>
         <Outlet />
       </MetroAppBar>
+      <Sonner />
     </ThemeProvider>
   );
 }

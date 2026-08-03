@@ -12,14 +12,14 @@
  * props so it can be tested in isolation before the router context (Phase 4)
  * is wired up. Page content is rendered below the bar via `children`.
  */
-import { Shield, User } from "lucide-react";
+import { CircleUserRound, Shield } from "lucide-react";
 import Button from "@components/ui/Button";
-import { type Iuser as IUser } from "@lib/api/generated";
 import Logo from "@components/Logo";
 import { type ReactNode } from "react";
 import ShareButton from "@components/ShareButton";
 import ThemeToggle from "@components/ThemeToggle";
 import Tooltip from "@components/ui/Tooltip";
+import { type User } from "@lib/api/generated";
 
 interface AdminButtonProps {
   visible: boolean;
@@ -56,7 +56,7 @@ function ShareButtonSlot({ visible }: ShareButtonSlotProps) {
 function UserChip({ name }: { name: string | undefined }) {
   return (
     <div className="flex items-center gap-2 px-2 text-sm text-foreground">
-      <User className="size-4 text-muted-foreground" />
+      <CircleUserRound className="size-4 text-muted-foreground" />
       <span className="max-w-32 truncate">{name ?? "User"}</span>
     </div>
   );
@@ -79,7 +79,7 @@ function AppBarBreadcrumb({ breadcrumb }: { breadcrumb: ReactNode }) {
 }
 
 interface AppBarRightProps {
-  user: IUser;
+  user: User;
 }
 
 function AppBarRight({ user }: AppBarRightProps) {
@@ -98,7 +98,7 @@ export default function MetroAppBar({
   breadcrumb,
   children,
 }: {
-  user: IUser;
+  user: User;
   breadcrumb?: ReactNode;
   children: ReactNode;
 }): React.JSX.Element {

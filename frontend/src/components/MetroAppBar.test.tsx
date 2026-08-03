@@ -1,15 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { type Iuser as IUser } from "@lib/api/generated";
 import MetroAppBar from "@components/MetroAppBar";
 import { type ReactNode } from "react";
 import { ThemeProvider } from "@lib/themeContext";
+import { type User } from "@lib/api/generated";
 import setupThemeEnvironment from "@test/themeEnvironment";
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
-function authenticatedUser(overrides: Partial<IUser> = {}): IUser {
+function authenticatedUser(overrides: Partial<User> = {}): User {
   return { isAuthenticated: true, isAdmin: false, name: "Jane", ...overrides };
 }
 
@@ -22,7 +22,7 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 interface RenderOptions {
-  user?: IUser;
+  user?: User;
   breadcrumb?: ReactNode;
   children?: ReactNode;
 }

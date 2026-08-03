@@ -7,12 +7,21 @@
  * `defaultPreloadStaleTime: 0` ensures loaders always refetch fresh data
  * through React Query rather than serving stale route-level cache.
  */
-import { QueryClient } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { type RouterContext } from "./routes/__root";
 import { createRouter } from "@tanstack/react-router";
+import { handleGlobalError } from "@lib/api/queryErrorHandler";
 import { routeTree } from "./routeTree.gen";
 
-const queryClient: QueryClient = new QueryClient();
+/**
+ * Singleton `QueryClient`. The query and mutation caches share a single
+ * `onError` (`handleGlobalError`) so any failed request is routed centrally:
+ * 401 → backend login, 404 → component empty state, 403/406 & unexpected → toast.
+ */
+const queryClient: QueryClient = new QueryClient({
+  queryCache: new QueryCache({ onError: handleGlobalError }),
+  mutationCache: new MutationCache({ onError: handleGlobalError }),
+});
 
 const router = createRouter({
   routeTree,
