@@ -124,8 +124,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
   - `useShareMutation` now uses the generated `generateTokenMutation()`. Required a backend change: `generateToken` is now `POST` (was GET `GenerateTokenQuery`/`IQueryHandler` → now `GenerateTokenCommand`/`ICommandHandler` with a `[FromBody]`), so hey-api classifies it as a mutation. The `ShareFormValues` become the request body.
   - Dropped the now-unused `ensurePage`/`ensureString` guards from `guards.ts`.
   - Test mocks retargeted to `@lib/api/generated/sdk.gen` (the generated options import the SDK directly, bypassing the barrel).
-- [ ] Empty-state tiles for folders with no images
-- [ ] Per-route error boundaries
+- [x] Error boundaries that handles common errors like 404, 403 and so on
 - [ ] `sonner` toasts: download started, link copied, token generated
 - [ ] Review code for React-Compiler friendliness (stable refs, no unnecessary `useMemo`)
 - [ ] Run `pnpm lint` (oxlint) and `tsc -b`; fix any issues
