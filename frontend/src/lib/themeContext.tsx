@@ -14,7 +14,15 @@
  *  - `setTheme` persists an explicit override and applies it.
  *  - `clearOverride` drops the override and re-follows the system preference.
  */
-import { type ReactNode, createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  type ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   type Theme,
   applyTheme,
@@ -55,19 +63,19 @@ export function ThemeProvider({ children }: { children: ReactNode }): React.JSX.
     [],
   );
 
-  function setTheme(next: Theme) {
+  const setTheme = useCallback((next: Theme) => {
     storeTheme(next);
     setCurrentTheme(next);
-  }
+  }, []);
 
-  function clearOverride() {
+  const clearOverride = useCallback(() => {
     clearStoredTheme();
     setCurrentTheme(resolveTheme());
-  }
+  }, []);
 
   const value: ThemeContextValue = useMemo<ThemeContextValue>(
     () => ({ theme: currentTheme, setTheme, clearOverride }),
-    [currentTheme],
+    [currentTheme, setTheme, clearOverride],
   );
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

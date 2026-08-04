@@ -8,10 +8,10 @@
  * component is fully controlled: it parses the incoming `value` string and
  * emits a new string via `onChange` whenever a checkbox toggles.
  */
+import { useCallback, useMemo } from "react";
 import { Ban } from "lucide-react";
 import Checkbox from "@components/ui/Checkbox";
 import Label from "@components/ui/Label";
-import { useCallback } from "react";
 
 const ALL_FOLDERS = "*";
 
@@ -123,7 +123,7 @@ export default function FilterBuilder({
   error,
   onChange,
 }: FilterBuilderProps): React.JSX.Element {
-  const parsed = parseFilter(value);
+  const parsed = useMemo(() => parseFilter(value), [value]);
   const handleAllFolders = useCallback(
     (checked: boolean) => onChange(buildFilter(checked, parsed.folders)),
     [onChange, parsed.folders],
