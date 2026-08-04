@@ -48,8 +48,17 @@ internal sealed class DownloadImagesQueryHandler(
         RelativePath stripPrefix)
     {
         var prefixWithSlash = stripPrefix.Value + "/";
-        using var memoryStream = new MemoryStream();
-        await using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, leaveOpen: true))
+
+        var temporaryPath = Path.GetTempFileName();
+        await using var temporaryStream = new FileStream(
+            temporaryPath,
+            FileMode.Create,
+            FileAccess.ReadWrite,
+            FileShare.None,
+            bufferSize: 81920,
+            FileOptions.DeleteOnClose | FileOptions.Asynchronous);
+
+        await using (var archive = new ZipArchive(temporaryStream, ZipArchiveMode.Create, leaveOpen: true))
         {
             foreach (var (path, info) in imageFiles)
             {
@@ -66,7 +75,7 @@ internal sealed class DownloadImagesQueryHandler(
             }
         }
 
-        memoryStream.Position = 0;
-        await memoryStream.CopyToAsync(output, cancellationToken);
+        temporaryStream.Position = 0;
+        await temporaryStream.CopyToAsync(output, cancellationToken);
     }
 }
