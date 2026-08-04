@@ -6,16 +6,33 @@ const TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiJ9.signature";
 const ORIGIN = "https://imageshare.example";
 const SHARE_URL = `${ORIGIN}/api/authentication/login/jwt/${TOKEN}`;
 
-const { writeText, mockToastSuccess } = vi.hoisted(() => ({
-  writeText: vi.fn<() => Promise<void>>(),
-  mockToastSuccess: vi.fn<(message: string) => void>(),
-}));
+const { writeText, mockToastSuccess, mockToastError, mockShare, mockCanShare, svgToPngFile } =
+  vi.hoisted(() => ({
+    writeText: vi.fn<() => Promise<void>>(),
+    mockToastSuccess: vi.fn<(message: string) => void>(),
+    mockToastError: vi.fn<(message: string) => void>(),
+    mockShare: vi.fn<(data: ShareData) => Promise<void>>(),
+    mockCanShare: vi.fn<(data?: ShareData) => boolean>(),
+    svgToPngFile: vi.fn<() => Promise<File>>(),
+  }));
 
 function stubClipboard(): void {
   Object.defineProperty(globalThis.navigator, "clipboard", {
     value: { writeText },
     configurable: true,
   });
+}
+
+function stubWebShare(canShare: boolean): void {
+  Object.defineProperty(globalThis.navigator, "canShare", {
+    value: mockCanShare,
+    configurable: true,
+  });
+  Object.defineProperty(globalThis.navigator, "share", {
+    value: mockShare,
+    configurable: true,
+  });
+  mockCanShare.mockReturnValue(canShare);
 }
 
 function stubLocation(): void {
@@ -25,8 +42,22 @@ function stubLocation(): void {
 vi.mock(import("sonner"), async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   const toast = actual.toast as Record<string, unknown>;
-  return { ...actual, toast: { ...toast, success: mockToastSuccess } as never };
+  return {
+    ...actual,
+    toast: { ...toast, success: mockToastSuccess, error: mockToastError } as never,
+  };
 });
+
+vi.mock(import("@lib/svgToPng"), () => ({
+  svgElementToPngFile: svgToPngFile,
+}));
+
+function stubResolvedQrFile(): File {
+  svgToPngFile.mockReset();
+  const file = new File([""], "share-qr.png", { type: "image/png" });
+  svgToPngFile.mockResolvedValue(file);
+  return file;
+}
 
 function renderResult(): void {
   render(<ShareLinkResult token={TOKEN} open onOpenChange={vi.fn<(open: boolean) => void>()} />);
@@ -103,4 +134,52 @@ describe("shareLinkResult close", () => {
     // Assert
     expect(onOpenChange.mock.calls[0]?.[0]).toBe(false);
   }, 1000);
+});
+
+describe("shareLinkResult send to email", () => {
+  it("renders a Send to email action button", () => {
+    expect.assertions(1);
+    // Arrange
+    stubLocation();
+    // Act
+    renderResult();
+    // Assert
+    expect(screen.getByRole("button", { name: "Send to email" })).toBeInTheDocument();
+  }, 1000);
+
+  it("shares the QR file and URL via the Web Share API when supported", async () => {
+    expect.assertions(2);
+    // Arrange
+    stubLocation();
+    stubWebShare(true);
+    const file = stubResolvedQrFile();
+    mockToastSuccess.mockReset();
+    renderResult();
+    // Act
+    fireEvent.click(screen.getByRole("button", { name: "Send to email" }));
+    await waitFor(() => mockShare.mock.calls.length > 0);
+    // Assert
+    expect(mockShare).toHaveBeenCalledWith({
+      files: [file],
+      title: "ImageShare link",
+      text: SHARE_URL,
+    });
+    expect(mockToastSuccess).toHaveBeenCalledWith("Shared");
+  }, 2000);
+
+  it("falls back to a mailto link when the Web Share API is unavailable", async () => {
+    expect.assertions(1);
+    // Arrange
+    stubLocation();
+    stubWebShare(false);
+    stubResolvedQrFile();
+    renderResult();
+    // Act
+    fireEvent.click(screen.getByRole("button", { name: "Send to email" }));
+    await waitFor(() => svgToPngFile.mock.calls.length > 0);
+    // Assert
+    expect(globalThis.location.href).toBe(
+      `mailto:?subject=ImageShare+link&body=${encodeURIComponent(SHARE_URL)}`,
+    );
+  }, 2000);
 });
