@@ -1,8 +1,10 @@
-import { type InfiniteData, type UseInfiniteQueryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
-  type PaginatedResultOfFolderEntry,
-  type ProblemDetails,
-} from "@lib/api/generated";
+  type InfiniteData,
+  type UseInfiniteQueryOptions,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query";
+import { type PaginatedResultOfFolderEntry, type ProblemDetails } from "@lib/api/generated";
 import {
   getContentByPathInfiniteOptions,
   getContentInfiniteOptions,
@@ -47,7 +49,10 @@ export function folderContentQueryOptions(path: string | undefined): FolderConte
   const base =
     folderPath === undefined
       ? getContentInfiniteOptions({ query: { pageSize: PAGE_SIZE } })
-      : getContentByPathInfiniteOptions({ path: { path: folderPath }, query: { pageSize: PAGE_SIZE } });
+      : getContentByPathInfiniteOptions({
+          path: { path: folderPath },
+          query: { pageSize: PAGE_SIZE },
+        });
   return {
     ...base,
     initialPageParam: 1,

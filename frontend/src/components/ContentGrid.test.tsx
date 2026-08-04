@@ -37,9 +37,7 @@ describe("contentGrid skeleton while loading", () => {
     setContent({ isPending: true, data: undefined });
 
     // Act
-    const { container } = render(
-      <ContentGrid onNavigateFolder={noop} onImageOpen={noop} />,
-    );
+    const { container } = render(<ContentGrid onNavigateFolder={noop} onImageOpen={noop} />);
 
     // Assert
     const skeletons = container.querySelectorAll('[data-slot="skeleton"]');
@@ -55,18 +53,12 @@ describe("contentGrid skeleton covers the full viewport", () => {
     expect.assertions(1);
     // Arrange — mock element dimensions so the grid shape is deterministic:
     // 760×800 → columns 4, rows 7 → 28 skeleton tiles fill the screen.
-    const heightSpy = vi
-      .spyOn(HTMLElement.prototype, "clientHeight", "get")
-      .mockReturnValue(800);
-    const widthSpy = vi
-      .spyOn(HTMLElement.prototype, "clientWidth", "get")
-      .mockReturnValue(760);
+    const heightSpy = vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(800);
+    const widthSpy = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(760);
     setContent({ isPending: true, data: undefined });
 
     // Act
-    const { container } = render(
-      <ContentGrid onNavigateFolder={noop} onImageOpen={noop} />,
-    );
+    const { container } = render(<ContentGrid onNavigateFolder={noop} onImageOpen={noop} />);
 
     // Assert — columns (4) × skeletonRows (7) = 28 tiles fill the screen
     const skeletons = container.querySelectorAll('[data-slot="skeleton"]');
@@ -92,9 +84,7 @@ describe("contentGrid restores scrolling once loaded", () => {
     });
 
     // Act
-    const { container } = render(
-      <ContentGrid onNavigateFolder={noop} onImageOpen={noop} />,
-    );
+    const { container } = render(<ContentGrid onNavigateFolder={noop} onImageOpen={noop} />);
 
     // Assert — scrollbar is restored (the skeleton lock is released)
     const scrollContainer = container.firstElementChild;
