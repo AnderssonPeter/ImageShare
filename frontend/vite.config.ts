@@ -35,6 +35,9 @@ export default defineConfig({
           {
             name: "@hey-api/sdk",
           },
+          {
+            name: "@tanstack/react-query",
+          },
         ],
       },
     }),

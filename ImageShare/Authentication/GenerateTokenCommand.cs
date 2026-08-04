@@ -6,8 +6,8 @@ namespace ImageShare.Authentication;
 
 [RequireAuthentication]
 [RequireAdmin]
-public sealed record GenerateTokenQuery(
-    [FromQuery] string Name,
-    [FromQuery] string Filter,
-    [FromQuery] DateTime EndDate)
-    : IQuery<Ok<string>>;
+public sealed record GenerateTokenCommand(
+    [FromRoute] string Name,
+    [FromRoute] string Filter,
+    [FromRoute] DateTime EndDate)
+    : ICommand<Ok<string>>;

@@ -11,7 +11,7 @@ const { mockGenerateToken, mockGetContent } = vi.hoisted(() => ({
   mockGetContent: vi.fn<typeof getContent>(),
 }));
 
-vi.mock(import("@lib/api/generated"), async (importOriginal) => {
+vi.mock(import("@lib/api/generated/sdk.gen"), async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
@@ -72,12 +72,12 @@ function fillAndSubmitForm(): void {
   fireEvent.click(screen.getByRole("button", { name: "Generate" }));
 }
 
-function assertTokenQuery(): void {
+function assertTokenPath(): void {
   const [call] = mockGenerateToken.mock.calls;
   expect(call).toBeDefined();
-  const query = call?.[0]?.query;
-  expect(query).toMatchObject({ name: "Test User", filter: "*" });
-  expect(query?.endDate).toBe(FUTURE_DATE);
+  const path = call?.[0]?.path;
+  expect(path).toMatchObject({ name: "Test User", filter: "*" });
+  expect(path?.endDate).toBe(FUTURE_DATE);
 }
 
 describe("shareButton trigger", () => {
@@ -103,7 +103,7 @@ describe("shareButton token generation", () => {
     await waitFor(() => {
       expect(screen.getByText("Share link generated")).toBeInTheDocument();
     });
-    assertTokenQuery();
+    assertTokenPath();
   }, 2000);
 
   it("fires onToken with the JWT once generation succeeds", async () => {

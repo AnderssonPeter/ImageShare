@@ -139,6 +139,14 @@
       }
     },
     {
+      "files": ["src/lib/api/generated/**"],
+      "rules": {
+        "typescript/consistent-type-definitions": "off",
+        "typescript/ban-ts-comment": "off",
+        "typescript/prefer-ts-expect-error": "off"
+      }
+    },
+    {
       "files": ["src/main.tsx", "src/router.tsx"],
       "rules": {
         "no-restricted-imports": "off"

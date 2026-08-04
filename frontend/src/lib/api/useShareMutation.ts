@@ -2,23 +2,21 @@
  * Share-token mutation hook (`useShareMutation`) — TanStack Query mutation
  * for minting a share JWT.
  *
- * Hand-written wrapper around the hey-api-generated `generateToken` SDK
- * function (the generated infinite-query options are disabled, so — like
- * `contentQueries.ts` — we wrap the SDK call manually). Narrows the SDK
- * `data` to a string via `ensureString` (see `guards.ts`) rather than an
- * unchecked cast. Tracks the generated `token` and any `submitError`
- * (RFC 7807 message) so the host component can drive the form/result
- * dialog flow.
+ * The token endpoint is `POST /api/authentication/token/generate`, so hey-api's
+ * `@tanstack/react-query` plugin generates `generateTokenMutation()` (see
+ * `generated/@tanstack/react-query.gen.ts`); this hook spreads it and adds the
+ * UI orchestration the generated options can't express: tracking the generated
+ * `token` plus any `submitError` (RFC 7807 message) and exposing form/result
+ * close handlers so the host component can drive the dialog flow.
  *
  * Owns the `ShareFormValues` contract shared with `ShareFormDialog`.
  */
 import { useCallback, useState } from "react";
 import { ApiError } from "@lib/api/errors";
-import { ensureString } from "@lib/api/guards";
-import { generateToken } from "@lib/api/generated";
+import { generateTokenMutation } from "@lib/api/generated/@tanstack/react-query.gen";
 import { useMutation } from "@tanstack/react-query";
 
-/** Values submitted by the share-link form. */
+/** Values submitted by the share-link form (matches the `GenerateTokenCommand` body). */
 export interface ShareFormValues {
   name: string;
   filter: string;
@@ -56,10 +54,7 @@ export function useShareMutation(
   const [token, setToken] = useState<string>();
   const [submitError, setSubmitError] = useState<string>();
   const mutation = useMutation({
-    mutationFn: async (values: ShareFormValues): Promise<string> => {
-      const { data } = await generateToken({ query: values });
-      return ensureString(data);
-    },
+    ...generateTokenMutation(),
     onSuccess: (generated) => {
       setToken(generated);
       onToken?.(generated);
@@ -72,7 +67,7 @@ export function useShareMutation(
   const handleGenerate = useCallback(
     (values: ShareFormValues) => {
       setSubmitError(undefined);
-      mutation.mutate(values);
+      mutation.mutate({ path: values });
     },
     [mutation],
   );

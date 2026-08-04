@@ -20,7 +20,7 @@ vi.mock(import("@lib/api/urls"), async (importOriginal) => {
   return { ...actual, imageUrl: mockImageUrl };
 });
 
-vi.mock(import("@lib/api/generated"), async (importOriginal) => {
+vi.mock(import("@lib/api/generated/sdk.gen"), async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return { ...actual, getContentByPath: mockGetContentByPath as never };
 });

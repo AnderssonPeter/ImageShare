@@ -53,7 +53,6 @@ Import alias: **`@`** → `src/` (configured in `vite.config.ts` and `tsconfig`)
 - Follow oxlint. TypeScript strict; `tsconfig.app.json` / `tsconfig.node.json` split.
 - Use the React Compiler (enabled via `babel-plugin-react-compiler` + `@rolldown/plugin-babel` in `vite.config.ts`) — avoid manual memoization unless profiling shows a need.
 - Prefer named exports for utilities/hooks, default exports for UI components.
-- Keep JSDoc on exported modules/functions that document non-obvious contracts (the codebase uses block-comment headers per module).
 - Don't use `any` or `unknown`.
 - Don't use abbreviations in variable names, parameter names, or field names (e.g. `directory` not `dir`, `extension` not `ext`).
 - Don't `as unknown as` instead create a guard and a ensure method that throws if the type is not correct, the exception is mocks in unit tests.

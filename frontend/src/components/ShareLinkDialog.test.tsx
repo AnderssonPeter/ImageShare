@@ -16,7 +16,7 @@ const { mockGetContent } = vi.hoisted(() => ({
   mockGetContent: vi.fn<typeof getContent>(),
 }));
 
-vi.mock(import("@lib/api/generated"), async (importOriginal) => {
+vi.mock(import("@lib/api/generated/sdk.gen"), async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return { ...actual, getContent: mockGetContent as never };
 });

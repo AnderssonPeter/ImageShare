@@ -1,13 +1,13 @@
-﻿using ImageShare.Errors;
+using ImageShare.Errors;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ImageShare.Authentication;
 
-internal sealed class GenerateTokenQueryHandler(JwtTokenIssuer tokenIssuer)
-    : IQueryHandler<GenerateTokenQuery, Ok<string>>
+internal sealed class GenerateTokenCommandHandler(JwtTokenIssuer tokenIssuer)
+    : ICommandHandler<GenerateTokenCommand, Ok<string>>
 {
-    public ValueTask<Ok<string>> Handle(GenerateTokenQuery request, CancellationToken cancellationToken)
+    public ValueTask<Ok<string>> Handle(GenerateTokenCommand request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
         {

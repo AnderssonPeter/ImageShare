@@ -47,7 +47,7 @@ public static class AuthenticationEndpoints
     public static IEndpointRouteBuilder MapTokenEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("authentication").WithTags("authentication");
-        group.MapGet("/token/generate", GenerateTokenAsync)
+        group.MapPost("/token/generate/{name}/{filter}/{endDate}", GenerateTokenAsync)
             .RequireAuthorization()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
@@ -61,7 +61,7 @@ public static class AuthenticationEndpoints
         return group;
     }
 
-    private static async Task<Ok<string>> GenerateTokenAsync(IMediator mediator, [AsParameters] GenerateTokenQuery request) =>
+    private static async Task<Ok<string>> GenerateTokenAsync(IMediator mediator, [AsParameters] GenerateTokenCommand request) =>
         await mediator.Send(request);
 
     private static async Task<RedirectHttpResult> LoginWithJwtAsync(IMediator mediator, [AsParameters] LoginWithJwtCommand request) =>

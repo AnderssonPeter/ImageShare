@@ -116,7 +116,14 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [x] Skeletons for initial grid load
   - Use shadcn skeleton component, the normal component and the skeleton should share as much variables and css as possible
   - Hide the scrollbar while rendering the skeleton
-- [ ] There are raw http calls in contentQueries.ts, if possible move them to use tanstack query, there should be generated code for it in the output of hey-api opents, the current solution is a ugly hack
+- [x] There are raw http calls in contentQueries.ts, if possible move them to use tanstack query, there should be generated code for it in the output of hey-api opents, the current solution is a ugly hack
+  - Enabled the `@tanstack/react-query` hey-api plugin (generates query/infinite-query/mutation options).
+  - Added a minimal oxlint override for `src/lib/api/generated/**` (3 rules: `consistent-type-definitions`, `ban-ts-comment`, `prefer-ts-expect-error`) so the generated `*Responses` stay `type` aliases (data narrows) and hey-api's `@ts-ignore` directives stay intact — both required for the generated options to compile.
+  - `folderContentQueryOptions` now spreads the generated infinite-query options for `getContent`/`getContentByPath` (unified with a single `as` cast, no `as unknown as`); the manual `ensurePage` runtime guard is gone (data is statically narrow).
+  - `useRootFolders` uses the generated `getContentOptions` + `select`.
+  - `useShareMutation` now uses the generated `generateTokenMutation()`. Required a backend change: `generateToken` is now `POST` (was GET `GenerateTokenQuery`/`IQueryHandler` → now `GenerateTokenCommand`/`ICommandHandler` with a `[FromBody]`), so hey-api classifies it as a mutation. The `ShareFormValues` become the request body.
+  - Dropped the now-unused `ensurePage`/`ensureString` guards from `guards.ts`.
+  - Test mocks retargeted to `@lib/api/generated/sdk.gen` (the generated options import the SDK directly, bypassing the barrel).
 - [ ] Empty-state tiles for folders with no images
 - [ ] Per-route error boundaries
 - [ ] `sonner` toasts: download started, link copied, token generated

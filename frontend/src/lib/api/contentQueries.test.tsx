@@ -10,7 +10,7 @@ const { mockGetContent, mockGetContentByPath } = vi.hoisted(() => ({
   mockGetContentByPath: vi.fn<typeof getContentByPath>(),
 }));
 
-vi.mock(import("@lib/api/generated"), async (importOriginal) => {
+vi.mock(import("@lib/api/generated/sdk.gen"), async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,

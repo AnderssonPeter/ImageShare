@@ -1,31 +1,17 @@
-/**
- * Manual TanStack Query wrappers for the content-listing endpoints.
- *
- * hey-api generates infinite-query options, but a typing quirk (the response
- * `*Responses` interfaces don't extend `Record<string, unknown>`, so the SDK
- * `data` is typed as the whole `{ 200: ... }` object instead of the narrowed
- * response) leaks when the generated options are spread. To keep things robust
- * we build the query options manually with plain serializable query keys and
- * narrow the SDK `data` back to `PaginatedResultOfFolderEntry` with a runtime
- * guard (`ensurePage` in `guards.ts`) rather than an unchecked cast. Errors
- * throw `ApiError` (mapped by the hey-api client error interceptor in
- * `httpClient.ts`).
- */
+import { type InfiniteData, type UseInfiniteQueryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   type PaginatedResultOfFolderEntry,
-  getContent,
-  getContentByPath,
+  type ProblemDetails,
 } from "@lib/api/generated";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { ensurePage } from "@lib/api/guards";
+import {
+  getContentByPathInfiniteOptions,
+  getContentInfiniteOptions,
+  getContentOptions,
+} from "@lib/api/generated/@tanstack/react-query.gen";
 
-/** Page size used for all content listing requests (backend max is 500). */
 const PAGE_SIZE = 50;
-
-/** Single large page for the root-folder list consumed by the share builder. */
 const ROOT_PAGE_SIZE = 500;
 
-/** Coerce a `number | string` field from the API into a finite number. */
 function toNumber(value: number | string): number {
   const parsed = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(parsed)) {
@@ -34,71 +20,52 @@ function toNumber(value: number | string): number {
   return parsed;
 }
 
-/** Fetch a single page of folder content. */
-async function fetchContentPage(
-  path: string | undefined,
-  page: number,
-  signal: AbortSignal,
-): Promise<PaginatedResultOfFolderEntry> {
-  const result =
-    path === undefined
-      ? await getContent({ query: { page, pageSize: PAGE_SIZE }, signal })
-      : await getContentByPath({ path: { path }, query: { page, pageSize: PAGE_SIZE }, signal });
-  return ensurePage(result.data);
+function nextContentPage(lastPage: PaginatedResultOfFolderEntry): number | undefined {
+  const currentPage = toNumber(lastPage.page);
+  const totalCount = toNumber(lastPage.totalCount);
+  const loadedCount = toNumber(lastPage.pageSize) * currentPage;
+  return loadedCount < totalCount ? currentPage + 1 : undefined;
 }
 
-/**
- * Infinite-query options for browsing folder content, shared between the
- * `useFolderContent` hook and route loaders (so a loader can prefetch the
- * first page into the same cache the hook reads).
- *
- * - No `path` (or empty) -> `GET /content?page=N&pageSize=50` (root listing).
- * - With `path`          -> `GET /content/{path}?page=N&pageSize=50` (subfolder).
- */
-export function folderContentQueryOptions(path: string | undefined) {
-  const folderPath = path === undefined || path === "" ? undefined : path;
-  return {
-    queryKey: ["content", folderPath ?? ""] as const,
-    queryFn: ({ pageParam, signal }: { pageParam: number; signal: AbortSignal }) =>
-      fetchContentPage(folderPath, pageParam, signal),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage: PaginatedResultOfFolderEntry): number | undefined => {
-      const currentPage = toNumber(lastPage.page);
-      const totalCount = toNumber(lastPage.totalCount);
-      const loadedCount = toNumber(lastPage.pageSize) * currentPage;
-      return loadedCount < totalCount ? currentPage + 1 : undefined;
-    },
-  };
-}
-
-/**
- * Infinite-query hook for browsing folder content.
- *
- * - No `path` (or empty) -> `GET /content?page=N&pageSize=50` (root listing).
- * - With `path`          -> `GET /content/{path}?page=N&pageSize=50` (subfolder).
- */
-export function useFolderContent(path?: string) {
-  return useInfiniteQuery(folderContentQueryOptions(path));
-}
-
-async function fetchRootFolderNames(signal: AbortSignal): Promise<string[]> {
-  const result = await getContent({ query: { page: 1, pageSize: ROOT_PAGE_SIZE }, signal });
-  const data = ensurePage(result.data);
+function folderNamesOf(data: PaginatedResultOfFolderEntry): string[] {
   return data.items
     .filter((entry) => entry.type === "Folder")
     .map((entry) => entry.name)
     .toSorted((left, right) => left.localeCompare(right));
 }
 
-/** Query options for the root-folder list consumed by the share-link builder. */
+type FolderContentOptions = UseInfiniteQueryOptions<
+  PaginatedResultOfFolderEntry,
+  ProblemDetails,
+  InfiniteData<PaginatedResultOfFolderEntry>,
+  readonly unknown[],
+  number
+>;
+
+export function folderContentQueryOptions(path: string | undefined): FolderContentOptions {
+  const folderPath = path === undefined || path === "" ? undefined : path;
+  const base =
+    folderPath === undefined
+      ? getContentInfiniteOptions({ query: { pageSize: PAGE_SIZE } })
+      : getContentByPathInfiniteOptions({ path: { path: folderPath }, query: { pageSize: PAGE_SIZE } });
+  return {
+    ...base,
+    initialPageParam: 1,
+    getNextPageParam: nextContentPage,
+  } as FolderContentOptions;
+}
+
+export function useFolderContent(path?: string) {
+  return useInfiniteQuery(folderContentQueryOptions(path));
+}
+
 export function rootFoldersQueryOptions() {
   return {
-    queryKey: ["root-folders"] as const,
-    queryFn: ({ signal }: { signal: AbortSignal }) => fetchRootFolderNames(signal),
+    ...getContentOptions({ query: { page: 1, pageSize: ROOT_PAGE_SIZE } }),
+    select: folderNamesOf,
   };
 }
 
-/** Hook returning the alphabetically sorted names of all root folders. */
 export function useRootFolders() {
   return useQuery(rootFoldersQueryOptions());
 }
