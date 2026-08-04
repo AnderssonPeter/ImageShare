@@ -21,6 +21,7 @@ import Dialog from "@components/ui/Dialog";
 import { Download } from "lucide-react";
 import DownloadDialog from "@components/DownloadDialog";
 import { downloadUrl } from "@lib/api/urls";
+import { toast } from "sonner";
 import { tw } from "@lib/utils";
 
 const ICON_CLASS = tw`size-4`;
@@ -33,6 +34,7 @@ interface DownloadButtonProps {
 
 function startDownload(folder: string, formats: readonly string[]): void {
   globalThis.location.href = downloadUrl(folder, formats);
+  toast.success("Download started");
 }
 
 function isRootPath(path: string | undefined): boolean {

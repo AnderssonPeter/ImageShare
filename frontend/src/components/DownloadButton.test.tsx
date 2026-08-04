@@ -3,14 +3,21 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import DownloadButton from "@components/DownloadButton";
 import { type downloadUrl } from "@lib/api/urls";
 
-const { mockDownloadUrl, mockHref } = vi.hoisted(() => ({
+const { mockDownloadUrl, mockHref, mockToastSuccess } = vi.hoisted(() => ({
   mockDownloadUrl: vi.fn<typeof downloadUrl>(),
   mockHref: { value: "" },
+  mockToastSuccess: vi.fn<(message: string) => void>(),
 }));
 
 vi.mock(import("@lib/api/urls"), async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return { ...actual, downloadUrl: mockDownloadUrl };
+});
+
+vi.mock(import("sonner"), async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  const toast = actual.toast as Record<string, unknown>;
+  return { ...actual, toast: { ...toast, success: mockToastSuccess } as never };
 });
 
 function mockLocationHref(): void {
@@ -41,24 +48,24 @@ describe("downloadButton trigger", () => {
 });
 
 describe("downloadButton download", () => {
-  it("navigates to the download URL with all formats by default", async () => {
+  it("navigates to the download URL with all formats by default and toasts", async () => {
     expect.hasAssertions();
     // Arrange
     mockDownloadUrl.mockReset();
     mockDownloadUrl.mockReturnValue("/api/content/download/Birds");
     mockLocationHref();
-
+    mockToastSuccess.mockReset();
     // Act — open the dialog then click Download
     render(<DownloadButton path="Birds" />);
     fireEvent.click(screen.getByRole("button", { name: "Download folder" }));
     const downloadButton = await screen.findByRole("button", { name: "Download" });
     fireEvent.click(downloadButton);
-
     // Assert
     await waitFor(() => {
       expect(mockDownloadUrl).toHaveBeenCalledWith("Birds", []);
+      expect(mockHref.value).toBe("/api/content/download/Birds");
+      expect(mockToastSuccess).toHaveBeenCalledWith("Download started");
     });
-    expect(mockHref.value).toBe("/api/content/download/Birds");
   }, 2000);
 });
 

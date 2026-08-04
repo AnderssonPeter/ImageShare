@@ -6,9 +6,10 @@ import { ApiError } from "@lib/api/errors";
 import { type ReactNode } from "react";
 import ShareButton from "@components/ShareButton";
 
-const { mockGenerateToken, mockGetContent } = vi.hoisted(() => ({
+const { mockGenerateToken, mockGetContent, mockToastSuccess } = vi.hoisted(() => ({
   mockGenerateToken: vi.fn<typeof generateToken>(),
   mockGetContent: vi.fn<typeof getContent>(),
+  mockToastSuccess: vi.fn<(message: string) => void>(),
 }));
 
 vi.mock(import("@lib/api/generated/sdk.gen"), async (importOriginal) => {
@@ -18,6 +19,12 @@ vi.mock(import("@lib/api/generated/sdk.gen"), async (importOriginal) => {
     generateToken: mockGenerateToken as never,
     getContent: mockGetContent as never,
   };
+});
+
+vi.mock(import("sonner"), async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  const toast = actual.toast as Record<string, unknown>;
+  return { ...actual, toast: { ...toast, success: mockToastSuccess } as never };
 });
 
 const TOKEN = "eyJhbGciOiJIUzI1NiJ9.payload.signature";
@@ -95,6 +102,7 @@ describe("shareButton token generation", () => {
     expect.hasAssertions();
     // Arrange
     stubTokenSuccess();
+    mockToastSuccess.mockReset();
     renderShareButton();
     // Act — open the form and submit a valid form
     fireEvent.click(screen.getByRole("button", { name: "Share" }));
@@ -104,6 +112,7 @@ describe("shareButton token generation", () => {
       expect(screen.getByText("Share link generated")).toBeInTheDocument();
     });
     assertTokenPath();
+    expect(mockToastSuccess).toHaveBeenCalledWith("Share link generated");
   }, 2000);
 
   it("fires onToken with the JWT once generation succeeds", async () => {

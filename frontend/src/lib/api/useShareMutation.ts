@@ -14,6 +14,7 @@
 import { useCallback, useState } from "react";
 import { ApiError } from "@lib/api/errors";
 import { generateTokenMutation } from "@lib/api/generated/@tanstack/react-query.gen";
+import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 
 /** Values submitted by the share-link form (matches the `GenerateTokenCommand` body). */
@@ -57,6 +58,7 @@ export function useShareMutation(
     ...generateTokenMutation(),
     onSuccess: (generated) => {
       setToken(generated);
+      toast.success("Share link generated");
       onToken?.(generated);
       onSuccess();
     },

@@ -5,6 +5,7 @@ import Dialog from "@components/ui/Dialog";
 import { QRCodeSVG } from "qrcode.react";
 import { buildShareUrl } from "@lib/api/urls";
 import logoUrl from "@assets/logo.svg?url";
+import { toast } from "sonner";
 
 interface ShareLinkResultProps {
   /** The JWT string returned by the token-generation endpoint. */
@@ -59,6 +60,7 @@ function useShareActions(url: string) {
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(url);
     setCopied(true);
+    toast.success("Link copied");
     setTimeout(() => setCopied(false), COPIED_FEEDBACK_MS);
   }, [url]);
   return { copied, handleCopy };

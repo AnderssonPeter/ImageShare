@@ -125,7 +125,7 @@ Generated from `PLAN.md`. Check off items as you complete them.
   - Dropped the now-unused `ensurePage`/`ensureString` guards from `guards.ts`.
   - Test mocks retargeted to `@lib/api/generated/sdk.gen` (the generated options import the SDK directly, bypassing the barrel).
 - [x] Error boundaries that handles common errors like 404, 403 and so on
-- [ ] `sonner` toasts: download started, link copied, token generated
+- [x] `sonner` toasts: download started, link copied, token generated
 - [ ] Review code for React-Compiler friendliness (stable refs, no unnecessary `useMemo`)
 - [ ] Run `pnpm lint` (oxlint) and `tsc -b`; fix any issues
 - [ ] Create a better icon

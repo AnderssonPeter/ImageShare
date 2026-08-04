@@ -6,7 +6,10 @@ const TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiJ9.signature";
 const ORIGIN = "https://imageshare.example";
 const SHARE_URL = `${ORIGIN}/api/authentication/login/jwt/${TOKEN}`;
 
-const { writeText } = vi.hoisted(() => ({ writeText: vi.fn<() => Promise<void>>() }));
+const { writeText, mockToastSuccess } = vi.hoisted(() => ({
+  writeText: vi.fn<() => Promise<void>>(),
+  mockToastSuccess: vi.fn<(message: string) => void>(),
+}));
 
 function stubClipboard(): void {
   Object.defineProperty(globalThis.navigator, "clipboard", {
@@ -18,6 +21,12 @@ function stubClipboard(): void {
 function stubLocation(): void {
   vi.stubGlobal("location", { origin: ORIGIN } as Location);
 }
+
+vi.mock(import("sonner"), async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  const toast = actual.toast as Record<string, unknown>;
+  return { ...actual, toast: { ...toast, success: mockToastSuccess } as never };
+});
 
 function renderResult(): void {
   render(<ShareLinkResult token={TOKEN} open onOpenChange={vi.fn<(open: boolean) => void>()} />);
@@ -54,6 +63,7 @@ describe("shareLinkResult copy action", () => {
     stubClipboard();
     writeText.mockReset();
     writeText.mockResolvedValue();
+    mockToastSuccess.mockReset();
     renderResult();
     // Act
     fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
@@ -61,6 +71,7 @@ describe("shareLinkResult copy action", () => {
     await waitFor(() => {
       expect(writeText).toHaveBeenCalledWith(SHARE_URL);
     });
+    expect(mockToastSuccess).toHaveBeenCalledWith("Link copied");
   }, 2000);
 
   it("shows a transient Copied label after copying", async () => {
