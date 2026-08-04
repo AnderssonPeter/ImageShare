@@ -124,8 +124,8 @@ todo:
   [ ] Add a usage agreement function
   [X] Add support for negative glob
   [X] Verify that the random function wont return images for folders where the user dosen't have access
-  [/] Sort images by created date, set created date from metadata
-  [ ] Microsoft.AspNetCore.Hosting.Diagnostics[11]
+  [ ] Sort images by created date, set created date from metadata
+  [X] Microsoft.AspNetCore.Hosting.Diagnostics[11]
       Hosting startup assembly exception
       System.InvalidOperationException: Startup assembly Microsoft.WebTools.ApiEndpointDiscovery failed to execute. See the inner exception for more details.
        ---> System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.WebTools.ApiEndpointDiscovery, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.
