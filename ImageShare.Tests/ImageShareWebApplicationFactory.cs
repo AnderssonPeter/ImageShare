@@ -60,6 +60,13 @@ public sealed class ImageShareWebApplicationFactory : WebApplicationFactory<Prog
                     options.Authority = "https://test-authority";
                     options.ClientId = "test-client-id";
                     options.ClientSecret = "test-client-secret";
+                    // A static configuration avoids the handler trying to fetch discovery metadata
+                    // from the fake authority during a challenge, so challenges produce a clean 302.
+                    options.Configuration = new Microsoft.IdentityModel.Protocols.OpenIdConnect.OpenIdConnectConfiguration
+                    {
+                        AuthorizationEndpoint = "https://test-authority/authorize",
+                        EndSessionEndpoint = "https://test-authority/logout",
+                    };
                 });
 
             services.RemoveAll<IFileProvider>();

@@ -1,4 +1,4 @@
-using ImageShare.Errors;
+﻿using ImageShare.Errors;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 

@@ -1,4 +1,7 @@
-﻿namespace ImageShare.Spa;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+
+namespace ImageShare.Spa;
 
 /// <summary>
 /// Hosts the React single-page application built by the Vite project in <c>../frontend</c>.
@@ -9,6 +12,9 @@
 /// <item><b>Production</b> — the compiled assets in <c>../frontend/dist</c> are served from disk,
 /// and unmapped requests fall back to <c>index.html</c> so client-side routing works.</item>
 /// </list>
+/// Every request that reaches the SPA branch must be authenticated; unauthenticated requests are
+/// challenged with the OpenID Connect handler so the browser is redirected to the identity provider
+/// before any SPA content — HTML, script, asset, or proxied dev-server response — is served.
 /// </summary>
 public static class SpaExtensions
 {
@@ -21,24 +27,41 @@ public static class SpaExtensions
 
     /// <summary>
     /// Adds the SPA hosting middleware. Place it after authentication/authorization so the SPA
-    /// is only reached for requests the backend did not handle. In development the proxy is a
-    /// terminal branch gated on <see cref="HttpContextExtensions.GetEndpoint"/> being null, so
-    /// backend endpoints (including OpenAPI and Scalar) keep working; everything else goes to Vite.
-    /// In production the compiled assets are served from disk via <see cref="SpaStaticFilesExtensions.UseSpaStaticFiles"/>.
+    /// is only reached for requests the backend did not handle. Requests with no matched endpoint
+    /// (i.e. SPA routes and assets) are branched off; the branch first challenges any
+    /// unauthenticated request via OpenID Connect, then either proxies to the Vite dev server
+    /// (development) or serves the compiled assets from disk (production). Backend endpoints
+    /// (including OpenAPI, Scalar and the OIDC callback) keep working because they have an endpoint.
     /// </summary>
     public static IApplicationBuilder UseSpaHosting(this IApplicationBuilder application, IWebHostEnvironment environment)
     {
-        if (environment.IsDevelopment())
-        {
-            application.MapWhen(
-                context => context.GetEndpoint() is null,
-                branch => branch.UseSpa(spa => spa.UseProxyToSpaDevelopmentServer(DevelopmentServerUri)));
-        }
-        else
-        {
-            application.UseSpaStaticFiles();
-        }
+        application.MapWhen(
+            context => context.GetEndpoint() is null,
+            branch =>
+            {
+                branch.Use(ChallengeIfUnauthenticated);
+
+                if (environment.IsDevelopment())
+                {
+                    branch.UseSpa(spa => spa.UseProxyToSpaDevelopmentServer(DevelopmentServerUri));
+                }
+                else
+                {
+                    branch.UseSpaStaticFiles();
+                }
+            });
 
         return application;
+    }
+
+    private static async Task ChallengeIfUnauthenticated(HttpContext context, RequestDelegate next)
+    {
+        if (context.User.Identity?.IsAuthenticated != true)
+        {
+            await context.ChallengeAsync(OpenIdConnectDefaults.AuthenticationScheme);
+            return;
+        }
+
+        await next(context);
     }
 }

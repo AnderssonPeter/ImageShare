@@ -127,12 +127,14 @@ Generated from `PLAN.md`. Check off items as you complete them.
 - [x] Error boundaries that handles common errors like 404, 403 and so on
 - [x] `sonner` toasts: download started, link copied, token generated
 - [x] Review code for React-Compiler friendliness (stable refs, no unnecessary `useMemo`)
-- [X] Run `pnpm lint` (oxlint) and `tsc -b`; fix any issues
+- [x] Run `pnpm lint` (oxlint) and `tsc -b`; fix any issues
 - [x] Preload the random image when changing folder, before changing it
-- [ ] The share dialog should show a loading animation using suspense when fetching the root folders
 
 ## Phase 9 - Extra features
 
 - [ ] Add cast functionality to chrome cast or airplay (Create a plan first of what changes to make)
 - [ ] Add support to email share url
+  - Move QR generation to backend
+  - Add smtp support in backend
+  - Add endpoint to check if smtp is enabled
 - [ ] Create a better icon

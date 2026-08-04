@@ -113,7 +113,7 @@ todo:
   [ ] Fork WritableFileProvider and add cancellationToken to ReadAsBytesAsync
   [X] Write openapi spec to disk on build
   [X] Include full path in /content and /content/{path}
-  [ ] Require the user to be logged in to get the frontend!
+  [X] Require the user to be logged in to get the frontend!
   [X] Add frontend proxy
   [ ] Chrome MCP server? / Playwright MCP
   [ ] Download log

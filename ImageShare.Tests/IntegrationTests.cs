@@ -191,6 +191,37 @@ public class IntegrationTests
     }
 
     [Test]
+    public async Task Spa_UnauthenticatedRequest_TriggersOpenIdConnectChallenge()
+    {
+        // Arrange — an unauthenticated client hitting the SPA root (no matched endpoint)
+        using var app = new TestApp();
+        var client = app.Factory.CreateClient();
+
+        // Act
+        var response = await client.GetAsync("/");
+
+        // Assert — the SPA gate challenges with OpenID Connect, redirecting to the provider
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Redirect);
+        var location = response.Headers.Location?.ToString();
+        await Assert.That(location).StartsWith("https://test-authority/authorize");
+    }
+
+    [Test]
+    public async Task Spa_AuthenticatedRequest_DoesNotChallenge()
+    {
+        // Arrange — an authenticated client (API key) is not challenged by the SPA gate
+        using var app = new TestApp();
+
+        // Act
+        var response = await app.Client.GetAsync("/");
+
+        // Assert — no challenge is issued; with no compiled SPA assets the request is not a redirect
+        // to the identity provider.
+        await Assert.That(response.StatusCode).IsNotEqualTo(HttpStatusCode.Redirect);
+        await Assert.That(response.Headers.Location).IsNull();
+    }
+
+    [Test]
     public async Task RateLimit_UnauthenticatedJwtLogin_ExceedsLimit_Returns429()
     {
         // Arrange — the test factory sets PermitLimit=3, WindowSeconds=60
