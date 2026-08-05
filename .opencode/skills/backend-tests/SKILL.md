@@ -23,7 +23,7 @@ Backend tests live in `/app/ImageShare.Tests` and use **TUnit** (load the `cshar
 
 ## Structure & style
 
-- Follow the **Arrange / Act / Assert** pattern with explicit `// Arrange`, `// Act`, `// Assert` comments.
+- Follow the **Arrange / Act / Assert** pattern with explicit `// Arrange`, `// Act`, `// Assert` or // Act & Assert comments.
 - When possible and where it makes sense, use parameterized unit tests (TUnit `[Arguments]` / `[MethodData]` / `[ClassData]`).
 
 ## Supporting types in the test project

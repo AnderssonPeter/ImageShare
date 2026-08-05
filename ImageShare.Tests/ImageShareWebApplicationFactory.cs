@@ -1,4 +1,5 @@
 ﻿using ImageShare.Authentication;
+using ImageShare.UsageAgreement;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -17,6 +18,8 @@ public sealed class ImageShareWebApplicationFactory : WebApplicationFactory<Prog
 
     public InMemoryFileProvider FileProvider { get; } = new();
 
+    public UsageAgreementText[] Agreements { get; set; } = [];
+
     public HttpClient CreateClientWithApiKey()
     {
         var client = CreateClient();
@@ -30,7 +33,7 @@ public sealed class ImageShareWebApplicationFactory : WebApplicationFactory<Prog
 
         builder.ConfigureAppConfiguration((context, config) =>
         {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
+            var settings = new Dictionary<string, string?>
             {
                 ["OpenIdConnect:Authority"] = "https://test-authority",
                 ["OpenIdConnect:ClientId"] = "test-client-id",
@@ -46,7 +49,15 @@ public sealed class ImageShareWebApplicationFactory : WebApplicationFactory<Prog
                 ["Storage:BasePath"] = "images",
                 ["RateLimit:PermitLimit"] = "3",
                 ["RateLimit:WindowSeconds"] = "60",
-            });
+            };
+
+            for (var index = 0; index < Agreements.Length; index++)
+            {
+                settings[$"UsageAgreement:Agreements:{index}:Language"] = Agreements[index].Language;
+                settings[$"UsageAgreement:Agreements:{index}:Text"] = Agreements[index].Text;
+            }
+
+            config.AddInMemoryCollection(settings);
         });
 
         builder.ConfigureTestServices(services =>

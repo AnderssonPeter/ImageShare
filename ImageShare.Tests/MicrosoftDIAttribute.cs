@@ -1,6 +1,7 @@
 ﻿using ImageShare.Authentication;
 using ImageShare.Browsing;
 using ImageShare.ImageConversion;
+using ImageShare.UsageAgreement;
 using Mediator;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
@@ -66,6 +67,8 @@ public class MicrosoftDIAttribute : DependencyInjectionDataSourceAttribute<IServ
             .AddSingleton<TestImageFactory>()
             .AddScoped<TestUser>()
             .AddScoped<IUser>(sp => sp.GetRequiredService<TestUser>())
+            .AddScoped<TestUsageAgreement>()
+            .AddScoped<IUsageAgreement>(sp => sp.GetRequiredService<TestUsageAgreement>())
             .BuildServiceProvider();
     }
 }

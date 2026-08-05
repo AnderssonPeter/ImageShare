@@ -5,6 +5,7 @@ using ImageShare.Errors;
 using ImageShare.Health;
 using ImageShare.ImageConversion;
 using ImageShare.Spa;
+using ImageShare.UsageAgreement;
 using Mediator;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
@@ -14,6 +15,7 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddImageShareOpenApi();
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default));
 builder.Services.AddCustomErrors();
@@ -30,6 +32,7 @@ builder.Services.AddSingleton<ImageShare.Browsing.ImageEnumerator>();
 builder.Services.AddOptions<StorageOptions>().BindConfiguration("Storage").Validated();
 builder.Services.AddOptions<ImageFormatOptions>().BindConfiguration("ImageFormats").Validated();
 builder.Services.AddSpaHosting();
+builder.Services.AddUsageAgreement();
 builder.Services.AddSingleton<IContentTypeProvider>(serviceProvider =>
 {
     var provider = new FileExtensionContentTypeProvider();
@@ -87,5 +90,6 @@ api.MapHealthEndpoints();
 api.MapAuthEndpoints();
 api.MapTokenEndpoints();
 api.MapContentEndpoints();
+api.MapUsageAgreementEndpoints();
 
 await app.RunAsync();

@@ -9,7 +9,7 @@ using Mirality.FileProviders;
 namespace ImageShare.Tests;
 
 [MicrosoftDI]
-public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMediator mediator, ImageEnumerator imageEnumerator, TestUser user, TestImageFactory imageFactory)
+public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMediator mediator, ImageEnumerator imageEnumerator, TestUser user, TestUsageAgreement usageAgreement, TestImageFactory imageFactory)
 {
     private const int Page = 1;
     private const int PageSize = 50;
@@ -575,6 +575,35 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         // Assert
         var entry = archive.Entries.Single();
         await Assert.That(entry.CompressedLength).IsEqualTo(entry.Length);
+    }
+
+    [Test]
+    public async Task DownloadImages_UsageAgreementNotAccepted_ReturnsForbidden()
+    {
+        // Arrange
+        fileProvider.AddFile("vacation/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        user.Allow("vacation");
+        usageAgreement.IsEnabled = true;
+        usageAgreement.IsAccepted = false;
+
+        // Act & Assert
+        await Assert.That(async () => await mediator.Send(new DownloadImagesQuery(new RelativePath("vacation"), []))).Throws<UsageAgreementNotAcceptedException>();
+    }
+
+    [Test]
+    public async Task DownloadImages_UsageAgreementAccepted_ReturnsZip()
+    {
+        // Arrange
+        fileProvider.AddFile("vacation/photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        user.Allow("vacation");
+        usageAgreement.IsEnabled = true;
+        usageAgreement.IsAccepted = true;
+
+        // Act
+        var result = await mediator.Send(new DownloadImagesQuery(new RelativePath("vacation"), []));
+
+        // Assert
+        await Assert.That(result).IsNotNull();
     }
 
     [Test]
@@ -1178,5 +1207,35 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         // Assert
         await Assert.That(result.IsStatusCode(200)).IsTrue();
         await Assert.That(result.GetContentType()).IsEqualTo("image/jpeg");
+    }
+
+    [Test]
+    public async Task ServeImage_FullImage_UsageAgreementNotAccepted_ReturnsForbidden()
+    {
+        // Arrange
+        fileProvider.Write("photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        user.Allow("vacation");
+        usageAgreement.IsEnabled = true;
+        usageAgreement.IsAccepted = false;
+
+        // Act & Assert
+        await Assert.That(async () => await mediator.Send(new ServeImageQuery(new RelativePath("photo"), "", false))).Throws<UsageAgreementNotAcceptedException>();
+    }
+
+    [Test]
+    public async Task ServeImage_Thumbnail_UsageAgreementNotAccepted_IsAllowed()
+    {
+        // Arrange
+        fileProvider.Write("photo.avif", imageFactory.CreateTestImage(MagickFormat.Avif));
+        fileProvider.AddFile("photo.thumb.jpg", imageFactory.CreateTestImage(10, 10, MagickFormat.Jpeg));
+        user.Allow("vacation");
+        usageAgreement.IsEnabled = true;
+        usageAgreement.IsAccepted = false;
+
+        // Act
+        var result = await mediator.Send(new ServeImageQuery(new RelativePath("photo"), "image/jpeg", true));
+
+        // Assert
+        await Assert.That(result.IsStatusCode(200)).IsTrue();
     }
 }

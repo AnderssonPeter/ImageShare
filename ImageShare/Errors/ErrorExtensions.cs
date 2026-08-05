@@ -38,6 +38,7 @@ public static class ErrorExtensions
         FolderAccessDeniedException => StatusCodes.Status403Forbidden,
         NotFoundException => StatusCodes.Status404NotFound,
         NotAcceptableException => StatusCodes.Status406NotAcceptable,
+        UsageAgreementNotAcceptedException => StatusCodes.Status403Forbidden,
         _ => StatusCodes.Status500InternalServerError,
     };
 }

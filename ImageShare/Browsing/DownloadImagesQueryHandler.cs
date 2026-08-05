@@ -1,6 +1,7 @@
 ﻿using System.IO.Compression;
 using ImageShare.Authentication;
 using ImageShare.Errors;
+using ImageShare.UsageAgreement;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.FileProviders;
@@ -9,7 +10,8 @@ namespace ImageShare.Browsing;
 
 internal sealed class DownloadImagesQueryHandler(
     ImageEnumerator imageEnumerator,
-    IUser user)
+    IUser user,
+    IUsageAgreement usageAgreement)
     : IQueryHandler<DownloadImagesQuery, PushStreamHttpResult>
 {
     public ValueTask<PushStreamHttpResult> Handle(
@@ -23,6 +25,7 @@ internal sealed class DownloadImagesQueryHandler(
         }
 
         user.EnsureCanAccessFolder(request.Folder);
+        usageAgreement.EnsureAccepted();
 
         var imageFiles = imageEnumerator.EnumerateImages(request.Folder, recursive: true)
             .Where(file => format.Matches(file.Path.Extension))
