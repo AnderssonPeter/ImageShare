@@ -3,6 +3,7 @@ import { type ReactNode, StrictMode } from "react";
 import { queryClient, router } from "./router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
+import UsageAgreementGate from "@components/UsageAgreementGate";
 import { createRoot } from "react-dom/client";
 import { registerErrorInterceptor } from "@lib/api/httpClient";
 
@@ -17,6 +18,7 @@ const children: ReactNode = (
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
+      <UsageAgreementGate />
     </QueryClientProvider>
   </StrictMode>
 );
