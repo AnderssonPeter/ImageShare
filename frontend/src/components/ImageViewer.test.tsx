@@ -63,6 +63,7 @@ function renderViewer(props: {
   folderPath?: string;
   imageName: string;
   onClose?: () => void;
+  onShare?: () => void;
 }): void {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   function Wrapper({ children }: { children: ReactNode }) {
@@ -74,6 +75,7 @@ function renderViewer(props: {
         folderPath={props.folderPath}
         imageName={props.imageName}
         onClose={props.onClose ?? noop}
+        onShare={props.onShare}
       />
     </Wrapper>,
   );
@@ -166,6 +168,35 @@ describe("imageViewer keyboard navigation", () => {
 
     // Assert
     expect(onClose).not.toHaveBeenCalled();
+  }, 2000);
+});
+
+describe("imageViewer share button", () => {
+  it("fires onShare when the share button is clicked", async () => {
+    expect.assertions(1);
+    // Arrange
+    setupContent([imageEntry("a", "a.jpg")]);
+    const onShare = vi.fn<() => void>();
+
+    // Act
+    renderViewer({ folderPath: "photos", imageName: "a", onShare });
+    fireEvent.click(await screen.findByRole("button", { name: "Share image" }));
+
+    // Assert
+    expect(onShare).toHaveBeenCalledTimes(1);
+  }, 2000);
+
+  it("does not render a share button when onShare is not provided", async () => {
+    expect.assertions(1);
+    // Arrange
+    setupContent([imageEntry("a", "a.jpg")]);
+
+    // Act
+    renderViewer({ folderPath: "photos", imageName: "a" });
+    await screen.findByAltText("a");
+
+    // Assert
+    expect(screen.queryByRole("button", { name: "Share image" })).toBeNull();
   }, 2000);
 });
 

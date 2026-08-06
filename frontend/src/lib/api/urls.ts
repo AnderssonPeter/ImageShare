@@ -92,18 +92,33 @@ export function downloadUrl(folder: string, formats: readonly string[]): string 
     : `/api/content/download/${encodePath(folder)}`;
 }
 
-/**
- * Build the absolute shareable sign-in URL for `GET /authentication/login/jwt/{token}`.
- *
- * Unlike the other builders (which return relative paths for `<img src>` /
- * `<a href>`), this returns an absolute URL because it is encoded into a QR
- * code and copied to the clipboard — both need an origin the recipient's device
- * can reach.
- *
- * @param token  - The JWT string returned by the token-generation endpoint.
- * @param origin - The current page origin (e.g. `https://imageshare.example`).
- * @returns An absolute sign-in URL.
- */
-export function buildShareUrl(token: string, origin: string): string {
-  return `${origin}/api/authentication/login/jwt/${token}`;
+export function buildShareUrl(token: string, origin: string, returnUrl?: string): string {
+  const base = `${origin}/api/authentication/login/jwt/${token}`;
+  if (returnUrl === undefined || returnUrl === "") {
+    return base;
+  }
+  return `${base}?returnUrl=${encodeURIComponent(returnUrl)}`;
+}
+
+export function trimReturnUrl(input: string): string {
+  const trimmed = input.trim();
+  if (trimmed === "") {
+    return "";
+  }
+  if (trimmed.includes("://")) {
+    return pathFromAbsoluteUrl(trimmed);
+  }
+  if (trimmed.startsWith("//")) {
+    return pathFromAbsoluteUrl(`http:${trimmed}`);
+  }
+  return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+}
+
+function pathFromAbsoluteUrl(absolute: string): string {
+  try {
+    const url = new URL(absolute);
+    return url.pathname + url.search + url.hash;
+  } catch {
+    return absolute.startsWith("/") ? absolute : `/${absolute}`;
+  }
 }

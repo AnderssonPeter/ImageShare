@@ -1,48 +1,43 @@
-/**
- * ShareButton — admin share-link trigger.
- *
- * Orchestrates the share-link flow: the trigger button + form dialog
- * (`ShareFormDialog`) and the success result dialog (`ShareLinkResult`).
- * Token generation is handled by the `useShareMutation` hook; this component
- * only wires open-state and renders the two dialogs.
- *
- * Visibility is gated on `user.isAdmin` in the app bar (Phase 7 item 6).
- */
-import { useCallback, useState } from "react";
-import ShareFormDialog from "@components/ShareFormDialog";
-import ShareLinkResult from "@components/ShareLinkResult";
-import { useShareMutation } from "@lib/api/useShareMutation";
+import Button from "@components/ui/Button";
+import { Share } from "lucide-react";
+import { cva } from "class-variance-authority";
+import { tw } from "@lib/utils";
+
+const ICON_CLASS = tw`size-4`;
+const OVERLAY_CLASS = tw`absolute top-2 left-2 z-10 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70`;
+
+const shareButtonVariants = cva("", {
+  variants: { variant: { "app-bar": "", overlay: OVERLAY_CLASS } },
+  defaultVariants: { variant: "app-bar" },
+});
 
 interface ShareButtonProps {
-  /** Fired with the JWT once the token endpoint returns one. */
-  onToken?: (token: string) => void;
+  onClick: (() => void) | undefined;
+  variant: "app-bar" | "overlay";
+  ariaLabel?: string;
 }
 
-export default function ShareButton({ onToken }: ShareButtonProps): React.JSX.Element {
-  const [formOpen, setFormOpen] = useState(false);
-  const { token, submitError, isPending, handleGenerate, handleFormClose, handleResultClose } =
-    useShareMutation(onToken, () => setFormOpen(false));
-  const handleFormOpenChange = useCallback(
-    (open: boolean) => {
-      setFormOpen(open);
-      if (!open) {
-        handleFormClose();
-      }
-    },
-    [handleFormClose],
-  );
+export default function ShareButton({
+  onClick,
+  variant,
+  ariaLabel = "Share",
+}: ShareButtonProps): React.JSX.Element | undefined {
+  if (onClick === undefined) {
+    return;
+  }
+  const className =
+    variant === "app-bar"
+      ? Button.buttonVariants({ variant: "ghost", size: "icon-sm" })
+      : shareButtonVariants({ variant });
   return (
-    <>
-      <ShareFormDialog
-        open={formOpen}
-        onOpenChange={handleFormOpenChange}
-        onGenerate={handleGenerate}
-        submitError={submitError}
-        isSubmitting={isPending}
-      />
-      {token !== undefined && (
-        <ShareLinkResult token={token} open onOpenChange={handleResultClose} />
-      )}
-    </>
+    <Button
+      variant="ghost"
+      className={className}
+      size="icon-sm"
+      onClick={onClick}
+      aria-label={ariaLabel}
+    >
+      <Share className={ICON_CLASS} />
+    </Button>
   );
 }

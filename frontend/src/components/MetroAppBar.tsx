@@ -5,52 +5,30 @@
  * design system) with three regions:
  *  - Left:   the ImageShare logo + app title.
  *  - Centre: a `breadcrumb` slot (supplied by the active route).
- *  - Right:  theme toggle, admin button (gated on `user.isAdmin`), and a
+ *  - Right:  theme toggle, share button (gated on `user.isAdmin`), and a
  *            user chip showing the signed-in user's name.
  *
  * The bar is a presentational shell — it takes `user` and `breadcrumb` as
- * props so it can be tested in isolation before the router context (Phase 4)
- * is wired up. Page content is rendered below the bar via `children`.
+ * props so it can be tested in isolation. Page content is rendered below the
+ * bar via `children`.
  */
-import { CircleUserRound, Shield } from "lucide-react";
-import Button from "@components/ui/Button";
-import Logo from "@components/Logo";
+import { CircleUserRound } from "lucide-react";
 import { type ReactNode } from "react";
+import { type User } from "@lib/api/generated";
+import Logo from "@components/Logo";
 import ShareButton from "@components/ShareButton";
 import ThemeToggle from "@components/ThemeToggle";
-import Tooltip from "@components/ui/Tooltip";
-import { type User } from "@lib/api/generated";
-
-interface AdminButtonProps {
-  visible: boolean;
-}
-
-function AdminButton({ visible }: AdminButtonProps) {
-  if (!visible) {
-    return;
-  }
-  return (
-    <Tooltip.Tooltip>
-      <Tooltip.TooltipTrigger
-        className={Button.buttonVariants({ variant: "ghost", size: "icon" })}
-        aria-label="Admin"
-      >
-        <Shield className="size-4" />
-      </Tooltip.TooltipTrigger>
-      <Tooltip.TooltipContent>Admin</Tooltip.TooltipContent>
-    </Tooltip.Tooltip>
-  );
-}
 
 interface ShareButtonSlotProps {
   visible: boolean;
+  onShare: (() => void) | undefined;
 }
 
-function ShareButtonSlot({ visible }: ShareButtonSlotProps) {
+function ShareButtonSlot({ visible, onShare }: ShareButtonSlotProps) {
   if (!visible) {
     return;
   }
-  return <ShareButton />;
+  return <ShareButton onClick={onShare} variant="app-bar" />;
 }
 
 function UserChip({ name }: { name: string | undefined }) {
@@ -80,14 +58,14 @@ function AppBarBreadcrumb({ breadcrumb }: { breadcrumb: ReactNode }) {
 
 interface AppBarRightProps {
   user: User;
+  onShare: (() => void) | undefined;
 }
 
-function AppBarRight({ user }: AppBarRightProps) {
+function AppBarRight({ user, onShare }: AppBarRightProps): React.JSX.Element {
   return (
     <div className="flex shrink-0 items-center gap-1">
       <ThemeToggle />
-      <ShareButtonSlot visible={user.isAdmin === true} />
-      <AdminButton visible={user.isAdmin === true} />
+      <ShareButtonSlot visible={user.isAdmin === true} onShare={onShare} />
       <UserChip name={user.name ?? undefined} />
     </div>
   );
@@ -96,10 +74,12 @@ function AppBarRight({ user }: AppBarRightProps) {
 export default function MetroAppBar({
   user,
   breadcrumb,
+  onShare,
   children,
 }: {
   user: User;
   breadcrumb?: ReactNode;
+  onShare?: () => void;
   children: ReactNode;
 }): React.JSX.Element {
   return (
@@ -107,7 +87,7 @@ export default function MetroAppBar({
       <header className="flex h-12 items-center gap-3 border-b border-border bg-background px-4">
         <AppBarLeft />
         <AppBarBreadcrumb breadcrumb={breadcrumb} />
-        <AppBarRight user={user} />
+        <AppBarRight user={user} onShare={onShare} />
       </header>
       <main className="flex-1">{children}</main>
     </div>

@@ -11,6 +11,8 @@ import { toast } from "sonner";
 interface ShareLinkResultProps {
   /** The JWT string returned by the token-generation endpoint. */
   token: string;
+  /** Optional site-relative path appended as `?returnUrl=` to the sign-in URL. */
+  returnUrl?: string;
   /** Whether the result dialog is open. */
   open: boolean;
   /** Open-state setter for the controlling trigger. */
@@ -153,11 +155,12 @@ function ShareActions({ url, svgRef }: ShareActionsProps): React.JSX.Element {
 
 export default function ShareLinkResult({
   token,
+  returnUrl,
   open,
   onOpenChange,
 }: ShareLinkResultProps): React.JSX.Element {
   const svgRef = useRef<SVGSVGElement>(null);
-  const shareUrl = buildShareUrl(token, globalThis.location.origin);
+  const shareUrl = buildShareUrl(token, globalThis.location.origin, returnUrl);
   return (
     <Dialog.Dialog open={open} onOpenChange={onOpenChange}>
       <Dialog.DialogContent>

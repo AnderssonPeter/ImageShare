@@ -133,8 +133,8 @@ Generated from `PLAN.md`. Check off items as you complete them.
 ## Phase 9 - Extra features
 
 - [x] Add a route/route parameter that tracks what image is open when a image has been clicked or changed from the carousel, this way a permalink can be created to a specific image
-- [ ] In the share dialog, there is now support for return url, add the ability to manually enter a url (ensure to trim protocol and domain before creating the link) also add support for using the current path, add a share button in the image viewer that sets the path to the current image.
-- [ ] The share function should clear after generating a link
+- [x] In the share dialog, there is now support for return url, add the ability to manually enter a url (ensure to trim protocol and domain before creating the link) also add support for using the current path, add a share button in the image viewer that sets the path to the current image.
+- [x] The share function should reset after generating a link or being closed
 - [ ] Add cast functionality to chrome cast or airplay (Create a plan first of what changes to make)
 - [x] Add support to email share url
   - Move QR generation to backend

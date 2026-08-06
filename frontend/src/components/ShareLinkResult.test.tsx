@@ -59,8 +59,15 @@ function stubResolvedQrFile(): File {
   return file;
 }
 
-function renderResult(): void {
-  render(<ShareLinkResult token={TOKEN} open onOpenChange={vi.fn<(open: boolean) => void>()} />);
+function renderResult(returnUrl?: string): void {
+  render(
+    <ShareLinkResult
+      token={TOKEN}
+      returnUrl={returnUrl}
+      open
+      onOpenChange={vi.fn<(open: boolean) => void>()}
+    />,
+  );
 }
 
 describe("shareLinkResult renders the QR code", () => {
@@ -134,6 +141,26 @@ describe("shareLinkResult close", () => {
     // Assert
     expect(onOpenChange.mock.calls[0]?.[0]).toBe(false);
   }, 1000);
+});
+
+describe("shareLinkResult return URL", () => {
+  it("encodes the return URL into the copied share link", async () => {
+    expect.hasAssertions();
+    // Arrange
+    stubLocation();
+    stubClipboard();
+    writeText.mockReset();
+    writeText.mockResolvedValue();
+    // Act
+    renderResult("/browse/photos?image=cat.jpg");
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+    // Assert
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        `${SHARE_URL}?returnUrl=${encodeURIComponent("/browse/photos?image=cat.jpg")}`,
+      );
+    });
+  }, 2000);
 });
 
 describe("shareLinkResult send to email", () => {

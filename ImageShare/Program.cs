@@ -79,6 +79,7 @@ if (app.Environment.IsDevelopment())
         options.Telemetry = false;
         options.Theme = ScalarTheme.Solarized;
         options.ShowDeveloperTools = DeveloperToolsVisibility.Never;
+        options.HideClientButton = true;
         options.Agent = new ScalarAgentOptions
         {
             Disabled = true

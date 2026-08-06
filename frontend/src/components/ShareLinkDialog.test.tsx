@@ -6,7 +6,12 @@ import Dialog from "@components/ui/Dialog";
 import { type ReactNode } from "react";
 import ShareLinkDialog from "@components/ShareLinkDialog";
 
-type GenerateHandler = (params: { name: string; filter: string; endDate: string }) => void;
+type GenerateHandler = (params: {
+  name: string;
+  filter: string;
+  endDate: string;
+  returnUrl: string;
+}) => void;
 
 const FUTURE_DATE = "2099-12-31T23:59";
 
@@ -39,7 +44,7 @@ function renderOpenDialog(onGenerate: GenerateHandler): void {
 
 function renderOpenDialogWithOptions(
   onGenerate: GenerateHandler,
-  options: { submitError?: string; isSubmitting?: boolean },
+  options: { submitError?: string; isSubmitting?: boolean; initialReturnUrl?: string },
 ): void {
   mockGetContent.mockReset();
   mockGetContent.mockResolvedValue(contentResponse());
@@ -53,6 +58,7 @@ function renderOpenDialogWithOptions(
         onGenerate={onGenerate}
         submitError={options.submitError}
         isSubmitting={options.isSubmitting}
+        initialReturnUrl={options.initialReturnUrl}
       />
     </Dialog.Dialog>,
     { wrapper: Wrapper },
@@ -60,15 +66,22 @@ function renderOpenDialogWithOptions(
 }
 
 describe("shareLinkDialog form fields", () => {
-  it("renders Name, the Filter builder, and End date inputs", async () => {
+  it("renders Name, the Filter builder, End date, and Return URL inputs", () => {
     expect.assertions(4);
     // Arrange + Act
     renderOpenDialog(vi.fn<GenerateHandler>());
-    // Assert — Name and End date inputs plus the All folders checkbox render immediately
+    // Assert — Name, End date, and Return URL inputs plus the All folders checkbox render immediately
     expect(screen.getByLabelText("Name")).toBeInTheDocument();
     expect(screen.getByLabelText("End date")).toBeInTheDocument();
+    expect(screen.getByLabelText("Return URL")).toBeInTheDocument();
     expect(screen.getByLabelText("All folders")).toBeInTheDocument();
-    // The root-folder rows appear once the content query resolves
+  }, 2000);
+
+  it("renders the root-folder rows once the content query resolves", async () => {
+    expect.assertions(1);
+    // Arrange
+    renderOpenDialog(vi.fn<GenerateHandler>());
+    // Act + Assert
     await waitFor(() => {
       expect(screen.getByLabelText("photos")).toBeInTheDocument();
     });
@@ -76,7 +89,7 @@ describe("shareLinkDialog form fields", () => {
 });
 
 describe("shareLinkDialog validation", () => {
-  it("shows errors for all empty fields on submit", async () => {
+  it("shows errors for all empty required fields on submit", async () => {
     expect.hasAssertions();
     // Arrange
     renderOpenDialog(vi.fn<GenerateHandler>());
@@ -160,7 +173,7 @@ describe("shareLinkDialog submit error", () => {
 });
 
 describe("shareLinkDialog submission", () => {
-  it("calls onGenerate with the selected filter when the form is valid", async () => {
+  it("calls onGenerate with the selected filter and an empty return URL", async () => {
     expect.hasAssertions();
     // Arrange
     const onGenerate = vi.fn<GenerateHandler>();
@@ -179,6 +192,7 @@ describe("shareLinkDialog submission", () => {
         name: "Test User",
         filter: "photos",
         endDate: FUTURE_DATE,
+        returnUrl: "",
       });
     });
   }, 2000);
@@ -203,7 +217,57 @@ describe("shareLinkDialog submission", () => {
         name: "Test",
         filter: "*|!photos",
         endDate: FUTURE_DATE,
+        returnUrl: "",
       });
     });
   }, 2000);
+});
+
+function fillValidBaseFields(): void {
+  fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Test" } });
+  fireEvent.click(screen.getByLabelText("All folders"));
+  fireEvent.change(screen.getByLabelText("End date"), { target: { value: FUTURE_DATE } });
+}
+
+async function waitForFolders(): Promise<void> {
+  await waitFor(() => {
+    expect(screen.getByLabelText("photos")).toBeInTheDocument();
+  });
+}
+
+function assertGenerated(onGenerate: GenerateHandler, returnUrl: string): void {
+  expect(onGenerate).toHaveBeenCalledWith({
+    name: "Test",
+    filter: "*",
+    endDate: FUTURE_DATE,
+    returnUrl,
+  });
+}
+
+describe("shareLinkDialog return URL", () => {
+  it("trims protocol and domain from a full URL on submit", async () => {
+    expect.hasAssertions();
+    // Arrange
+    const onGenerate = vi.fn<GenerateHandler>();
+    renderOpenDialog(onGenerate);
+    await waitForFolders();
+    // Act
+    fillValidBaseFields();
+    fireEvent.change(screen.getByLabelText("Return URL"), {
+      target: { value: "https://imageshare.example/browse/photos?image=cat.jpg" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+    // Assert
+    await waitFor(() => assertGenerated(onGenerate, "/browse/photos?image=cat.jpg"));
+  }, 2000);
+
+  it("prefills the Return URL field from initialReturnUrl", () => {
+    expect.assertions(1);
+    // Arrange + Act
+    renderOpenDialogWithOptions(vi.fn<GenerateHandler>(), {
+      initialReturnUrl: "/browse/photos?image=cat.jpg",
+    });
+    // Assert
+    expect(screen.getByLabelText("Return URL")).toHaveValue("/browse/photos?image=cat.jpg");
+  }, 1000);
 });

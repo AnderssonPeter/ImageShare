@@ -4,6 +4,7 @@ import {
   imageUrl,
   randomFolderUrl,
   randomRootUrl,
+  trimReturnUrl,
 } from "@lib/api/urls";
 import { describe, expect, it } from "vitest";
 
@@ -76,5 +77,52 @@ describe("buildShareUrl builder", () => {
     expect(buildShareUrl("eyJ.token.sig", "https://imageshare.example")).toBe(
       "https://imageshare.example/api/authentication/login/jwt/eyJ.token.sig",
     );
+  }, 1000);
+
+  it("appends the encoded return URL when provided", () => {
+    expect.assertions(1);
+    // Arrange + Act + Assert
+    expect(
+      buildShareUrl("eyJ.token.sig", "https://imageshare.example", "/browse/photos?image=cat.jpg"),
+    ).toBe(
+      "https://imageshare.example/api/authentication/login/jwt/eyJ.token.sig?returnUrl=%2Fbrowse%2Fphotos%3Fimage%3Dcat.jpg",
+    );
+  }, 1000);
+
+  it("omits the return URL query when it is empty", () => {
+    expect.assertions(1);
+    // Arrange + Act + Assert
+    expect(buildShareUrl("tok", "https://host", "")).toBe(
+      "https://host/api/authentication/login/jwt/tok",
+    );
+  }, 1000);
+});
+
+describe("return URL normalization", () => {
+  it("returns an empty string for blank input", () => {
+    expect.assertions(1);
+    expect(trimReturnUrl("   ")).toBe("");
+  }, 1000);
+
+  it("trims protocol and domain from a full URL", () => {
+    expect.assertions(1);
+    expect(trimReturnUrl("https://imageshare.example/browse/photos?image=cat.jpg#top")).toBe(
+      "/browse/photos?image=cat.jpg#top",
+    );
+  }, 1000);
+
+  it("trims the host from a protocol-relative URL", () => {
+    expect.assertions(1);
+    expect(trimReturnUrl("//imageshare.example/browse/x")).toBe("/browse/x");
+  }, 1000);
+
+  it("keeps an absolute path as-is", () => {
+    expect.assertions(1);
+    expect(trimReturnUrl("/browse/photos")).toBe("/browse/photos");
+  }, 1000);
+
+  it("adds a leading slash to a bare path", () => {
+    expect.assertions(1);
+    expect(trimReturnUrl("browse/photos")).toBe("/browse/photos");
   }, 1000);
 });

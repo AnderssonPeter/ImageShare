@@ -1,8 +1,11 @@
+import { createFileRoute, useLocation } from "@tanstack/react-router";
 import ContentGrid from "@components/ContentGrid";
 import ImageViewer from "@components/ImageViewer";
-import { createFileRoute } from "@tanstack/react-router";
 import { folderContentQueryOptions } from "@lib/api/contentQueries";
 import { useBrowseNavigation } from "@lib/browseNavigation";
+import { useCallback } from "react";
+import { useShareDialog } from "@lib/shareDialogContext";
+import { useUser } from "@lib/userContext";
 
 /** Search params for the browse route — `image` is the open image's filename (permalink). */
 interface BrowseSearch {
@@ -29,8 +32,13 @@ export const Route = createFileRoute("/browse/$")({
 function BrowseComponent(): React.JSX.Element {
   const { _splat } = Route.useParams();
   const { image } = Route.useSearch();
+  const { data: user } = useUser();
   const path = splatToRelativePath(_splat) || undefined;
   const { navigateFolder, openImage, changeImage, closeImage } = useBrowseNavigation(_splat);
+  const { openShare } = useShareDialog();
+  const location = useLocation();
+  const handleShareImage = useCallback(() => openShare(location.href), [openShare, location.href]);
+  const onShare = user?.isAdmin === true ? handleShareImage : undefined;
   return (
     <>
       <ContentGrid path={path} onNavigateFolder={navigateFolder} onImageOpen={openImage} />
@@ -40,6 +48,7 @@ function BrowseComponent(): React.JSX.Element {
           imageName={image}
           onImageChange={changeImage}
           onClose={closeImage}
+          onShare={onShare}
         />
       )}
     </>

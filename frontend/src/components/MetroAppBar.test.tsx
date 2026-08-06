@@ -8,6 +8,7 @@ import { type User } from "@lib/api/generated";
 import setupThemeEnvironment from "@test/themeEnvironment";
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function noopShare(): void {}
 
 function authenticatedUser(overrides: Partial<User> = {}): User {
   return { isAuthenticated: true, isAdmin: false, name: "Jane", ...overrides };
@@ -25,11 +26,17 @@ interface RenderOptions {
   user?: User;
   breadcrumb?: ReactNode;
   children?: ReactNode;
+  onShare?: () => void;
 }
 
-function renderAppBar({ user = authenticatedUser(), breadcrumb, children }: RenderOptions = {}) {
+function renderAppBar({
+  user = authenticatedUser(),
+  breadcrumb,
+  children,
+  onShare,
+}: RenderOptions = {}) {
   return render(
-    <MetroAppBar user={user} breadcrumb={breadcrumb}>
+    <MetroAppBar user={user} breadcrumb={breadcrumb} onShare={onShare ?? noopShare}>
       {children}
     </MetroAppBar>,
     { wrapper },
@@ -82,42 +89,6 @@ describe("metroAppBar falls back to User when name is undefined", () => {
 
     // Assert
     expect(screen.getByText("User")).toBeInTheDocument();
-  }, 1000);
-});
-
-describe("metroAppBar hides the admin button for non-admin users", () => {
-  it("does not render an admin button when isAdmin is false", () => {
-    expect.assertions(1);
-    // Arrange + Act
-    setupThemeEnvironment(false);
-    renderAppBar({ user: authenticatedUser({ isAdmin: false }) });
-
-    // Assert
-    expect(screen.queryByRole("button", { name: "Admin" })).toBeNull();
-  }, 1000);
-});
-
-describe("metroAppBar shows the admin button for admin users", () => {
-  it("renders an admin button when isAdmin is true", () => {
-    expect.assertions(1);
-    // Arrange + Act
-    setupThemeEnvironment(false);
-    renderAppBar({ user: authenticatedUser({ isAdmin: true }) });
-
-    // Assert
-    expect(screen.getByRole("button", { name: "Admin" })).toBeInTheDocument();
-  }, 1000);
-});
-
-describe("metroAppBar hides the admin button when isAdmin is undefined", () => {
-  it("does not render an admin button when isAdmin is not set", () => {
-    expect.assertions(1);
-    // Arrange + Act
-    setupThemeEnvironment(false);
-    renderAppBar({ user: authenticatedUser({ isAdmin: undefined }) });
-
-    // Assert
-    expect(screen.queryByRole("button", { name: "Admin" })).toBeNull();
   }, 1000);
 });
 
