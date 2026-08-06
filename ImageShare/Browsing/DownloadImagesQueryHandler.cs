@@ -11,13 +11,15 @@ namespace ImageShare.Browsing;
 internal sealed class DownloadImagesQueryHandler(
     ImageEnumerator imageEnumerator,
     IUser user,
-    IUsageAgreement usageAgreement)
+    IUsageAgreement usageAgreement,
+    ILogger<DownloadImagesQueryHandler> logger)
     : IQueryHandler<DownloadImagesQuery, PushStreamHttpResult>
 {
     public ValueTask<PushStreamHttpResult> Handle(
         DownloadImagesQuery request,
         CancellationToken cancellationToken)
     {
+        logger.LogInformation("Downloading {folder} in {format}", request.Folder, request.Format);
         var format = new RequestedFormat(request.Format);
         if (!format.IsSupportedBy(imageEnumerator.SupportedFormats))
         {

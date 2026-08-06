@@ -119,7 +119,7 @@ todo:
   [X] Require the user to be logged in to get the frontend!
   [X] Add frontend proxy
   [ ] Chrome MCP server? / Playwright MCP
-  [ ] Download log
+  [X] Download log
   [X] Improve logging
   [X] Reverse Proxy support for IP resolution
     [X] Add support for KnownProxies
