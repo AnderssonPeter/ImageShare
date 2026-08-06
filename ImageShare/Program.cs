@@ -4,6 +4,7 @@ using ImageShare.Browsing;
 using ImageShare.Errors;
 using ImageShare.Health;
 using ImageShare.ImageConversion;
+using ImageShare.Logging;
 using ImageShare.Spa;
 using ImageShare.UsageAgreement;
 using Mediator;
@@ -12,10 +13,17 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Mirality.FileProviders;
 using Scalar.AspNetCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSerilog((services, configuration) => configuration
+    .ReadFrom.Configuration(builder.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext());
+
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddRequestLogEnricher();
 builder.Services.AddImageShareOpenApi();
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default));
 builder.Services.AddCustomErrors();
@@ -28,6 +36,7 @@ builder.Services.AddImageConversion();
 builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
 builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuthenticationBehavior<,>));
 builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AdminBehavior<,>));
+builder.Services.AddReverseProxy();
 builder.Services.AddSingleton<ImageShare.Browsing.ImageEnumerator>();
 builder.Services.AddOptions<StorageOptions>().BindConfiguration("Storage").Validated();
 builder.Services.AddOptions<ImageFormatOptions>().BindConfiguration("ImageFormats").Validated();
@@ -79,6 +88,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCustomErrors();
+app.UseReverseProxy();
+app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.UseRateLimiting();
 app.UseAuthentication();

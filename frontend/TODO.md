@@ -132,8 +132,9 @@ Generated from `PLAN.md`. Check off items as you complete them.
 
 ## Phase 9 - Extra features
 
+- [ ] Add a route/route parameter that tracks what image is open when a image has been clicked or changed from the carousel, this way a permalink can be created to a specific image
 - [ ] Add cast functionality to chrome cast or airplay (Create a plan first of what changes to make)
-- [ ] Add support to email share url
+- [X] Add support to email share url
   - Move QR generation to backend
   - Add smtp support in backend
   - Add endpoint to check if smtp is enabled
