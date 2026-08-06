@@ -1,42 +1,19 @@
-/**
- * ImageViewer — fullscreen carousel for the images in the current folder.
- *
- * Opens at the clicked image's index. Resolves the slide list itself from
- * the shared folder-content query cache (`useFolderContent(folderPath)`)
- * so the tile stays decoupled from carousel state — `onImageOpen` only
- * carries the image's `RelativePath`, its stable identity. Each slide shows
- * the full-resolution image (`imageUrl(path, false)`); prev/next are the
- * shadcn carousel controls. Keyboard nav and zoom land in later phases.
- *
- * Progressive loading: only the clicked image loads first. Once it has
- * finished, the window expands to ±1, then ±2, then ±3 — each step waits
- * for the previous ring to finish loading before the next ring starts.
- * This means only one image is ever fetching/decoding for the very first
- * paint, then 2, then 2 more, etc., keeping the main thread free for
- * smooth carousel transitions and never starving the clicked image.
- *
- * The viewer is controlled by its parent: pass an `imagePath` to open and
- * `onClose` to dismiss (the browse route toggles `imagePath` between a
- * string and `undefined`).
- */
 import { Loader2, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Button from "@components/ui/Button";
 import Carousel from "@components/ui/Carousel";
 import { type FolderEntry } from "@lib/api/generated";
 import { type UseEmblaCarouselType } from "embla-carousel-react";
 import { imageUrl } from "@lib/api/urls";
 import { tw } from "@lib/utils";
+import { useCanLoadImages } from "@lib/api/usageAgreement";
 import { useFolderContent } from "@lib/api/contentQueries";
 
 type CarouselApi = UseEmblaCarouselType[1];
+type ReadyHandler = (api: CarouselApi | undefined) => void;
 
-/** Maximum preload window: current slide ± this many slides. */
 const MAX_RANGE = 3;
-
-/** Delay (ms) before outer rings (±2, ±3) start loading after a slide switch. */
 const OUTER_DELAY = 500;
-
 const OVERLAY_CLASS = tw`fixed inset-0 z-50 flex flex-col bg-black/95`;
 const CAROUSEL_CLASS = tw`h-full min-h-0 flex-1 [&_[data-slot=carousel-content]]:h-full`;
 const CONTENT_CLASS = tw`h-full ml-0`;
@@ -50,19 +27,23 @@ const NAV_NEXT_CLASS = tw`right-2 left-auto z-10 rounded-full bg-black/50 text-w
 const ICON_CLASS = tw`size-4`;
 
 interface ImageViewerProps {
-  /** Current folder RelativePath (undefined or empty = root listing). */
   folderPath?: string;
-  /** RelativePath of the image to open at (its index in the slide list). */
-  imagePath: string;
-  /** Fired when the viewer requests to close. */
+  imageName: string;
+  onImageChange?: (name: string) => void;
   onClose: () => void;
+}
+
+interface CarouselApiHandlerOptions {
+  images: FolderEntry[];
+  imageName: string;
+  onImageChange: ((name: string) => void) | undefined;
+  onReady: ReadyHandler;
 }
 
 function isImage(entry: FolderEntry): boolean {
   return entry.type === "File";
 }
 
-/** Largest loaded ring (0 = only current, 1 = ±1, …) where every slide in the ring is loaded. */
 function loadedRing(current: number, count: number, loaded: ReadonlySet<number>): number {
   for (let ring = 0; ring <= MAX_RANGE; ring++) {
     for (let offset = -ring; offset <= ring; offset++) {
@@ -75,17 +56,14 @@ function loadedRing(current: number, count: number, loaded: ReadonlySet<number>)
   return MAX_RANGE;
 }
 
-function ImageSlide({
-  entry,
-  index,
-  shouldLoad,
-  onLoaded,
-}: {
+interface ImageSlideProps {
   entry: FolderEntry;
   index: number;
   shouldLoad: boolean;
   onLoaded: (index: number) => void;
-}) {
+}
+
+function ImageSlide({ entry, index, shouldLoad, onLoaded }: ImageSlideProps): React.JSX.Element {
   const [loaded, setLoaded] = useState(false);
   const handleLoad = useCallback(() => {
     setLoaded(true);
@@ -107,17 +85,21 @@ function ImageSlide({
   );
 }
 
+interface ImageSlidesProps {
+  images: FolderEntry[];
+  currentIndex: number;
+  effectiveRange: number;
+  canLoadImages: boolean;
+  onSlideLoaded: (index: number) => void;
+}
+
 function ImageSlides({
   images,
   currentIndex,
   effectiveRange,
+  canLoadImages,
   onSlideLoaded,
-}: {
-  images: FolderEntry[];
-  currentIndex: number;
-  effectiveRange: number;
-  onSlideLoaded: (index: number) => void;
-}) {
+}: ImageSlidesProps): React.JSX.Element {
   return (
     <Carousel.CarouselContent className={CONTENT_CLASS}>
       {images.map((entry, index) => (
@@ -125,7 +107,7 @@ function ImageSlides({
           key={entry.path}
           entry={entry}
           index={index}
-          shouldLoad={Math.abs(index - currentIndex) <= effectiveRange}
+          shouldLoad={canLoadImages && Math.abs(index - currentIndex) <= effectiveRange}
           onLoaded={onSlideLoaded}
         />
       ))}
@@ -158,42 +140,75 @@ function useProgressiveLoading(
   return { handleSlideLoaded, effectiveRange };
 }
 
-function ImageCarousel({
-  images,
-  startIndex,
-  onCarouselReady,
-}: {
-  images: FolderEntry[];
-  startIndex: number;
-  onCarouselReady?: (api: CarouselApi | undefined) => void;
-}) {
-  const clampedStart = Math.max(0, startIndex);
-  const opts = useMemo(() => ({ startIndex: clampedStart }), [clampedStart]);
-  const [currentIndex, setCurrentIndex] = useState(clampedStart);
-  const { handleSlideLoaded, effectiveRange } = useProgressiveLoading(currentIndex, images.length);
-
-  const handleSetApi = useCallback(
+function useCarouselApiHandler(options: CarouselApiHandlerOptions): {
+  opts: { startIndex: number };
+  setApi: (api: CarouselApi) => void;
+  currentIndex: number;
+} {
+  const { images, imageName, onImageChange, onReady } = options;
+  const latestRef = useRef({ images, imageName, onImageChange });
+  latestRef.current = { images, imageName, onImageChange };
+  const startIndexRef = useRef<number | null>(null);
+  if (startIndexRef.current === null) {
+    startIndexRef.current = Math.max(
+      0,
+      images.findIndex((entry) => entry.name === imageName),
+    );
+  }
+  const startIndex = startIndexRef.current;
+  const [currentIndex, setCurrentIndex] = useState(startIndex);
+  const setApi = useCallback(
     (api: CarouselApi) => {
-      onCarouselReady?.(api);
+      onReady(api);
       if (api === undefined) {
         return;
       }
       const embla = api;
       function onSelect() {
-        setCurrentIndex(embla.selectedScrollSnap());
+        const index = embla.selectedScrollSnap();
+        setCurrentIndex(index);
+        const latest = latestRef.current;
+        const name = latest.images[index]?.name;
+        if (name !== undefined && name !== latest.imageName) {
+          latest.onImageChange?.(name);
+        }
       }
       setCurrentIndex(embla.selectedScrollSnap());
       embla.on("select", onSelect);
     },
-    [onCarouselReady],
+    [onReady],
   );
+  return { opts: useMemo(() => ({ startIndex }), [startIndex]), setApi, currentIndex };
+}
 
+interface ImageCarouselProps {
+  images: FolderEntry[];
+  imageName: string;
+  onImageChange?: (name: string) => void;
+  onCarouselReady: ReadyHandler;
+}
+
+function ImageCarousel({
+  images,
+  imageName,
+  onImageChange,
+  onCarouselReady,
+}: ImageCarouselProps): React.JSX.Element {
+  const canLoadImages = useCanLoadImages();
+  const { opts, setApi, currentIndex } = useCarouselApiHandler({
+    images,
+    imageName,
+    onImageChange,
+    onReady: onCarouselReady,
+  });
+  const { handleSlideLoaded, effectiveRange } = useProgressiveLoading(currentIndex, images.length);
   return (
-    <Carousel.Carousel opts={opts} setApi={handleSetApi} className={CAROUSEL_CLASS}>
+    <Carousel.Carousel opts={opts} setApi={setApi} className={CAROUSEL_CLASS}>
       <ImageSlides
         images={images}
         currentIndex={currentIndex}
         effectiveRange={effectiveRange}
+        canLoadImages={canLoadImages}
         onSlideLoaded={handleSlideLoaded}
       />
       <Carousel.CarouselPrevious className={NAV_BUTTON_CLASS} />
@@ -202,7 +217,7 @@ function ImageCarousel({
   );
 }
 
-function CloseButton({ onClose }: { onClose: () => void }) {
+function CloseButton({ onClose }: { onClose: () => void }): React.JSX.Element {
   return (
     <Button
       variant="ghost"
@@ -216,29 +231,13 @@ function CloseButton({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function ImageViewer({
-  folderPath,
-  imagePath,
-  onClose,
-}: ImageViewerProps): React.JSX.Element {
-  const { data } = useFolderContent(folderPath);
-  const images = useMemo(
-    () => (data?.pages.flatMap((page) => page.items) ?? []).filter((entry) => isImage(entry)),
-    [data],
-  );
-  const startIndex = images.findIndex((entry) => entry.path === imagePath);
-  const [carouselApi, setCarouselApi] = useState<CarouselApi | undefined>();
-  const handleCarouselReady = useCallback((api: CarouselApi | undefined) => {
-    setCarouselApi(api);
-  }, []);
-
+function useKeyboardNavigation(api: CarouselApi | undefined, onClose: () => void): void {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         onClose();
         return;
       }
-      const api = carouselApi;
       if (api === undefined) {
         return;
       }
@@ -248,18 +247,35 @@ export default function ImageViewer({
         api.scrollNext();
       }
     }
-
     globalThis.addEventListener("keydown", onKeyDown);
     return () => globalThis.removeEventListener("keydown", onKeyDown);
-  }, [onClose, carouselApi]);
+  }, [api, onClose]);
+}
 
+export default function ImageViewer({
+  folderPath,
+  imageName,
+  onImageChange,
+  onClose,
+}: ImageViewerProps): React.JSX.Element {
+  const { data } = useFolderContent(folderPath);
+  const images = useMemo(
+    () => (data?.pages.flatMap((page) => page.items) ?? []).filter((entry) => isImage(entry)),
+    [data],
+  );
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | undefined>();
+  const handleCarouselReady = useCallback((api: CarouselApi | undefined) => {
+    setCarouselApi(api);
+  }, []);
+  useKeyboardNavigation(carouselApi, onClose);
   return (
     <div className={OVERLAY_CLASS}>
       <CloseButton onClose={onClose} />
       {images.length > 0 && (
         <ImageCarousel
           images={images}
-          startIndex={startIndex}
+          imageName={imageName}
+          onImageChange={onImageChange}
           onCarouselReady={handleCarouselReady}
         />
       )}

@@ -110,13 +110,19 @@ todo:
     [X] Change from PhysicalFileProvider to WritablePhysicalFileProvider, register it as both IAsyncWritableFileProvider and IFileProvider, use IAsyncWritableFileProvider when creating new files.
   [X] Add static analysis unit test that ensures that all minimal endpoints parameters has [FromQuery], [FromRoute], [FromBody], [FromHeader] or [FromServices] attributes
   [X] Call OpenApi endpoint instead of root in startup.ps1
-  [ ] Fork WritableFileProvider and add cancellationToken to ReadAsBytesAsync
+  [X] Fork WritableFileProvider and add cancellationToken to ReadAsBytesAsync
+    [X] Add method to change last modified
+    [X] Add cancellation tokens
+  [ ] Sort images by created date, set created date from metadata
   [X] Write openapi spec to disk on build
   [X] Include full path in /content and /content/{path}
   [X] Require the user to be logged in to get the frontend!
   [X] Add frontend proxy
   [ ] Chrome MCP server? / Playwright MCP
   [ ] Download log
+  [X] Improve logging
+  [X] Reverse Proxy support for IP resolution
+    [X] Add support for KnownProxies
   [ ] Images aren't being converted when added by rapidraw?
   [X] Create unit tests that tries to forge an jwt token
   [X] Add rate limit to unauthenticated endpoints
@@ -124,7 +130,6 @@ todo:
   [X] Add a usage agreement function
   [X] Add support for negative glob
   [X] Verify that the random function wont return images for folders where the user dosen't have access
-  [ ] Sort images by created date, set created date from metadata
   [X] Microsoft.AspNetCore.Hosting.Diagnostics[11]
       Hosting startup assembly exception
       System.InvalidOperationException: Startup assembly Microsoft.WebTools.ApiEndpointDiscovery failed to execute. See the inner exception for more details.

@@ -1,33 +1,26 @@
-/**
- * Browse splat route — `GET /browse`, `GET /browse/photos`, `GET /browse/photos/2024`, …
- *
- * The splat (`$`) captures everything after `/browse/` as `_splat`. Each
- * segment of the splat is a path component of a `RelativePath` (relative,
- * forward-slash-delimited, never rooted). Segments arrive already
- * URL-decoded by the router, so they are joined with `/` to reconstruct the
- * `RelativePath` for the content-listing query.
- *
- * The `loader` kicks off the first-page fetch via `ensureInfiniteQueryData`
- * without awaiting it, so navigation commits immediately and the grid shows
- * its skeleton while the request is in flight (the `useFolderContent` hook
- * subscribes to the same in-flight query — TanStack Query dedupes). Cached
- * revisits resolve instantly and skip the skeleton.
- *
- * Folder navigation is wired to the router; opening an image shows the
- * fullscreen carousel (`ImageViewer`), controlled by `imagePath` state
- * (`null` = closed, a `RelativePath` = open at that image's index).
- */
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
 import ContentGrid from "@components/ContentGrid";
 import ImageViewer from "@components/ImageViewer";
+import { createFileRoute } from "@tanstack/react-router";
 import { folderContentQueryOptions } from "@lib/api/contentQueries";
+import { useBrowseNavigation } from "@lib/browseNavigation";
+
+/** Search params for the browse route — `image` is the open image's filename (permalink). */
+interface BrowseSearch {
+  image?: string;
+}
+
+/** Reconstruct a RelativePath (relative, forward-slash-delimited) from the raw splat. */
+function splatToRelativePath(splat: string | undefined): string {
+  const segments = splat === undefined ? [] : splat.split("/");
+  return segments.join("/");
+}
 
 export const Route = createFileRoute("/browse/$")({
+  validateSearch: (search: Record<string, unknown>): BrowseSearch => ({
+    image: typeof search.image === "string" && search.image.length > 0 ? search.image : undefined,
+  }),
   loader: ({ context, params }) => {
-    const segments = params._splat === undefined ? [] : params._splat.split("/");
-    const relativePath = segments.join("/");
-    const path = relativePath === "" ? undefined : relativePath;
+    const path = splatToRelativePath(params._splat) || undefined;
     void context.queryClient.ensureInfiniteQueryData(folderContentQueryOptions(path));
   },
   component: BrowseComponent,
@@ -35,26 +28,19 @@ export const Route = createFileRoute("/browse/$")({
 
 function BrowseComponent(): React.JSX.Element {
   const { _splat } = Route.useParams();
-  const segments = _splat === undefined ? [] : _splat.split("/");
-  const relativePath = segments.join("/");
-  const path = relativePath === "" ? undefined : relativePath;
-  const navigate = useNavigate();
-  const [imagePath, setImagePath] = useState<string | undefined>();
-  const handleNavigateFolder = useCallback(
-    (folderPath: string) => navigate({ to: "/browse/$", params: { _splat: folderPath } }),
-    [navigate],
-  );
-  const handleImageOpen = useCallback((openedPath: string) => setImagePath(openedPath), []);
-  const handleClose = useCallback(() => setImagePath(undefined), []);
+  const { image } = Route.useSearch();
+  const path = splatToRelativePath(_splat) || undefined;
+  const { navigateFolder, openImage, changeImage, closeImage } = useBrowseNavigation(_splat);
   return (
     <>
-      <ContentGrid
-        path={path}
-        onNavigateFolder={handleNavigateFolder}
-        onImageOpen={handleImageOpen}
-      />
-      {imagePath !== undefined && (
-        <ImageViewer folderPath={path} imagePath={imagePath} onClose={handleClose} />
+      <ContentGrid path={path} onNavigateFolder={navigateFolder} onImageOpen={openImage} />
+      {image !== undefined && (
+        <ImageViewer
+          folderPath={path}
+          imageName={image}
+          onImageChange={changeImage}
+          onClose={closeImage}
+        />
       )}
     </>
   );

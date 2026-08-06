@@ -1,14 +1,3 @@
-/**
- * UsageAgreementDialog — blocking modal presenting the usage agreement.
- *
- * Rendered by `UsageAgreementGate` when the agreement is enabled and not yet
- * accepted (`accepted === false`). It is non-dismissable: there is no close
- * button, outside-press is disabled, and `onOpenChange` ignores Esc/escape so
- * the only way out is to accept. Accepting calls `POST /api/usage-agreement/accept`;
- * on success the gate invalidates the agreement query, refetches with
- * `accepted: true`, and unmounts this dialog. The agreement text is shown
- * verbatim with preserved line breaks and a scroll region so long texts fit.
- */
 import { ApiError } from "@lib/api/errors";
 import Button from "@components/ui/Button";
 import Dialog from "@components/ui/Dialog";
@@ -35,7 +24,8 @@ function UsageAgreementHeader(): React.JSX.Element {
     <Dialog.DialogHeader>
       <Dialog.DialogTitle>Usage agreement</Dialog.DialogTitle>
       <Dialog.DialogDescription>
-        Please read and accept the agreement below to continue. You may be asked again if it changes.
+        Please read and accept the agreement below to continue. You may be asked again if it
+        changes.
       </Dialog.DialogDescription>
     </Dialog.DialogHeader>
   );

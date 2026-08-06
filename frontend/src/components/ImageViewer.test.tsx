@@ -9,10 +9,12 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import ImageViewer from "@components/ImageViewer";
 import { type ReactNode } from "react";
 import { type imageUrl } from "@lib/api/urls";
+import { type useCanLoadImages } from "@lib/api/usageAgreement";
 
-const { mockImageUrl, mockGetContentByPath } = vi.hoisted(() => ({
+const { mockImageUrl, mockGetContentByPath, mockCanLoadImages } = vi.hoisted(() => ({
   mockImageUrl: vi.fn<typeof imageUrl>(),
   mockGetContentByPath: vi.fn<typeof getContentByPath>(),
+  mockCanLoadImages: vi.fn<typeof useCanLoadImages>(),
 }));
 
 vi.mock(import("@lib/api/urls"), async (importOriginal) => {
@@ -23,6 +25,11 @@ vi.mock(import("@lib/api/urls"), async (importOriginal) => {
 vi.mock(import("@lib/api/generated/sdk.gen"), async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return { ...actual, getContentByPath: mockGetContentByPath as never };
+});
+
+vi.mock(import("@lib/api/usageAgreement"), async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  return { ...actual, useCanLoadImages: mockCanLoadImages };
 });
 
 function imageEntry(name: string, path: string): FolderEntry {
@@ -44,15 +51,17 @@ function sdkResponse(items: FolderEntry[]) {
 function setupContent(images: FolderEntry[]): void {
   mockImageUrl.mockReset();
   mockGetContentByPath.mockReset();
+  mockCanLoadImages.mockReset();
   mockImageUrl.mockReturnValue("/img");
   mockGetContentByPath.mockResolvedValue(sdkResponse(images));
+  mockCanLoadImages.mockReturnValue(true);
 }
 
 function noop(): void {}
 
 function renderViewer(props: {
   folderPath?: string;
-  imagePath: string;
+  imageName: string;
   onClose?: () => void;
 }): void {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -63,7 +72,7 @@ function renderViewer(props: {
     <Wrapper>
       <ImageViewer
         folderPath={props.folderPath}
-        imagePath={props.imagePath}
+        imageName={props.imageName}
         onClose={props.onClose ?? noop}
       />
     </Wrapper>,
@@ -78,7 +87,7 @@ describe("imageViewer close button", () => {
     const onClose = vi.fn<() => void>();
 
     // Act
-    renderViewer({ folderPath: "photos", imagePath: "a.jpg", onClose });
+    renderViewer({ folderPath: "photos", imageName: "a", onClose });
     fireEvent.click(await screen.findByRole("button", { name: "Close" }));
 
     // Assert
@@ -93,7 +102,7 @@ describe("imageViewer slides", () => {
     setupContent([imageEntry("a", "photos/a.jpg"), imageEntry("b", "photos/b.jpg")]);
 
     // Act
-    renderViewer({ folderPath: "photos", imagePath: "photos/a.jpg" });
+    renderViewer({ folderPath: "photos", imageName: "a" });
     await screen.findByAltText("a");
 
     // Assert
@@ -107,7 +116,7 @@ describe("imageViewer slides", () => {
     setupContent([imageEntry("a", "photos/a.jpg")]);
 
     // Act
-    renderViewer({ folderPath: "photos", imagePath: "photos/a.jpg" });
+    renderViewer({ folderPath: "photos", imageName: "a" });
     await screen.findByAltText("a");
 
     // Assert
@@ -120,7 +129,7 @@ describe("imageViewer slides", () => {
     setupContent([imageEntry("a", "p/a.jpg"), imageEntry("b", "p/b.jpg")]);
 
     // Act
-    renderViewer({ folderPath: "p", imagePath: "p/b.jpg" });
+    renderViewer({ folderPath: "p", imageName: "b" });
     await screen.findByAltText("b");
 
     // Assert
@@ -136,7 +145,7 @@ describe("imageViewer keyboard navigation", () => {
     const onClose = vi.fn<() => void>();
 
     // Act
-    renderViewer({ folderPath: "photos", imagePath: "a.jpg", onClose });
+    renderViewer({ folderPath: "photos", imageName: "a", onClose });
     await screen.findByAltText("a");
     fireEvent.keyDown(document, { key: "Escape" });
 
@@ -151,11 +160,27 @@ describe("imageViewer keyboard navigation", () => {
     const onClose = vi.fn<() => void>();
 
     // Act
-    renderViewer({ folderPath: "photos", imagePath: "a.jpg", onClose });
+    renderViewer({ folderPath: "photos", imageName: "a", onClose });
     await screen.findByAltText("a");
     fireEvent.keyDown(document, { key: "ArrowRight" });
 
     // Assert
     expect(onClose).not.toHaveBeenCalled();
+  }, 2000);
+});
+
+describe("imageViewer usage-agreement gate", () => {
+  it("does not request full-res image URLs until the agreement allows loading", async () => {
+    expect.assertions(1);
+    // Arrange — agreement pending: full-res serving is 403-gated on the backend.
+    setupContent([imageEntry("a", "photos/a.jpg")]);
+    mockCanLoadImages.mockReturnValue(false);
+
+    // Act
+    renderViewer({ folderPath: "photos", imageName: "a" });
+    await screen.findByAltText("a");
+
+    // Assert — no full-res URL built while the agreement is unaccepted
+    expect(mockImageUrl).not.toHaveBeenCalledWith("photos/a.jpg", false);
   }, 2000);
 });
