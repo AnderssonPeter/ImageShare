@@ -5,5 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace ImageShare.Authentication;
 
 public sealed record LoginWithJwtCommand(
-    [FromRoute] string Token)
+    [FromRoute] string Token,
+    [FromQuery] string ReturnUrl = "")
     : ICommand<RedirectHttpResult>;

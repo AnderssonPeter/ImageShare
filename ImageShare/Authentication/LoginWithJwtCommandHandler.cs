@@ -28,6 +28,38 @@ internal sealed class LoginWithJwtCommandHandler(
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(identity));
 
-        return TypedResults.Redirect("/");
+        return TypedResults.Redirect(IsSafeReturnUrl(request.ReturnUrl) ? request.ReturnUrl : "/");
+    }
+
+    private static bool IsSafeReturnUrl(string returnUrl)
+    {
+        if (string.IsNullOrWhiteSpace(returnUrl) ||
+            !returnUrl.StartsWith("/", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        // Reject protocol-relative and backslash-prefixed URLs so no protocol or host can sneak in.
+        if (returnUrl.StartsWith("//", StringComparison.Ordinal) ||
+            returnUrl.StartsWith("/\\", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (returnUrl.Contains("..", StringComparison.Ordinal) ||
+            returnUrl.Contains('\\'))
+        {
+            return false;
+        }
+
+        for (var index = 0; index < returnUrl.Length; index++)
+        {
+            if (char.IsControl(returnUrl, index))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
