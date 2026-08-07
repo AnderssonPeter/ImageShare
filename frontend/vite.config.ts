@@ -4,8 +4,10 @@ import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vitest/config";
+import { compression, defineAlgorithm } from "vite-plugin-compression2";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import { heyApiPlugin } from "@hey-api/vite-plugin";
+import { constants } from "zlib";
 
 export default defineConfig({
   plugins: [
@@ -40,6 +42,21 @@ export default defineConfig({
           },
         ],
       },
+    }),
+    compression({
+      algorithms: [
+        defineAlgorithm("gzip", { level: 9 }),
+        defineAlgorithm("brotliCompress", {
+          params: {
+            [constants.BROTLI_PARAM_QUALITY]: 11,
+          },
+        }),
+        defineAlgorithm("zstd", {
+          params: {
+            [constants.ZSTD_c_compressionLevel]: 22,
+          },
+        }),
+      ],
     }),
   ],
   resolve: {
