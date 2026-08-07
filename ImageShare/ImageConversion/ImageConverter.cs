@@ -32,7 +32,28 @@ public sealed class ImageConverter(IOptions<ImageConverterOptions> options)
             image.Resize(geometry);
         }
 
+        // AVIF uses AV1 4:2:0 chroma subsampling, which requires even dimensions.
+        // An odd width or height makes the encoder pad to the next even row/column
+        // with black pixels, producing a visible black line at the bottom/right edge.
+        if (format == MagickFormat.Avif)
+        {
+            EnsureEvenDimensions(image);
+        }
+
         return image.ToByteArray();
+    }
+
+    private static void EnsureEvenDimensions(MagickImage image)
+    {
+        var width = (int)image.Width;
+        var height = (int)image.Height;
+        var evenWidth = width & ~1;
+        var evenHeight = height & ~1;
+
+        if (evenWidth != width || evenHeight != height)
+        {
+            image.Crop(new MagickGeometry((uint)evenWidth, (uint)evenHeight));
+        }
     }
 
     public ReadOnlyMemory<byte> ConvertFull(ReadOnlySpan<byte> imageData, MagickFormat format) =>

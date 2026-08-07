@@ -239,6 +239,22 @@ public class ImageConverterTests(ImageConverter converter, TestImageFactory imag
     }
 
     [Test]
+    public async Task ConvertThumbnail_Avif_AlwaysProducesEvenDimensions()
+    {
+        // Arrange — 800x533 resized into 200x200 yields 200x133 (odd height),
+        // which would make the AV1 encoder pad a black bottom row.
+        var source = imageFactory.CreateTestImage(800, 533);
+
+        // Act
+        var result = converter.ConvertThumbnail(source, MagickFormat.Avif);
+
+        // Assert
+        var (width, height) = imageFactory.GetDimensions(result);
+        await Assert.That(width % 2).IsEqualTo(0);
+        await Assert.That(height % 2).IsEqualTo(0);
+    }
+
+    [Test]
     public async Task ConvertToAllFormats_EachFormatProducesValidImage()
     {
         // Arrange

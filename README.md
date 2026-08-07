@@ -124,6 +124,7 @@ todo:
   [X] Reverse Proxy support for IP resolution
     [X] Add support for KnownProxies
   [X] Images aren't being converted when added by rapidraw?
+  [ ] Avif + thumbnail results in black line in the bottom? (IMG_0833, IMG_5384)
   [X] Create unit tests that tries to forge an jwt token
   [X] Add rate limit to unauthenticated endpoints
   [X] Break up the agent.md into skills to lower the token usage
