@@ -18,11 +18,11 @@
 
   <ItemGroup>
     <PackageReference Include="Mirality.FileProviders.InMemory" Version="6.2.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="*" />
     <PackageReference Include="TUnit" Version="*" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.3.3" />
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.9.0" />
+    <PackageReference Include="TUnit.AspNetCore" Version="1.63.0" />
     <PackageReference Include="TUnit.Mocks.Logging" Version="1.63.0" />
   </ItemGroup>
 
