@@ -123,7 +123,7 @@ todo:
   [X] Improve logging
   [X] Reverse Proxy support for IP resolution
     [X] Add support for KnownProxies
-  [ ] Images aren't being converted when added by rapidraw?
+  [X] Images aren't being converted when added by rapidraw?
   [X] Create unit tests that tries to forge an jwt token
   [X] Add rate limit to unauthenticated endpoints
   [X] Break up the agent.md into skills to lower the token usage

@@ -154,6 +154,84 @@ public class ImageConverterJobTests(ISyncWritableFileProvider fileProvider, Imag
     }
 
     [Test]
+    public async Task WatchForChanges_ConvertsFilesAddedAfterEachConversion(CancellationToken testCancellation)
+    {
+        // Arrange: the file-provider watch token is one-shot. After the first
+        // detected change consumes it, a later addition only triggers a fresh
+        // scan if the job re-registers the watch after every scan.
+        using var jobCancellation = new CancellationTokenSource();
+        var sentinel = imageFactory.CreateTestImage(MagickFormat.Avif);
+        var firstImage = imageFactory.CreateTestImage(MagickFormat.Jpeg);
+        var secondImage = imageFactory.CreateTestImage(MagickFormat.Avif);
+
+        try
+        {
+            // Act
+            // The sentinel is converted by the initial scan; waiting for its
+            // last output guarantees the initial scan is done and the watch is
+            // about to be registered before any additions are made.
+            fileProvider.AddFile("sentinel.avif", sentinel);
+            await job.StartAsync(jobCancellation.Token);
+            await WaitForFileAsync("sentinel.thumb.png", testCancellation);
+
+            // The first addition can only be converted by a token-triggered scan,
+            // which consumes the one-shot watch token.
+            fileProvider.AddFile("first.jpg", firstImage);
+            await WaitForConversionByRetouchingAsync("first.jpg", "first.avif", firstImage, testCancellation);
+
+            // A second addition must also trigger a scan (only after the fix).
+            fileProvider.AddFile("second.avif", secondImage);
+            await WaitForFileAsync("second.webp", testCancellation);
+        }
+        finally
+        {
+            jobCancellation.Cancel();
+            await job.StopAsync(testCancellation);
+        }
+
+        // Assert
+        await Assert.That(fileProvider.GetFileInfo("second.webp").Exists).IsTrue();
+    }
+
+    private async Task WaitForConversionByRetouchingAsync(
+        string inputPath, string outputPath, byte[] inputBytes, CancellationToken cancellationToken)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
+        try
+        {
+            while (!fileProvider.GetFileInfo(outputPath).Exists)
+            {
+                // Re-assert the input so that, once the watch token is registered,
+                // the matching change fires (the token is one-shot per write).
+                fileProvider.Write(inputPath, inputBytes);
+                await Task.Delay(50, linked.Token);
+            }
+        }
+        catch (OperationCanceledException) when (timeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException($"Timed out waiting for '{outputPath}' to be created; the file change watch did not fire.");
+        }
+    }
+
+    private async Task WaitForFileAsync(string path, CancellationToken cancellationToken)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
+        try
+        {
+            while (!fileProvider.GetFileInfo(path).Exists)
+            {
+                await Task.Delay(50, linked.Token);
+            }
+        }
+        catch (OperationCanceledException) when (timeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException($"Timed out waiting for '{path}' to be created; the file change watch did not fire again.");
+        }
+    }
+
+    [Test]
     public Task ScanAndConvertAsync_EmptyDirectory_DoesNotThrow(CancellationToken cancellationToken) =>
         job.ScanAndConvertAsync(cancellationToken);
 

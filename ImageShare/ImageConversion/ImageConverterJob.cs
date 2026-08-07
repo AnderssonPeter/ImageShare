@@ -11,8 +11,9 @@ internal sealed class ImageConverterJob(
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        logger.LogInformation("Starting initial image conversion scan");
         await ScanAndConvertAsync(stoppingToken);
-
+        logger.LogInformation("Initial image conversion scan complete");
         if (!stoppingToken.IsCancellationRequested)
         {
             await WatchForChangesAsync(stoppingToken);
@@ -21,14 +22,16 @@ internal sealed class ImageConverterJob(
 
     private async Task WatchForChangesAsync(CancellationToken cancellationToken)
     {
-        var changeToken = fileProvider.Watch("**/*");
-
-        var reset = new SemaphoreSlim(0, 1);
-        using var changeRegistration = changeToken.RegisterChangeCallback(_ => reset.Release(), null);
         while (!cancellationToken.IsCancellationRequested)
         {
-            await reset.WaitAsync(cancellationToken);
+            logger.LogInformation("Waiting for file changes to trigger image conversion scan");
+            await WaitForChangeOnceAsync(cancellationToken);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
 
+            logger.LogInformation("File change detected, starting image conversion scan");
             try
             {
                 await ScanAndConvertAsync(cancellationToken);
@@ -38,6 +41,14 @@ internal sealed class ImageConverterJob(
                 logger.LogInformation(ex, "Image conversion scan canceled");
             }
         }
+    }
+
+    private async Task WaitForChangeOnceAsync(CancellationToken cancellationToken)
+    {
+        var reset = new SemaphoreSlim(0, 1);
+        var changeToken = fileProvider.Watch("**/*");
+        using var changeRegistration = changeToken.RegisterChangeCallback(_ => reset.Release(), null);
+        await reset.WaitAsync(cancellationToken);
     }
 
     internal async Task ScanAndConvertAsync(CancellationToken cancellationToken)
