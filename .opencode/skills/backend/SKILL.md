@@ -45,6 +45,16 @@ Run `dotnet tool restore` once at the start of a new session before using `dotne
 3. `dotnet r test`
 4. `dotnet r startup`
 
+### `dotnet r format` is not clean unless it prints nothing
+
+`dotnet format` returns exit code `0` even when it emits diagnostics it cannot auto-fix, so a clean exit code does **not** mean formatting is clean. A successful format step is one that prints **nothing** (no warnings, no "Unable to fix..." messages). Treat any output on stdout/stderr as a real violation and fix it before proceeding — do not dismiss messages like:
+
+To locate the offending file/symbol, re-run format with detailed verbosity and narrow it down:
+
+```
+dotnet format ImageShare.slnx --verbosity detailed --no-restore
+```
+
 If any of the steps above fail, run `dotnet build-server shutdown` and then re-run the failed step. (If you have an idea how to fix it permanently, do so and then re-run the failed step.)
 
 If `dotnet restore` fails with a vulnerability error (NU1901/NU1902/NU1903) treated as an error, upgrade the offending package to a non-vulnerable version rather than suppressing the warning. Use `nuget_fix_vulnerable_packages` to compute the smallest safe version change, then apply it.
