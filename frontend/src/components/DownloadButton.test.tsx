@@ -94,7 +94,7 @@ describe("downloadButton format selection", () => {
     // Act — select WebP then download
     render(<DownloadButton path="Birds" />);
     fireEvent.click(screen.getByRole("button", { name: "Download folder" }));
-    fireEvent.click(await screen.findByLabelText("WEBP"));
+    fireEvent.click(await screen.findByLabelText("WEBP", { exact: false }));
     fireEvent.click(screen.getByRole("button", { name: "Download" }));
 
     // Assert

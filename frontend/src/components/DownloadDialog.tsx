@@ -25,6 +25,7 @@ interface DownloadFormValues {
 interface RadioOption {
   value: string;
   label: string;
+  description?: string;
 }
 
 interface DownloadDialogProps {
@@ -33,10 +34,22 @@ interface DownloadDialogProps {
 }
 
 const FORMAT_OPTIONS: readonly RadioOption[] = [
-  { value: "avif", label: "AVIF" },
-  { value: "webp", label: "WEBP" },
-  { value: "jpg", label: "JPG" },
-  { value: "", label: "All formats" },
+  {
+    value: "avif",
+    label: "AVIF",
+    description: "Smallest files. Modern format, limited application support.",
+  },
+  { value: "webp", label: "WEBP", description: "Small files with limited application support." },
+  {
+    value: "jpg",
+    label: "JPG",
+    description: "Universal compatibility, larger files.",
+  },
+  {
+    value: "",
+    label: "All formats",
+    description: "Downloads every available format.",
+  },
 ];
 
 function DownloadDialogHeader(): React.JSX.Element {
