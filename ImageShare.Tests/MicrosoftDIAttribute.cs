@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Mirality.FileProviders;
 using Mirality.FileProviders.InMemory;
+using TUnit.Mocks.Logging;
 
 namespace ImageShare.Tests;
 
@@ -52,6 +53,7 @@ public class MicrosoftDIAttribute : DependencyInjectionDataSourceAttribute<IServ
                 }))
             .AddSingleton<IContentTypeProvider>(contentTypeProvider)
             .AddSingleton<ILoggerFactory>(new LoggerFactory())
+            .AddTransient(typeof(ILogger<>), typeof(MockLogger<>))
             .AddSingleton<ImageConverter>()
             .AddSingleton<ImageShareFilterCompiler>()
             .AddSingleton<IOptions<JwtSettings>>(
