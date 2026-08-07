@@ -13,17 +13,11 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Mirality.FileProviders;
 using Scalar.AspNetCore;
-using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSerilog((services, configuration) => configuration
-    .ReadFrom.Configuration(builder.Configuration)
-    .ReadFrom.Services(services)
-    .Enrich.FromLogContext());
-
+builder.Logging.AddImageShareConsoleFormatter();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddRequestLogEnricher();
 builder.Services.AddImageShareOpenApi();
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default));
 builder.Services.AddCustomErrors();
@@ -90,7 +84,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseCustomErrors();
 app.UseReverseProxy();
-app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.UseRateLimiting();
 app.UseAuthentication();

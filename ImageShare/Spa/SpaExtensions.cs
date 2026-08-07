@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using CompressedStaticFiles;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.SpaServices.StaticFiles;
 
 namespace ImageShare.Spa;
 
@@ -21,9 +23,12 @@ public static class SpaExtensions
     /// <summary>Base URI of the Vite/React development server started by <c>pnpm dev</c>.</summary>
     public const string DevelopmentServerUri = "http://localhost:5000";
 
-    public static void AddSpaHosting(this IServiceCollection services) =>
-        services.AddSpaStaticFiles(configuration =>
-            configuration.RootPath = "Client");
+    public static void AddSpaHosting(this IServiceCollection services)
+    {
+
+        services.AddSpaStaticFiles(configuration => configuration.RootPath = "Client");
+        services.AddCompressedStaticFiles();
+    }
 
     /// <summary>
     /// Adds the SPA hosting middleware. Place it after authentication/authorization so the SPA
@@ -47,7 +52,27 @@ public static class SpaExtensions
                 }
                 else
                 {
-                    branch.UseSpaStaticFiles();
+                    var spaFileProvider = branch.ApplicationServices.GetRequiredService<ISpaStaticFileProvider>().FileProvider;
+                    var spaFileOptions = new StaticFileOptions
+                    {
+                        FileProvider = spaFileProvider,
+                    };
+
+                    branch.UseCompressedStaticFiles(spaFileOptions);
+
+                    // Fall back to index.html for client-side routes that map to no static file, so
+                    // deep links and refreshes hand the SPA shell to the browser. The request is
+                    // re-dispatched to /index.html through the compressed static files pipeline so the
+                    // precompressed variants and content-type handling apply to the fallback too.
+                    var indexPipeline = branch.New();
+                    indexPipeline.UseCompressedStaticFiles(spaFileOptions);
+                    var serveIndexHtml = indexPipeline.Build();
+
+                    branch.Run(async context =>
+                    {
+                        context.Request.Path = "/index.html";
+                        await serveIndexHtml(context);
+                    });
                 }
             });
 

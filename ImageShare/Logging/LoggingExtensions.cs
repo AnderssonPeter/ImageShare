@@ -1,8 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
-using Serilog.Core;
 
 namespace ImageShare.Logging;
 
@@ -18,10 +19,11 @@ public static class LoggingExtensions
         return services;
     }
 
-    public static IServiceCollection AddRequestLogEnricher(this IServiceCollection services)
+    public static ILoggingBuilder AddImageShareConsoleFormatter(this ILoggingBuilder builder)
     {
-        services.AddHttpContextAccessor();
-        return services.AddSingleton<ILogEventEnricher, HttpContextEnricher>();
+        builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ConsoleFormatter, ImageShareConsoleFormatter>());
+        builder.Services.Configure<ConsoleLoggerOptions>(options => options.FormatterName = ImageShareConsoleFormatter.FormatterName);
+        return builder;
     }
 
     public static IApplicationBuilder UseReverseProxy(this IApplicationBuilder app)
