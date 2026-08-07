@@ -9,7 +9,7 @@ EXPOSE 8081
 
 
 # This stage is used to build the service project
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build-backend
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["ImageShare/ImageShare.csproj", "ImageShare/"]
@@ -18,10 +18,29 @@ COPY . .
 WORKDIR "/src/ImageShare"
 RUN dotnet build "./ImageShare.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
+# This stage builds the Vite/React frontend (../frontend) into /src/frontend/dist.
+# The @hey-api/vite-plugin generates the typed API client at Vite's configResolved
+# hook, so a Vite build must run before `tsc -b` can resolve the generated imports.
+# The compiled assets are later served from the "Client" folder by SpaExtensions.
+FROM node:26-trixie-slim AS build-frontend
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+WORKDIR /src/frontend
+RUN npm install -g corepack && corepack enable
+# Install dependencies first so the layer is cached across source/API changes.
+COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+# Use the OpenAPI document produced by the backend build so the generated client
+# matches the API being shipped.
+COPY --from=build-backend /src/ImageShare/openapi.json /src/ImageShare/openapi.json
+COPY frontend/ ./
+RUN pnpm install && pnpm run build
+
 # This stage is used to publish the service project to be copied to the final stage
-FROM build AS publish
+FROM build-backend AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./ImageShare.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./ImageShare.csproj" -c $BUILD_CONFIGURATION -o /app/publish
+# Host the SPA from the "Client" folder expected by SpaExtensions.AddSpaStaticFiles.
+COPY --from=build-frontend /src/frontend/dist /app/publish/Client
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final

@@ -100,7 +100,7 @@ todo:
     [X] ImageConverterJobTests should not use a physical directory and instead use the memory file provider!
     [X] Do not use reflection in tests to access method, instead make it internal and use InternalsVisibleTo attribute to access it in tests
     [X] Do not use time based tests, Task.Delay is not a feasible solution
-  [ ] there should be some way to use IContentTypeProvider without constructing it on our own, while adding additional file formats to it?
+  [X] there should be some way to use IContentTypeProvider without constructing it on our own, while adding additional file formats to it?
   [X] Move the Paginate method to a helper method and make it generic and reuse it in both BrowserEndpoint and ImageEndpoints
   [X] Make service generate the image in all possible formats
     [X] There is a mix of Thumbprint and Thumbnail in the codebase, we should standardize on one of them
@@ -124,7 +124,7 @@ todo:
   [X] Reverse Proxy support for IP resolution
     [X] Add support for KnownProxies
   [X] Images aren't being converted when added by rapidraw?
-  [ ] Avif + thumbnail results in black line in the bottom? (IMG_0833, IMG_5384)
+  [X] Avif + thumbnail results in black line in the bottom? (IMG_0833, IMG_5384)
   [X] Create unit tests that tries to forge an jwt token
   [X] Add rate limit to unauthenticated endpoints
   [X] Break up the agent.md into skills to lower the token usage
