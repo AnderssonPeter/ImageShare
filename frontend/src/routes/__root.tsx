@@ -11,6 +11,8 @@
  * renders read it directly from the query cache.
  */
 import { UserProvider, currentUserQueryOptions } from "@lib/userContext";
+import { type ReactNode } from "react";
+import { LanguageProvider } from "@lib/i18nContext";
 import { ThemeProvider } from "@lib/themeContext";
 import AppLayout from "@components/AppLayout";
 import { type QueryClient } from "@tanstack/react-query";
@@ -26,14 +28,23 @@ export interface RouterContext {
   queryClient: QueryClient;
 }
 
+/** Stack the app-wide providers once; page content is passed as children. */
+function RootProviders({ children }: { children: ReactNode }): React.JSX.Element {
+  return (
+    <LanguageProvider>
+      <ThemeProvider>
+        <UserProvider>{children}</UserProvider>
+      </ThemeProvider>
+    </LanguageProvider>
+  );
+}
+
 function RootComponent(): React.JSX.Element {
   return (
-    <ThemeProvider>
-      <UserProvider>
-        <AppLayout />
-        <Sonner />
-      </UserProvider>
-    </ThemeProvider>
+    <RootProviders>
+      <AppLayout />
+      <Sonner />
+    </RootProviders>
   );
 }
 

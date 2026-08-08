@@ -17,6 +17,7 @@ import MetroTile from "@components/MetroTile";
 import { randomFolderUrl } from "@lib/api/urls";
 import { tw } from "@lib/utils";
 import { useCallback } from "react";
+import { useTranslation } from "@lib/i18n";
 
 const NAME_CLASS = tw`pointer-events-none absolute bottom-1 left-1 z-[1] text-sm leading-none text-tile-foreground`;
 
@@ -29,15 +30,12 @@ interface FolderTileProps {
   className?: string;
 }
 
-function navigateLabel(name: string): string {
-  return `Open folder ${name}`;
-}
-
 export default function FolderTile({
   entry,
   onNavigate,
   className,
 }: FolderTileProps): React.JSX.Element {
+  const { t: translate } = useTranslation();
   const cover = randomFolderUrl(entry.path, true, true);
   const handleNavigate = useCallback(() => onNavigate(entry.path), [onNavigate, entry.path]);
   return (
@@ -45,7 +43,7 @@ export default function FolderTile({
       imageUrl={cover}
       className={className}
       onClick={handleNavigate}
-      ariaLabel={navigateLabel(entry.name)}
+      ariaLabel={translate("tiles.openFolder", { name: entry.name })}
     >
       <span className={NAME_CLASS}>{entry.name}</span>
     </MetroTile>

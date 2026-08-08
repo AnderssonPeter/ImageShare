@@ -21,6 +21,7 @@ import Dialog from "@components/ui/Dialog";
 import { Download } from "lucide-react";
 import DownloadDialog from "@components/DownloadDialog";
 import { downloadUrl } from "@lib/api/urls";
+import { useTranslation } from "@lib/i18n";
 import { toast } from "sonner";
 import { tw } from "@lib/utils";
 
@@ -32,9 +33,13 @@ interface DownloadButtonProps {
   path?: string;
 }
 
-function startDownload(folder: string, formats: readonly string[]): void {
+function startDownload(
+  folder: string,
+  formats: readonly string[],
+  translate: (key: string) => string,
+): void {
   globalThis.location.href = downloadUrl(folder, formats);
-  toast.success("Download started");
+  toast.success(translate("download.started"));
 }
 
 function isRootPath(path: string | undefined): boolean {
@@ -44,21 +49,22 @@ function isRootPath(path: string | undefined): boolean {
 export default function DownloadButton({
   path,
 }: DownloadButtonProps): React.JSX.Element | undefined {
+  const { t: translate } = useTranslation();
   const folder = path ?? "";
   const [open, setOpen] = useState(false);
   const handleDownload = useCallback(
     (values: { recursive: boolean; format: string }) => {
       setOpen(false);
-      startDownload(folder, values.format === "" ? [] : [values.format]);
+      startDownload(folder, values.format === "" ? [] : [values.format], translate);
     },
-    [folder],
+    [folder, translate],
   );
   if (isRootPath(path)) {
     return;
   }
   return (
     <Dialog.Dialog open={open} onOpenChange={setOpen}>
-      <Dialog.DialogTrigger className={TRIGGER_CLASS} aria-label="Download folder">
+      <Dialog.DialogTrigger className={TRIGGER_CLASS} aria-label={translate("download.trigger")}>
         <Download className={ICON_CLASS} />
       </Dialog.DialogTrigger>
       <DownloadDialog onDownload={handleDownload} />

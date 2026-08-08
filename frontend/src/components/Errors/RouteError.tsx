@@ -24,6 +24,7 @@ import { RotateCw, TriangleAlert } from "lucide-react";
 import { useCallback, useEffect } from "react";
 import Button from "@components/ui/Button";
 import { resolveErrorAction } from "@lib/api/queryErrorHandler";
+import { useTranslation } from "@lib/i18n";
 
 const HOME_LINK_CLASS = Button.buttonVariants({ variant: "ghost", size: "sm" });
 const ROOT_SPLAT_PARAMS = { _splat: undefined };
@@ -35,21 +36,23 @@ function currentPath(): string {
 }
 
 function ErrorActions({ onRetry }: { onRetry: () => void }): React.JSX.Element {
+  const { t: translate } = useTranslation();
   return (
     <div className="flex gap-2">
       <Button variant="default" size="sm" onClick={onRetry}>
         <RotateCw />
-        Retry
+        {translate("errors.retry")}
       </Button>
       <Link to="/browse/$" params={ROOT_SPLAT_PARAMS} className={HOME_LINK_CLASS}>
-        Go to library
+        {translate("errors.goLibrary")}
       </Link>
     </div>
   );
 }
 
 export default function RouteError({ error, reset }: ErrorComponentProps): React.JSX.Element {
-  const action = resolveErrorAction(error, currentPath());
+  const { t: translate } = useTranslation();
+  const action = resolveErrorAction(error, currentPath(), translate);
   const router = useRouter();
   const redirectUrl = action.kind === "redirect" ? action.url : undefined;
   const handleRetry = useCallback(() => {
@@ -66,7 +69,7 @@ export default function RouteError({ error, reset }: ErrorComponentProps): React
   if (action.kind === "redirect") {
     return (
       <div className="flex h-full items-center justify-center p-8">
-        <p className="text-sm text-muted-foreground">Redirecting to sign in…</p>
+        <p className="text-sm text-muted-foreground">{translate("errors.redirecting")}</p>
       </div>
     );
   }
@@ -75,7 +78,7 @@ export default function RouteError({ error, reset }: ErrorComponentProps): React
     <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
       <TriangleAlert className="size-5 text-muted-foreground" />
       <p className="text-sm text-foreground">
-        {action.kind === "ignore" ? "We couldn't find what you were looking for." : action.message}
+        {action.kind === "ignore" ? translate("errors.notFoundMessage") : action.message}
       </p>
       <ErrorActions onRetry={handleRetry} />
     </div>

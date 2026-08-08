@@ -110,7 +110,7 @@ function fillAndSubmitForm(returnUrl?: string): void {
   if (returnUrl !== undefined) {
     fireEvent.change(screen.getByLabelText("Return URL"), { target: { value: returnUrl } });
   }
-  fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+  fireEvent.click(screen.getByRole("button", { name: "Share" }));
 }
 
 function assertTokenPath(): void {
@@ -197,7 +197,7 @@ describe("shareDialogProvider error handling", () => {
     expect(screen.queryByText("Share link generated")).not.toBeInTheDocument();
   }, 2000);
 
-  it("shows a loading state on the Generate button while submitting", async () => {
+  it("shows a loading state on the Share button while submitting", async () => {
     expect.hasAssertions();
     // Arrange — never-resolving token call keeps the mutation pending
     stubTokenPending();
@@ -206,7 +206,7 @@ describe("shareDialogProvider error handling", () => {
     // Act
     fillAndSubmitForm();
     // Assert — the button switches to its loading label
-    await waitFor(() => expect(screen.getByRole("button", { name: "Generating…" })).toBeDisabled());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Sharing…" })).toBeDisabled());
   }, 2000);
 });
 

@@ -12,6 +12,7 @@ import { useCallback, useMemo } from "react";
 import { Ban } from "lucide-react";
 import Checkbox from "@components/ui/Checkbox";
 import Label from "@components/ui/Label";
+import { useTranslation } from "@lib/i18n";
 
 const ALL_FOLDERS = "*";
 
@@ -64,7 +65,10 @@ interface AllFoldersRowProps {
 }
 
 function AllFoldersRow({ checked, onToggle }: AllFoldersRowProps): React.JSX.Element {
-  return <Checkbox checked={checked} onChange={onToggle} label="All folders" />;
+  const { t: translate } = useTranslation();
+  return (
+    <Checkbox checked={checked} onChange={onToggle} label={translate("share.fields.allFolders")} />
+  );
 }
 
 interface FilterFolderRowProps {
@@ -123,6 +127,7 @@ export default function FilterBuilder({
   error,
   onChange,
 }: FilterBuilderProps): React.JSX.Element {
+  const { t: translate } = useTranslation();
   const parsed = useMemo(() => parseFilter(value), [value]);
   const handleAllFolders = useCallback(
     (checked: boolean) => onChange(buildFilter(checked, parsed.folders)),
@@ -142,7 +147,7 @@ export default function FilterBuilder({
   );
   return (
     <div className="flex flex-col gap-1">
-      <Label>Filter</Label>
+      <Label>{translate("share.fields.filter")}</Label>
       <AllFoldersRow checked={parsed.allFolders} onToggle={handleAllFolders} />
       <FilterFolderList
         folders={folders}

@@ -19,6 +19,7 @@
  * argument instead of reading `globalThis.location`), so the branching logic
  * is unit-testable without a DOM. `handleGlobalError` performs the side effects.
  */
+import { type Translate } from "@lib/i18n";
 import { ApiError } from "@lib/api/errors";
 import { toast } from "sonner";
 
@@ -42,8 +43,8 @@ function problemMessage(error: ApiError): string {
 }
 
 /** Human-readable message for an arbitrary (possibly non-ApiError) error. */
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong.";
+function errorMessage(error: unknown, translate: Translate): string {
+  return error instanceof Error ? error.message : translate("errors.unknown");
 }
 
 /**
@@ -55,7 +56,11 @@ function errorMessage(error: unknown): string {
  *                      `Error` for e.g. network failure).
  * @param currentPath - The full in-app path to return to after re-login.
  */
-export function resolveErrorAction(error: unknown, currentPath: string): ErrorAction {
+export function resolveErrorAction(
+  error: unknown,
+  currentPath: string,
+  translate: Translate,
+): ErrorAction {
   if (error instanceof ApiError) {
     if (error.status === 401) {
       return { kind: "redirect", url: buildLoginUrl(currentPath) };
@@ -65,14 +70,14 @@ export function resolveErrorAction(error: unknown, currentPath: string): ErrorAc
     }
     return { kind: "toast", message: problemMessage(error) };
   }
-  return { kind: "toast", message: errorMessage(error) };
+  return { kind: "toast", message: errorMessage(error, translate) };
 }
 
 /** Side-effecting handler bound to the query/mutation caches. */
-export function handleGlobalError(error: unknown): void {
+export function handleGlobalError(error: unknown, translate: Translate): void {
   const { location } = globalThis;
   const currentPath = location.pathname + location.search + location.hash;
-  const action = resolveErrorAction(error, currentPath);
+  const action = resolveErrorAction(error, currentPath, translate);
   if (action.kind === "redirect") {
     location.replace(action.url);
     return;

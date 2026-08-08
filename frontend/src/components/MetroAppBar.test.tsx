@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import MetroAppBar from "@components/MetroAppBar";
 import { type ReactNode } from "react";
+import { LanguageProvider } from "@lib/i18nContext";
 import { ThemeProvider } from "@lib/themeContext";
 import { type User } from "@lib/api/generated";
 import setupThemeEnvironment from "@test/themeEnvironment";
@@ -17,7 +18,9 @@ function authenticatedUser(overrides: Partial<User> = {}): User {
 function wrapper({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>{children}</ThemeProvider>
+      <LanguageProvider>
+        <ThemeProvider>{children}</ThemeProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

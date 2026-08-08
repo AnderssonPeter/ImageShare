@@ -13,6 +13,7 @@ import { type FolderEntry } from "@lib/api/generated";
 import MetroTile from "@components/MetroTile";
 import { imageUrl } from "@lib/api/urls";
 import { useCallback } from "react";
+import { useTranslation } from "@lib/i18n";
 
 interface ImageTileProps {
   /** Image file entry to render (must have `type === 'File'`). */
@@ -23,11 +24,8 @@ interface ImageTileProps {
   className?: string;
 }
 
-function openLabel(name: string): string {
-  return `Open image ${name}`;
-}
-
 export default function ImageTile({ entry, onOpen, className }: ImageTileProps): React.JSX.Element {
+  const { t: translate } = useTranslation();
   const thumbnail = imageUrl(entry.path, true);
   const handleOpen = useCallback(() => onOpen(entry.path), [onOpen, entry.path]);
   return (
@@ -35,7 +33,7 @@ export default function ImageTile({ entry, onOpen, className }: ImageTileProps):
       imageUrl={thumbnail}
       className={className}
       onClick={handleOpen}
-      ariaLabel={openLabel(entry.name)}
+      ariaLabel={translate("tiles.openImage", { name: entry.name })}
     />
   );
 }

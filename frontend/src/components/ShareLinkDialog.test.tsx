@@ -94,7 +94,7 @@ describe("shareLinkDialog validation", () => {
     // Arrange
     renderOpenDialog(vi.fn<GenerateHandler>());
     // Act
-    fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
     // Assert
     await expect(screen.findByText("A name must be specified.")).resolves.toBeInTheDocument();
     expect(screen.getByText("A filter must be specified.")).toBeInTheDocument();
@@ -107,7 +107,7 @@ describe("shareLinkDialog validation", () => {
     const onGenerate = vi.fn<GenerateHandler>();
     renderOpenDialog(onGenerate);
     // Act
-    fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
     await waitFor(() => {
       expect(screen.getByText("A name must be specified.")).toBeInTheDocument();
     });
@@ -126,7 +126,7 @@ describe("shareLinkDialog validation", () => {
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Test" } });
     fireEvent.click(screen.getByLabelText("photos"));
     fireEvent.change(screen.getByLabelText("End date"), { target: { value: "2020-01-01T00:00" } });
-    fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
     // Assert
     await expect(
       screen.findByText("The end date must be in the future."),
@@ -140,7 +140,7 @@ describe("shareLinkDialog error clearing", () => {
     // Arrange
     renderOpenDialog(vi.fn<GenerateHandler>());
     // Act — submit empty, then fix the Name field
-    fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
     await expect(screen.findByText("A name must be specified.")).resolves.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Test User" } });
     // Assert
@@ -161,12 +161,12 @@ describe("shareLinkDialog submit error", () => {
     expect(screen.getByText("A filter must be specified.")).toBeInTheDocument();
   }, 1000);
 
-  it("disables the Generate button and shows loading text while submitting", () => {
+  it("disables the Share button and shows loading text while submitting", () => {
     expect.assertions(2);
     // Arrange + Act
     renderOpenDialogWithOptions(vi.fn<GenerateHandler>(), { isSubmitting: true });
     // Assert
-    const button = screen.getByRole("button", { name: "Generating…" });
+    const button = screen.getByRole("button", { name: "Sharing…" });
     expect(button).toBeDisabled();
     expect(button).toBeInTheDocument();
   }, 1000);
@@ -185,7 +185,7 @@ describe("shareLinkDialog submission", () => {
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "  Test User  " } });
     fireEvent.click(screen.getByLabelText("photos"));
     fireEvent.change(screen.getByLabelText("End date"), { target: { value: FUTURE_DATE } });
-    fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
     // Assert
     await waitFor(() => {
       expect(onGenerate).toHaveBeenCalledWith({
@@ -210,7 +210,7 @@ describe("shareLinkDialog submission", () => {
     fireEvent.click(screen.getByLabelText("All folders"));
     fireEvent.click(screen.getByLabelText("photos"));
     fireEvent.change(screen.getByLabelText("End date"), { target: { value: FUTURE_DATE } });
-    fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
     // Assert
     await waitFor(() => {
       expect(onGenerate).toHaveBeenCalledWith({
@@ -256,7 +256,7 @@ describe("shareLinkDialog return URL", () => {
     fireEvent.change(screen.getByLabelText("Return URL"), {
       target: { value: "https://imageshare.example/browse/photos?image=cat.jpg" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
     // Assert
     await waitFor(() => assertGenerated(onGenerate, "/browse/photos?image=cat.jpg"));
   }, 2000);

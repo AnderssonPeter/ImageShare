@@ -5,6 +5,7 @@ import { type UsageAgreementResponse } from "@lib/api/generated";
 import { tw } from "@lib/utils";
 import { useAcceptUsageAgreement } from "@lib/api/usageAgreement";
 import { useCallback } from "react";
+import { useTranslation, type Translate } from "@lib/i18n";
 
 interface UsageAgreementDialogProps {
   /** The agreement to display (language + text + accepted). */
@@ -13,20 +14,16 @@ interface UsageAgreementDialogProps {
 
 const TEXT_CLASS = tw`max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-md bg-muted/40 p-3 leading-relaxed`;
 
-function acceptErrorMessage(error: unknown): string {
-  return error instanceof ApiError
-    ? error.message
-    : "Failed to accept the agreement. Please try again.";
+function acceptErrorMessage(error: unknown, translate: Translate): string {
+  return error instanceof ApiError ? error.message : translate("usageAgreement.acceptError");
 }
 
 function UsageAgreementHeader(): React.JSX.Element {
+  const { t: translate } = useTranslation();
   return (
     <Dialog.DialogHeader>
-      <Dialog.DialogTitle>Usage agreement</Dialog.DialogTitle>
-      <Dialog.DialogDescription>
-        Please read and accept the agreement below to continue. You may be asked again if it
-        changes.
-      </Dialog.DialogDescription>
+      <Dialog.DialogTitle>{translate("usageAgreement.title")}</Dialog.DialogTitle>
+      <Dialog.DialogDescription>{translate("usageAgreement.description")}</Dialog.DialogDescription>
     </Dialog.DialogHeader>
   );
 }
@@ -40,12 +37,13 @@ function UsageAgreementText({ text }: { text: string }): React.JSX.Element {
 }
 
 function UsageAgreementError({ error }: { error: unknown }): React.JSX.Element | undefined {
+  const { t: translate } = useTranslation();
   if (!(error instanceof Error)) {
     return;
   }
   return (
     <p role="alert" className="text-sm text-destructive">
-      {acceptErrorMessage(error)}
+      {acceptErrorMessage(error, translate)}
     </p>
   );
 }
@@ -56,10 +54,11 @@ interface UsageAgreementFooterProps {
 }
 
 function UsageAgreementFooter({ onAccept, pending }: UsageAgreementFooterProps): React.JSX.Element {
+  const { t: translate } = useTranslation();
   return (
     <Dialog.DialogFooter>
       <Button onClick={onAccept} disabled={pending}>
-        {pending ? "Accepting…" : "Accept"}
+        {pending ? translate("usageAgreement.accepting") : translate("usageAgreement.accept")}
       </Button>
     </Dialog.DialogFooter>
   );

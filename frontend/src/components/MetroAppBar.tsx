@@ -16,8 +16,10 @@ import { CircleUserRound } from "lucide-react";
 import { type ReactNode } from "react";
 import { type User } from "@lib/api/generated";
 import Logo from "@components/Logo";
+import LanguageToggle from "@components/LanguageToggle";
 import ShareButton from "@components/ShareButton";
 import ThemeToggle from "@components/ThemeToggle";
+import { useTranslation } from "@lib/i18n";
 
 interface ShareButtonSlotProps {
   visible: boolean;
@@ -31,20 +33,22 @@ function ShareButtonSlot({ visible, onShare }: ShareButtonSlotProps) {
   return <ShareButton onClick={onShare} variant="app-bar" />;
 }
 
-function UserChip({ name }: { name: string | undefined }) {
+function UserChip({ name }: { name: string | undefined }): React.JSX.Element {
+  const { t: translate } = useTranslation();
   return (
     <div className="flex items-center gap-2 px-2 text-sm text-foreground">
       <CircleUserRound className="size-4 text-muted-foreground" />
-      <span className="max-w-32 truncate">{name ?? "User"}</span>
+      <span className="max-w-32 truncate">{name ?? translate("common.user")}</span>
     </div>
   );
 }
 
-function AppBarLeft() {
+function AppBarLeft(): React.JSX.Element {
+  const { t: translate } = useTranslation();
   return (
     <div className="flex shrink-0 items-center gap-2">
       <Logo className="size-6 text-primary" />
-      <span className="text-sm font-medium text-foreground">ImageShare</span>
+      <span className="text-sm font-medium text-foreground">{translate("common.brand")}</span>
     </div>
   );
 }
@@ -65,6 +69,7 @@ function AppBarRight({ user, onShare }: AppBarRightProps): React.JSX.Element {
   return (
     <div className="flex shrink-0 items-center gap-1">
       <ThemeToggle />
+      <LanguageToggle />
       <ShareButtonSlot visible={user.isAdmin === true} onShare={onShare} />
       <UserChip name={user.name ?? undefined} />
     </div>

@@ -3,12 +3,17 @@ import NotFound from "@components/Errors/NotFound";
 import RouteError from "@components/Errors/RouteError";
 import { type RouterContext } from "./routes/__root";
 import { createRouter } from "@tanstack/react-router";
+import { translate } from "@lib/i18n";
 import { handleGlobalError } from "@lib/api/queryErrorHandler";
 import { routeTree } from "./routeTree.gen";
 
+function onGlobalError(error: unknown): void {
+  handleGlobalError(error, translate());
+}
+
 const queryClient: QueryClient = new QueryClient({
-  queryCache: new QueryCache({ onError: handleGlobalError }),
-  mutationCache: new MutationCache({ onError: handleGlobalError }),
+  queryCache: new QueryCache({ onError: onGlobalError }),
+  mutationCache: new MutationCache({ onError: onGlobalError }),
 });
 
 const router = createRouter({

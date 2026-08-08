@@ -19,28 +19,16 @@ import ImageTile from "@components/ImageTile";
 import Skeleton from "@components/ui/Skeleton";
 import { tw } from "@lib/utils";
 import { useFolderContent } from "@lib/api/contentQueries";
+import { useTranslation } from "@lib/i18n";
 
-/** Tile width in pixels (Metro wide tile, 3:2 aspect ratio). */
 const TILE_WIDTH = 180;
-/** Tile height in pixels (TILE_WIDTH * 2/3 = 120, 3:2 aspect ratio). */
 const TILE_HEIGHT = 120;
-/** Gap between tiles in pixels (matches --spacing-gutter). */
 const GUTTER = 4;
-/** Rows from the end before auto-loading the next page. */
 const AUTOLOAD_THRESHOLD = 3;
-/** Rows rendered beyond the viewport for smooth scrolling. */
 const OVERSCAN = 4;
-/** Total row height including the gutter below each row. */
 const ROW_HEIGHT = TILE_HEIGHT + GUTTER;
 
-/** Static styles — module-level so react-perf/jsx-no-new-object-as-prop is satisfied. */
 const TILE_SIZE_CLASS = tw`w-[180px] h-[120px]`;
-const ROW_POSITION_BASE_STYLE: CSSProperties = {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  width: "100%",
-};
 const SCROLL_ACTIVE_CLASS = tw`relative h-[calc(100dvh-3rem)] p-gutter overflow-auto`;
 const SCROLL_LOCKED_CLASS = tw`relative h-[calc(100dvh-3rem)] p-gutter overflow-hidden`;
 const CONTENT_WRAPPER_CLASS = tw`relative z-10`;
@@ -61,9 +49,7 @@ interface GridShape {
 }
 
 /**
- * Measure the scroll container to derive grid columns and the skeleton row
- * count that covers the full viewport (ceil, min 1; `overflow-hidden` during
- * load clips any overshoot). Recomputed on resize via a single observer.
+ * Measure the scroll container to derive grid columns and skeleton rows.
  */
 function useGridShape(containerRef: RefObject<HTMLDivElement | null>): GridShape {
   const [shape, setShape] = useState<GridShape>({ columns: 1, skeletonRows: 1 });
@@ -160,7 +146,10 @@ function VirtualRow({
 }) {
   const style = useMemo<CSSProperties>(
     () => ({
-      ...ROW_POSITION_BASE_STYLE,
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
       height: virtualRow.size,
       transform: `translateY(${virtualRow.start}px)`,
     }),
@@ -228,6 +217,15 @@ function SkeletonGrid({ columns, rows }: { columns: number; rows: number }): Rea
   return renderedRows;
 }
 
+function EmptyFolder(): React.JSX.Element {
+  const { t: translate } = useTranslation();
+  return (
+    <div className="flex h-full items-center justify-center p-8">
+      <p className="text-sm text-muted-foreground">{translate("content.emptyFolder")}</p>
+    </div>
+  );
+}
+
 function renderContent({
   isPending,
   items,
@@ -245,11 +243,7 @@ function renderContent({
     return <SkeletonGrid columns={columns} rows={skeletonRows} />;
   }
   if (items.length === 0) {
-    return (
-      <div className="flex h-full items-center justify-center p-8">
-        <p className="text-sm text-muted-foreground">This folder is empty.</p>
-      </div>
-    );
+    return <EmptyFolder />;
   }
   return <VirtualGridBody rowVirtualizer={rowVirtualizer} items={items} columns={columns} />;
 }
@@ -288,7 +282,13 @@ export default function ContentGrid({
     () => ({ onNavigateFolder, onImageOpen }),
     [onNavigateFolder, onImageOpen],
   );
-  const content = renderContent({ isPending, items, columns, skeletonRows, rowVirtualizer });
+  const content = renderContent({
+    isPending,
+    items,
+    columns,
+    skeletonRows,
+    rowVirtualizer,
+  });
   return (
     <GridActionsContext.Provider value={actions}>
       <div ref={scrollRef} className={isPending ? SCROLL_LOCKED_CLASS : SCROLL_ACTIVE_CLASS}>

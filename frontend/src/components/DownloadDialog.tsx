@@ -16,16 +16,48 @@ import Checkbox from "@components/ui/Checkbox";
 import Dialog from "@components/ui/Dialog";
 import RadioGroup from "@components/ui/RadioGroup";
 import { useForm } from "@tanstack/react-form";
+import { type Translate, useTranslation } from "@lib/i18n";
 
 interface DownloadFormValues {
   recursive: boolean;
   format: string;
 }
 
-interface RadioOption {
+interface FormatOption {
   value: string;
   label: string;
   description?: string;
+}
+
+const FORMAT_KEYS = [
+  {
+    value: "avif",
+    labelKey: "download.formats.avif",
+    descriptionKey: "download.formatDescriptions.avif",
+  },
+  {
+    value: "webp",
+    labelKey: "download.formats.webp",
+    descriptionKey: "download.formatDescriptions.webp",
+  },
+  {
+    value: "jpg",
+    labelKey: "download.formats.jpg",
+    descriptionKey: "download.formatDescriptions.jpg",
+  },
+  {
+    value: "",
+    labelKey: "download.formats.all",
+    descriptionKey: "download.formatDescriptions.all",
+  },
+] as const;
+
+function buildFormatOptions(translate: Translate): readonly FormatOption[] {
+  return FORMAT_KEYS.map((option) => ({
+    value: option.value,
+    label: translate(option.labelKey),
+    description: translate(option.descriptionKey),
+  }));
 }
 
 interface DownloadDialogProps {
@@ -33,32 +65,12 @@ interface DownloadDialogProps {
   onDownload: (values: DownloadFormValues) => void;
 }
 
-const FORMAT_OPTIONS: readonly RadioOption[] = [
-  {
-    value: "avif",
-    label: "AVIF",
-    description: "Smallest files. Modern format, limited application support.",
-  },
-  { value: "webp", label: "WEBP", description: "Small files with limited application support." },
-  {
-    value: "jpg",
-    label: "JPG",
-    description: "Universal compatibility, larger files.",
-  },
-  {
-    value: "",
-    label: "All formats",
-    description: "Downloads every available format.",
-  },
-];
-
 function DownloadDialogHeader(): React.JSX.Element {
+  const { t: translate } = useTranslation();
   return (
     <Dialog.DialogHeader>
-      <Dialog.DialogTitle>Download folder</Dialog.DialogTitle>
-      <Dialog.DialogDescription>
-        Choose the image format and whether to include subfolders.
-      </Dialog.DialogDescription>
+      <Dialog.DialogTitle>{translate("download.title")}</Dialog.DialogTitle>
+      <Dialog.DialogDescription>{translate("download.description")}</Dialog.DialogDescription>
     </Dialog.DialogHeader>
   );
 }
@@ -70,6 +82,8 @@ interface DownloadDialogBodyProps {
 }
 
 function DownloadDialogBody({ form }: DownloadDialogBodyProps): React.JSX.Element {
+  const { t: translate } = useTranslation();
+  const formatOptions = buildFormatOptions(translate);
   return (
     <div className="flex flex-col gap-3">
       <form.Field name="recursive">
@@ -77,7 +91,7 @@ function DownloadDialogBody({ form }: DownloadDialogBodyProps): React.JSX.Elemen
           <Checkbox
             checked={field.state.value}
             onChange={field.handleChange}
-            label="Recursive (include subfolders)"
+            label={translate("download.recursive")}
           />
         )}
       </form.Field>
@@ -86,9 +100,9 @@ function DownloadDialogBody({ form }: DownloadDialogBodyProps): React.JSX.Elemen
           <RadioGroup
             value={field.state.value}
             onChange={field.handleChange}
-            options={FORMAT_OPTIONS}
+            options={formatOptions}
             name="format"
-            legend="Format"
+            legend={translate("download.formatLegend")}
           />
         )}
       </form.Field>
@@ -97,9 +111,10 @@ function DownloadDialogBody({ form }: DownloadDialogBodyProps): React.JSX.Elemen
 }
 
 function DownloadDialogFooter(): React.JSX.Element {
+  const { t: translate } = useTranslation();
   return (
     <Dialog.DialogFooter>
-      <Button type="submit">Download</Button>
+      <Button type="submit">{translate("download.button")}</Button>
     </Dialog.DialogFooter>
   );
 }

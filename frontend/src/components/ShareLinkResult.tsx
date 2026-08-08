@@ -5,6 +5,7 @@ import Dialog from "@components/ui/Dialog";
 import { QRCodeSVG } from "qrcode.react";
 import { buildShareUrl } from "@lib/api/urls";
 import logoUrl from "@assets/logo.svg?url";
+import { type Translate, useTranslation } from "@lib/i18n";
 import { svgElementToPngFile } from "@lib/svgToPng";
 import { toast } from "sonner";
 
@@ -23,40 +24,37 @@ const QR_LOGO_SETTINGS = { src: logoUrl, height: 40, width: 40, excavate: true }
 const QR_SIZE = 200;
 const COPIED_FEEDBACK_MS = 2000;
 const QR_FILENAME = "share-qr.png";
-const SHARE_TITLE = "ImageShare link";
-const MAILTO_SUBJECT = "ImageShare link";
 
-function buildMailtoUrl(url: string): string {
+function buildMailtoUrl(url: string, translate: Translate): string {
   const params = new URLSearchParams({
-    subject: MAILTO_SUBJECT,
+    subject: translate("share.shareTitle"),
     body: url,
   });
   return `mailto:?${params.toString()}`;
 }
 
-async function dispatchQrFile(file: File, url: string): Promise<void> {
+async function dispatchQrFile(file: File, url: string, translate: Translate): Promise<void> {
   if (navigator.canShare?.({ files: [file] }) === true) {
-    await navigator.share({ files: [file], title: SHARE_TITLE, text: url });
-    toast.success("Shared");
+    await navigator.share({ files: [file], title: translate("share.shareTitle"), text: url });
+    toast.success(translate("share.toasts.shared"));
     return;
   }
-  globalThis.location.href = buildMailtoUrl(url);
+  globalThis.location.href = buildMailtoUrl(url, translate);
 }
 
-function handleEmailError(error: unknown): void {
+function handleEmailError(error: unknown, translate: Translate): void {
   if (error instanceof DOMException && error.name === "AbortError") {
     return;
   }
-  toast.error("Could not send email");
+  toast.error(translate("share.toasts.emailError"));
 }
 
 function ShareResultHeader(): React.JSX.Element {
+  const { t: translate } = useTranslation();
   return (
     <Dialog.DialogHeader>
-      <Dialog.DialogTitle>Share link generated</Dialog.DialogTitle>
-      <Dialog.DialogDescription>
-        Share this link or scan the QR code to grant access to the matching folders.
-      </Dialog.DialogDescription>
+      <Dialog.DialogTitle>{translate("share.resultTitle")}</Dialog.DialogTitle>
+      <Dialog.DialogDescription>{translate("share.resultDescription")}</Dialog.DialogDescription>
     </Dialog.DialogHeader>
   );
 }
@@ -87,14 +85,15 @@ interface ShareActionsProps {
 }
 
 function useShareActions(url: string, svgRef: RefObject<SVGSVGElement | null>) {
+  const { t: translate } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(url);
     setCopied(true);
-    toast.success("Link copied");
+    toast.success(translate("share.toasts.copied"));
     setTimeout(() => setCopied(false), COPIED_FEEDBACK_MS);
-  }, [url]);
+  }, [url, translate]);
   const handleSendEmail = useCallback(async () => {
     const svg = svgRef.current;
     if (svg === null) {
@@ -103,13 +102,13 @@ function useShareActions(url: string, svgRef: RefObject<SVGSVGElement | null>) {
     setSending(true);
     try {
       const file = await svgElementToPngFile(svg, QR_SIZE, QR_FILENAME);
-      await dispatchQrFile(file, url);
+      await dispatchQrFile(file, url, translate);
     } catch (error) {
-      handleEmailError(error);
+      handleEmailError(error, translate);
     } finally {
       setSending(false);
     }
-  }, [svgRef, url]);
+  }, [svgRef, url, translate]);
   return { copied, sending, handleCopy, handleSendEmail };
 }
 
@@ -120,10 +119,11 @@ function CopyLinkButton({
   copied: boolean;
   onClick: () => void;
 }): React.JSX.Element {
+  const { t: translate } = useTranslation();
   return (
     <Button type="button" variant="outline" onClick={onClick}>
       {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-      {copied ? "Copied" : "Copy link"}
+      {copied ? translate("share.copied") : translate("share.copyLink")}
     </Button>
   );
 }
@@ -135,10 +135,11 @@ function SendEmailButton({
   sending: boolean;
   onClick: () => void;
 }): React.JSX.Element {
+  const { t: translate } = useTranslation();
   return (
     <Button type="button" variant="outline" disabled={sending} onClick={onClick}>
       <Mail className="size-4" />
-      {sending ? "Sending…" : "Send to email"}
+      {sending ? translate("share.sending") : translate("share.sendToEmail")}
     </Button>
   );
 }

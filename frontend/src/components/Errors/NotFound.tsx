@@ -8,17 +8,19 @@
 import Button from "@components/ui/Button";
 import { FileQuestion } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "@lib/i18n";
 
 const HOME_LINK_CLASS = Button.buttonVariants({ variant: "ghost", size: "sm" });
 const ROOT_SPLAT_PARAMS = { _splat: undefined };
 
 export default function NotFound(): React.JSX.Element {
+  const { t: translate } = useTranslation();
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
       <FileQuestion className="size-5 text-muted-foreground" />
-      <p className="text-sm text-foreground">This page could not be found.</p>
+      <p className="text-sm text-foreground">{translate("errors.notFound")}</p>
       <Link to="/browse/$" params={ROOT_SPLAT_PARAMS} className={HOME_LINK_CLASS}>
-        Go to library
+        {translate("errors.goLibrary")}
       </Link>
     </div>
   );

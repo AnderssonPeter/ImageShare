@@ -4,10 +4,10 @@ import Button from "@components/ui/Button";
 import Dialog from "@components/ui/Dialog";
 import FilterBuilder from "@components/FilterBuilder";
 import ShareField from "@components/ShareField";
-import ShareReturnUrlField from "@components/ShareReturnUrlField";
 import { trimReturnUrl } from "@lib/api/urls";
 import { useForm } from "@tanstack/react-form";
 import { useRootFolders } from "@lib/api/contentQueries";
+import { type Translate, useTranslation } from "@lib/i18n";
 
 interface ShareFormValues {
   name: string;
@@ -27,33 +27,51 @@ interface ShareLinkDialogProps {
   initialReturnUrl?: string;
 }
 
-const nameSchema = string().check(
-  refine((value) => value.trim() !== "", { error: "A name must be specified." }),
-);
-const filterSchema = string().check(
-  refine((value) => value.trim() !== "", { error: "A filter must be specified." }),
-);
-const endDateSchema = string().check(
-  refine((value) => value !== "", { error: "An end date must be specified." }),
-  refine((value) => !Number.isNaN(new Date(value).getTime()), { error: "Invalid date." }),
-  refine((value) => new Date(value).getTime() > Date.now(), {
-    error: "The end date must be in the future.",
-  }),
-);
+function nameSchema(translate: Translate) {
+  return string().check(
+    refine((value) => value.trim() !== "", { error: translate("share.errors.nameRequired") }),
+  );
+}
 
-const nameValidators = { onChange: nameSchema, onSubmit: nameSchema };
-const filterValidators = { onChange: filterSchema, onSubmit: filterSchema };
-const endDateValidators = { onChange: endDateSchema, onSubmit: endDateSchema };
+function filterSchema(translate: Translate) {
+  return string().check(
+    refine((value) => value.trim() !== "", { error: translate("share.errors.filterRequired") }),
+  );
+}
+
+function endDateSchema(translate: Translate) {
+  return string()
+    .check(refine((value) => value !== "", { error: translate("share.errors.endDateRequired") }))
+    .check(
+      refine((value) => !Number.isNaN(new Date(value).getTime()), {
+        error: translate("share.errors.dateInvalid"),
+      }),
+    )
+    .check(
+      refine((value) => new Date(value).getTime() > Date.now(), {
+        error: translate("share.errors.endDateFuture"),
+      }),
+    );
+}
+
+function validatorsFor(name: "name" | "endDate", translate: Translate) {
+  const schema = name === "name" ? nameSchema(translate) : endDateSchema(translate);
+  return { onChange: schema, onSubmit: schema };
+}
+
+function filterValidators(translate: Translate) {
+  const schema = filterSchema(translate);
+  return { onChange: schema, onSubmit: schema };
+}
 
 const EMPTY_FOLDERS: string[] = [];
 
 function ShareDialogHeader(): React.JSX.Element {
+  const { t: translate } = useTranslation();
   return (
     <Dialog.DialogHeader>
-      <Dialog.DialogTitle>Generate share link</Dialog.DialogTitle>
-      <Dialog.DialogDescription>
-        Create a time-limited link that grants access to folders matching the filter.
-      </Dialog.DialogDescription>
+      <Dialog.DialogTitle>{translate("share.generateTitle")}</Dialog.DialogTitle>
+      <Dialog.DialogDescription>{translate("share.generateDescription")}</Dialog.DialogDescription>
     </Dialog.DialogHeader>
   );
 }
@@ -120,11 +138,14 @@ interface TextFieldOptions {
   showErrors: boolean;
 }
 
-function textField(form: ShareForm, options: TextFieldOptions): React.JSX.Element {
+function textField(
+  form: ShareForm,
+  translate: Translate,
+  options: TextFieldOptions,
+): React.JSX.Element {
   const { name, label, type, showErrors } = options;
-  const validators = name === "name" ? nameValidators : endDateValidators;
   return (
-    <form.Field name={name} validators={validators}>
+    <form.Field name={name} validators={validatorsFor(name, translate)}>
       {(field) => (
         <ShareField
           id={field.name}
@@ -141,12 +162,17 @@ function textField(form: ShareForm, options: TextFieldOptions): React.JSX.Elemen
 }
 
 function ShareFormFields({ form, showErrors }: ShareFormFieldsProps): React.JSX.Element {
+  const { t: translate } = useTranslation();
   const { data: folders } = useRootFolders();
   const folderNames = folders ?? EMPTY_FOLDERS;
   return (
     <div className="flex flex-col gap-3">
-      {textField(form, { name: "name", label: "Name", showErrors })}
-      <form.Field name="filter" validators={filterValidators}>
+      {textField(form, translate, {
+        name: "name",
+        label: translate("share.fields.name"),
+        showErrors,
+      })}
+      <form.Field name="filter" validators={filterValidators(translate)}>
         {(field) => (
           <FilterBuilder
             folders={folderNames}
@@ -156,17 +182,20 @@ function ShareFormFields({ form, showErrors }: ShareFormFieldsProps): React.JSX.
           />
         )}
       </form.Field>
-      {textField(form, {
+      {textField(form, translate, {
         name: "endDate",
-        label: "End date",
+        label: translate("share.fields.endDate"),
         type: "datetime-local",
         showErrors,
       })}
       <form.Field name="returnUrl">
         {(field) => (
-          <ShareReturnUrlField
+          <ShareField
             id={field.name}
+            label={translate("share.fields.returnUrl")}
             value={field.state.value}
+            placeholder={translate("share.fields.returnUrlPlaceholder")}
+            inputMode="url"
             onChange={field.handleChange}
             onBlur={field.handleBlur}
           />
@@ -189,10 +218,11 @@ interface ShareDialogFooterProps {
 }
 
 function ShareDialogFooter({ isSubmitting }: ShareDialogFooterProps): React.JSX.Element {
+  const { t: translate } = useTranslation();
   return (
     <Dialog.DialogFooter>
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Generating…" : "Generate"}
+        {isSubmitting ? translate("share.generating") : translate("share.submit")}
       </Button>
     </Dialog.DialogFooter>
   );

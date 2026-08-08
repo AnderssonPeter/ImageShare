@@ -1,5 +1,9 @@
 import "@testing-library/jest-dom/vitest";
+import { i18n } from "@lib/i18n";
 import { vi } from "vitest";
+
+// Initialise i18n and pin English so string-based assertions are deterministic.
+void i18n.changeLanguage("en");
 
 /**
  * Provide no-op stubs for browser APIs jsdom does not implement. The
