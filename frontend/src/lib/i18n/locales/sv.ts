@@ -1,6 +1,6 @@
 const sv = {
   common: {
-    brand: "ImageShare",
+    brand: "Image Share",
     user: "Användare",
   },
   theme: {

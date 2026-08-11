@@ -1,6 +1,6 @@
 const en = {
   common: {
-    brand: "ImageShare",
+    brand: "Image Share",
     user: "User",
   },
   theme: {
