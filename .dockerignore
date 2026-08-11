@@ -22,6 +22,9 @@
 **/secrets.dev.yaml
 **/values.dev.yaml
 
+# Runtime image storage (mounted as a volume in production; not needed for build)
+ImageShare/images/
+
 # Frontend generated files (regenerated during image build; keep context lean)
 frontend/src/lib/api/generated/
 frontend/.tanstack/

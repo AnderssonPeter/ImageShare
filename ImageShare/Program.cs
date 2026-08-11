@@ -19,6 +19,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration
     .AddEnvironmentVariables()
     .AddDockerSecrets();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddUserSecrets<Program>();
+}
+
 builder.Logging.AddImageShareConsoleFormatter();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddImageShareOpenApi();

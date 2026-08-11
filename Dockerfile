@@ -33,7 +33,7 @@ RUN pnpm install --frozen-lockfile
 # matches the API being shipped.
 COPY --from=build-backend /src/ImageShare/openapi.json /src/ImageShare/openapi.json
 COPY frontend/ ./
-RUN pnpm install && pnpm run build
+RUN pnpm run build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build-backend AS publish
