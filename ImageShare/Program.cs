@@ -7,6 +7,7 @@ using ImageShare.ImageConversion;
 using ImageShare.Logging;
 using ImageShare.Spa;
 using ImageShare.UsageAgreement;
+using Mcrio.Configuration.Provider.Docker.Secrets;
 using Mediator;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
@@ -15,7 +16,9 @@ using Mirality.FileProviders;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Configuration
+    .AddEnvironmentVariables()
+    .AddDockerSecrets();
 builder.Logging.AddImageShareConsoleFormatter();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddImageShareOpenApi();
@@ -31,7 +34,7 @@ builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetim
 builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuthenticationBehavior<,>));
 builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AdminBehavior<,>));
 builder.Services.AddReverseProxy();
-builder.Services.AddSingleton<ImageShare.Browsing.ImageEnumerator>();
+builder.Services.AddSingleton<ImageEnumerator>();
 builder.Services.AddOptions<StorageOptions>().BindConfiguration("Storage").Validated();
 builder.Services.AddOptions<ImageFormatOptions>().BindConfiguration("ImageFormats").Validated();
 builder.Services.AddSpaHosting();
