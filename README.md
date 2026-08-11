@@ -1,142 +1,270 @@
-todo:
-[X] Add nuget mcp
-[X] Enable dotnet and typescript LSP
-[X] Add powershell to docker
-[X] Dynamic Context Pruning Plugin https://github.com/Opencode-DCP/opencode-dynamic-context-pruning
-[X] Allow opencode to access tmp folder by default
-[X] mcp to search code base https://github.com/Helweg/opencode-codebase-index
-[X] Fix context7 auth go into container and curl with "" around the url!
-[ ] Install headroom
-[X] Add Auth endpoint where you can provide a filter (same as `User.ImageShareFilter` and a end date, and returns a signed jwt token
-  [X] The endpoint that generates a JWT should verify that the user has a admin role (what the role is named should be configured in appsettings, the admin role can only exist when authing from open id connect)
-  [X] Add a auth endpoint that accepts the jwt token from above as sign in
-  [X] To create the jwt token an admin role should be required
-[X] Add api key authentication
-  [X] This should not replace the other auth all three should work
-  [X] The api keys should be stored in the settings file, with a `ImageShareFilter`
-[X] Do not use magic string, check if they are defined in some other class or create a const, Example "image_share_filter", "name", "display_name"
-[X] Modify the script that starts the open code container, fix the todos in it!
-[X] What is rg cli tool? install in container?
-[X] Add nuget mcp server
-[X] Enable microsoft docs mcp server
-[X] Add instructions to group files by funcitionality not type
-[X] Add Arrange, Act, Assert comments to unit tests
-[X] Convert unit tests to parameterized unit tests where it makes sense
-[X] Add TestUser to DI
-[X] Disallow root paths
-[X] Folder endpoint should only return files that have a image file extension
-[X] Add endpoint to download multiple images, from multiple folders recursively
-[X] Add endpoint to get random image from a list of folder recursively
-[X] In unit tests move AddDir (rename to AddDirectory), AddFile, AddImageFile, AddThumbFile, Unwrap and other common methods to extension methods
-[X] Add CreateThumbnail, IsStatusCode, CreateTestImage, to a base class for unit tests
-[X] Move the code for `dotnet r startup` to a powershell file, check if the Redirect logic is needed, if not then remove if it's needed make sure its compatible with both linux and windows
-[X] Create a user mock class that can be reused in all unit tests instead of having one per test file
-  [X] The mock class should be added to DI and resolved using DI (the tests should not call new on it)
-[X] HasVisibleContent
-  [X] should not return true when it finds a directory, it has to run recursively on sub directories
-  [X] Thumbprints should not be included in the calculation, only images with the correct file extension should be included
-[ ] BE
-  [X] Add run script
-    [X] Add dotnet format
-    [X] Add test start application
-      [X] Modify to scan the output instead of doing a health check
-      [X] Move the script to a file
-  [X] NativeAOT
-  [X] editorconfig
-  [X] Linting
-  [X] Scalar
-  [X] Add user class
-  [X] Don't use _ for private fields
-    [X] Configure .editorconfig accordingly
-  [X] Try not to create helper classes or service classes, create extension methods or classes that handle the logic
-    [X] BrowsingHelpers.IsImageFile/IsHiddenFile could be added to a `RelativePath` class, that is converted from string.
-    [X] `PathHelper` could also be merged into `RelativePath`
-    [X] BrowsingHelpers.HasVisibleContent Should be an extension method on IFileProvider
-    [X] Add XML comments to the newly created methods
-  [X] Add custom exception mapper
-    [X] Use custom exceptions for different types of errors
-    [X] Add EnsureAuthenticated on IUser
-  [X] Don't check if `IsAuthenticated` inside Command/QueryHandler, use a behavior and attribute for that!
-  [X] Merge EnumerateImageFiles and GetImageBaseNames and add parameter for recursive or not
-  [X] Do we need FindMatchingFilesRecursive can't we just rewrite FindMatchingFiles to handle it correctly?
-  [X] There are multiple requests that don't work, create integration tests.
-  [X] /folders without any folders listed dosen't work so its impossible to list the root folders.
-  [X] /images/download fails due to some `System.InvalidOperationException: Synchronous operations are disallowed. Call WriteAsync or set AllowSynchronousIO to true instead.` error
-  [X] Path parameters are incorrectly sent from scalar, i don't know if its a bug in scalar or a bug in how we specified the path variable in openapi, the path parameter is url encoded so / is replaced by %2f
-  [X] When a path is provided that doesn't exist return 404
-  [X] Image converter job doesn't seem to work
-  [X] When you only download one folder, don't create a folder for it inside the zip
-  [X] Add canAccessFolder method to user class
-    [X] Move the regex generation logic into it's own class that caches regexes for each filter.
-    [X] Add unit tests for canAccessFolder method
-  [X] Parse scopes to detect what images we are allowed to read
-  [X] Keep one list of supported image formats in configuration and use it instead of hardcoding in both ImageEndpoints and ThumbprintService, it should be it's own options object and in appsettings.json it should be avif, webp, jpg, png.
-  [X] When adding options add validation attributes and validate them on startup
-  [X] Use DI in unit tests!?
-  [X] See if we can find a better way to structure the endpoints
-  [X] Use typed result sets, and get rid of IsStatusCode helper method!
-  [X] ServeBestMatchAsync and ServeImageAsync should not be async!
-  [X] Add endpoint to fetch folder
-    [X] BrowserEndpoint must support duplicate images with different formats
-    [X] BrowserEndpoint should not return the file extension
-    [X] BrowserEndpoint should not list files in the root folder
-  [X] Add a function to get a random thumbnail image in a folder
-    [X] Move GetRandomThumbnail from BrowsingEndpoints to ImageEndpoints
-    [X] No unit test should create a new InMemoryFileProvider and instead use the one provided by Dependency Injection
-    [X] Unit tests should use IWritableFileProvider and IFileProvider instead of concrete implementations
-    [X] Convert `/random-thumbnail/{**path}` to get `/random/{**path}` with a parameter to specify if you want a full image or thumbnail, and a parameter if to get recursively
-  [X] Don't list empty folders in BrowserEndpoint
-  [X] Add endpoint to fetch images
-    [X] Use IContentTypeProvider instead of FileExtensionContentTypeProvider and take it as a dependency instead of constructing your own, use the extension method IContentTypeProvider.GetContentType to simplify getting mime type
-    [X] Rewrite to take thumbprint from query string as a bool value
-    [X] Don't try to convert in the endpoint, instead loop PreferredConvertFormats and find the first match that the client accepts, if no match is found, return 406 Not Acceptable
-    [X] Write missing unit tests for ImageEndpoints
-    [X] To find a matching image check the smallest first then the next and so on
-    [X] Do not convert to thumbnail in ImageEndpoints, modify so that it looks for thumbnail files in FindMatchingFiles instead
-  [X] Find a way to generate thumbprints
-  [X] Add common instructions
-    [X] All options must be validated on startup
-    [X] Do not use abbreviations
-    [X] ImageConverterJobTests should not use a physical directory and instead use the memory file provider!
-    [X] Do not use reflection in tests to access method, instead make it internal and use InternalsVisibleTo attribute to access it in tests
-    [X] Do not use time based tests, Task.Delay is not a feasible solution
-  [X] there should be some way to use IContentTypeProvider without constructing it on our own, while adding additional file formats to it?
-  [X] Move the Paginate method to a helper method and make it generic and reuse it in both BrowserEndpoint and ImageEndpoints
-  [X] Make service generate the image in all possible formats
-    [X] There is a mix of Thumbprint and Thumbnail in the codebase, we should standardize on one of them
-      [X] Modify the ThumbnailService to instead convert between formats and also specify a target resolution
-      [X] Rename the folder and all classes inside to something more appropriate, like ImageConversion, ImageConveter
-    [X] Generate thumbnails for all formats and in all formats
-    [X] Change from PhysicalFileProvider to WritablePhysicalFileProvider, register it as both IAsyncWritableFileProvider and IFileProvider, use IAsyncWritableFileProvider when creating new files.
-  [X] Add static analysis unit test that ensures that all minimal endpoints parameters has [FromQuery], [FromRoute], [FromBody], [FromHeader] or [FromServices] attributes
-  [X] Call OpenApi endpoint instead of root in startup.ps1
-  [X] Fork WritableFileProvider and add cancellationToken to ReadAsBytesAsync
-    [X] Add method to change last modified
-    [X] Add cancellation tokens
-  [ ] Sort images by created date, set created date from metadata
-  [X] Write openapi spec to disk on build
-  [X] Include full path in /content and /content/{path}
-  [X] Require the user to be logged in to get the frontend!
-  [X] Add frontend proxy
-  [ ] Chrome MCP server? / Playwright MCP
-  [X] Download log
-  [X] Improve logging
-  [X] Reverse Proxy support for IP resolution
-    [X] Add support for KnownProxies
-  [X] Images aren't being converted when added by rapidraw?
-  [X] Avif + thumbnail results in black line in the bottom? (IMG_0833, IMG_5384)
-  [X] Create unit tests that tries to forge an jwt token
-  [X] Add rate limit to unauthenticated endpoints
-  [X] Break up the agent.md into skills to lower the token usage
-  [X] Add a usage agreement function
-  [X] Add support for negative glob
-  [X] Verify that the random function wont return images for folders where the user dosen't have access
-  [X] Microsoft.AspNetCore.Hosting.Diagnostics[11]
-      Hosting startup assembly exception
-      System.InvalidOperationException: Startup assembly Microsoft.WebTools.ApiEndpointDiscovery failed to execute. See the inner exception for more details.
-       ---> System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.WebTools.ApiEndpointDiscovery, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.
-      File name: 'Microsoft.WebTools.ApiEndpointDiscovery, Culture=neutral, PublicKeyToken=null'
-         at System.Reflection.RuntimeAssembly.InternalLoad(AssemblyName assemblyName, StackCrawlMark& stackMark, AssemblyLoadContext assemblyLoadContext, RuntimeAssembly requestingAssembly, Boolean throwOnFileNotFound)
-         at System.Reflection.Assembly.Load(AssemblyName assemblyRef)
-         at Microsoft.AspNetCore.Hosting.GenericWebHostBuilder.ExecuteHostingStartups()
-         --- End of inner exception stack trace ---
+# Image Share
+
+A stateless application to share images.
+It provides an image gallery and rest API.
+The goal was to create a lightweight, self-contained image sharing solution that can be deployed in a containerized environment, with as few moving parts as possible.
+Authentication is provided through OpenID Connect (e.g.
+Pocket ID) and/or API keys, with JWT token issuance for programmatic access.
+
+## Getting started
+
+The application ships as a single container built from
+[`ImageShare/Dockerfile`](ImageShare/Dockerfile).
+
+### 1. Build the image
+
+```bash
+ docker buildx build . -f .\Dockerfile -t image-share:latest
+```
+
+### 2. Provide configuration
+
+The container reads configuration from, in order of precedence (later overrides
+earlier):
+
+1. `ImageShare/appsettings.json` (baked into the image).
+2. `ImageShare/appsettings.{Environment}.json`, where `{Environment}` is
+   `ASPNETCORE_ENVIRONMENT` (defaults to `Production`).
+3. Environment variables passed to the container.
+4. Docker secret files mounted under `/run/secrets`.
+
+See the [Settings](#settings) section for every supported key. At minimum you
+must supply an OIDC authority, client id/secret, a JWT signing key (≥ 32
+characters) and a storage path.
+
+### 3. Run with Docker Compose
+
+Create a `docker-compose.yml` next to the repository root:
+
+```yaml
+secrets:
+  OpenIdConnect__ClientSecret:
+    file: ./secrets/OpenIdConnect__ClientSecret
+  Jwt__SigningKey:
+    file: ./secrets/Jwt__SigningKey
+
+services:
+  imageshare:
+    image: imageshare:latest
+    ports:
+      - "8080:8080"
+    environment:
+      OpenIdConnect__Authority: https://your-pocket-id-domain
+      OpenIdConnect__ClientId: imageshare
+      OpenIdConnect__AdminRole: admin
+      Jwt__Issuer: ImageShare
+      Jwt__Audience: ImageShare
+      Storage__BasePath: /data/images
+      ReverseProxy__Enabled: "true"
+      ReverseProxy__KnownProxies__0: "172.16.0.0/12"   # Docker bridge network
+      ImageFormats__SupportedFormats__0: avif
+      ImageFormats__SupportedFormats__1: webp
+      ImageFormats__SupportedFormats__2: jpg
+    volumes:
+      - ./image-share/data:/data/images
+    secrets:
+      - OpenIdConnect__ClientSecret
+      - Jwt__SigningKey
+    restart: unless-stopped
+```
+
+Secret files are plain text files containing only the secret value (no quotes, no
+newlines are significant — trailing whitespace is trimmed). Compose mounts each
+declared secret at `/run/secrets/<secret_name>` (read-only), so name the secret
+after the configuration key it should populate
+
+Start the stack:
+
+```bash
+docker compose up -d
+```
+
+The API is then available at `https://localhost:7127/scalar`
+
+> In production put ImageShare behind your own TLS-terminating reverse proxy and
+> set `ReverseProxy__Enabled=true` together with the proxy's IP address(es) in
+> `ReverseProxy__KnownProxies` so forwarded headers are honoured. The container
+> runs as a non-root user (`$APP_UID`) and listens on port 8080 (HTTP) / 8081
+> (HTTPS).
+
+## Settings
+
+All settings are bound to validated options classes, so an invalid value
+prevents startup with a clear error message rather than failing at runtime.
+
+### Configuration sources
+
+| Source | Location | Notes |
+| --- | --- | --- |
+| Environment JSON | `ImageShare/appsettings.Production.json` | Selected by `ASPNETCORE_ENVIRONMENT`. |
+| Environment variables | container env | Use `__` (double underscore, replace all `:` in the tables below with `__`) for nesting, e.g. `OpenIdConnect__ClientId`. Array indices are numeric, e.g. `ImageFormats__SupportedFormats__0`. |
+| Docker secrets | `/run/secrets/<name>` | Same naming as the equivalent environment variable — the file's name (with `__`, replace all `:` in the tables below with `__`) maps to the configuration key. Loaded via the `Mcrio.Configuration.Provider.Docker.Secrets` provider. |
+
+### Settings reference
+
+#### `Logging`
+
+| Path | Type | Default | Description |
+| --- | --- | --- | --- |
+| `Logging:LogLevel:Default` | string | `Information` | Default log severity. |
+
+#### `ReverseProxy`
+
+
+| Path | Type | Default | Description |
+| --- | --- | --- | --- |
+| `ReverseProxy:Enabled` | bool | `false` | Enables `ForwardedHeaders` handling. |
+| `ReverseProxy:KnownProxies` | string[] | `[]` | Trusted proxy IP addresses (validated). |
+
+#### `OpenIdConnect`
+
+| Path | Type | Default | Description |
+| --- | --- | --- | --- |
+| `OpenIdConnect:Authority` | string | — | OIDC provider authority URL. **Required.** |
+| `OpenIdConnect:ClientId` | string | — | Client id registered with the provider. **Required.** |
+| `OpenIdConnect:ClientSecret` | string | — | Client secret. **Required, secret.** |
+| `OpenIdConnect:ResponseType` | string | `code` | OIDC response type. |
+| `OpenIdConnect:GetClaimsFromUserInfoEndpoint` | bool | `true` | Fetch extra claims from the user info endpoint. |
+| `OpenIdConnect:AdminRole` | string | `admin` | Role claim value that grants admin access. |
+
+#### `ApiKeys`
+
+| Path | Type | Default | Description |
+| --- | --- | --- | --- |
+| `ApiKeys:Keys:0:Key` | string | — | The API key value. **Required, secret.** Sent via the `X-API-Key` header or query parameter. |
+| `ApiKeys:Keys:0:Name` | string | — | Human-friendly label. **Required.** |
+| `ApiKeys:Keys:0:Filter` | string | — | Image filter [glob](#filter-globs), e.g. `*` or `vacation/**`. **Required.** |
+| `ApiKeys:Keys:0:IsAdmin` | bool | `false` | Grants admin privileges to the key. |
+
+Repeat the `:Keys:<index>:` block for each key.
+
+#### `Jwt`
+
+Bound to [`JwtSettings`](ImageShare/Authentication/JwtSettings.cs). Used by
+`JwtTokenIssuer`/`JwtTokenValidator` to mint and validate API tokens.
+
+| Path | Type | Default | Description |
+| --- | --- | --- | --- |
+| `Jwt:Issuer` | string | — | Token issuer (`iss`). **Required.** |
+| `Jwt:Audience` | string | — | Token audience (`aud`). **Required.** |
+| `Jwt:SigningKey` | string | — | HMAC signing key, **must be ≥ 32 characters**. **Required, secret.** |
+
+#### `RateLimit`
+Only unauthenticated requests are rate-limited. Authenticated users (OIDC, JWT or API key) are exempt.
+
+| Path | Type | Default | Description |
+| --- | --- | --- | --- |
+| `RateLimit:PermitLimit` | int | `10` | Maximum requests per window. Must be > 0. |
+| `RateLimit:WindowSeconds` | int | `60` | Fixed window length in seconds. Must be > 0. |
+
+#### `Storage`
+
+The directory is created on startup if it does not exist.
+
+| Path | Type | Default | Description |
+| --- | --- | --- | --- |
+| `Storage:BasePath` | string | `images` | Root directory for the image library. **Required.** Mount a volume here in containers. |
+
+#### `ImageFormats`
+
+| Path | Type | Default | Description |
+| --- | --- | --- | --- |
+| `ImageFormats:SupportedFormats` | string[] | `["avif","webp","jpg"]` | File extensions served/browsed. At least one required. |
+
+#### `ImageConversion`
+
+The background `ImageConverterJob` generates full-quality and `.thumb` variants.
+
+| Path | Type | Default | Description |
+| --- | --- | --- | --- |
+| `ImageConversion:FullQuality` | uint | `95` | Quality (0–100) for full-size conversions. |
+| `ImageConversion:ThumbnailQuality` | uint | `85` | Quality (0–100) for thumbnails. |
+| `ImageConversion:ThumbnailMaxWidth` | int | `200` | Max thumbnail width in pixels. ≥ 1. |
+| `ImageConversion:ThumbnailMaxHeight` | int | `200` | Max thumbnail height in pixels. ≥ 1. |
+
+#### `UsageAgreement`
+
+Agreement enforcement is only active when at least one agreement is configured.
+
+| Path | Type | Default | Description |
+| --- | --- | --- | --- |
+| `UsageAgreement:Agreements:0:Language` | string | — | BCP-47 language tag, e.g. `en`, `sv`. |
+| `UsageAgreement:Agreements:0:Text` | string | — | Agreement body text. |
+
+### Recommended secret files
+
+The file name must equal the equivalent environment variable name.
+
+| Secret file name | Maps to | Notes |
+| --- | --- | --- |
+| `OpenIdConnect__ClientSecret` | `OpenIdConnect:ClientSecret` | OIDC client secret. |
+| `Jwt__SigningKey` | `Jwt:SigningKey` | HMAC signing key (≥ 32 chars). |
+| `ApiKeys__Keys__0__Key` | `ApiKeys:Keys:0:Key` | First API key value. |
+
+Non-sensitive settings (authorities, role names, limits, formats) are fine as
+environment variables; only the three values above are worth treating as
+secrets.
+
+## Filter globs
+
+Each API key and JWT token carries an `image_share_filter` claim that restricts
+which top-level folders the caller can see. The claim value is a glob expression
+compiled by [`ImageShareFilterCompiler`](ImageShare/Authentication/ImageShareFilterCompiler.cs)
+and evaluated against the **root folder** of every request (the first path
+segment, before any `/`). Access to a root folder grants access to everything
+beneath it; subfolders are never re-checked, so a filter cannot expose or hide
+individual nested paths.
+
+### Syntax
+
+A filter is a `|`-separated list of patterns. Each pattern is matched against
+the root folder name, case-insensitively and anchored to the whole name
+(`^pattern$`).
+
+| Token | Meaning |
+| --- | --- |
+| `*` | Any run of characters within the same segment — matches `[^/]*`, so it never crosses a `/`. |
+| `?` | A single character within the same segment — matches `[^/]`. |
+| `!` | Prefix a pattern with `!` to negate it (a deny pattern). |
+| <code>\|</code> | Separates patterns. At least one allow (non-negated) pattern is required. |
+
+There is no recursive `**` wildcard — `*` is single-segment only, and since
+matching is performed on the root folder name alone, deep-path patterns are not
+meaningful.
+
+A request is allowed when the root folder matches at least one allow pattern
+**and** matches no deny pattern. Deny patterns take precedence over allow
+patterns.
+
+### Examples
+
+| Filter | Effect |
+| --- | --- |
+| `*` | Access to every root folder (and thus everything beneath them). |
+| `vacation` | Only the `vacation` root folder. |
+| <code>vacation\|public</code> | The `vacation` or `public` root folders. |
+| <code>*\|!private</code> | Every root folder except `private`. |
+| `pub*` | Every root folder whose name starts with `pub` (e.g. `public`, `pub_2024`). |
+| `202?` | Root folders named `2024`, `2025`, etc. |
+
+Administrators (`IsAdmin` / the configured `OpenIdConnect:AdminRole`) are not
+subject to the filter — admin callers see every folder.
+
+## AI/LLM disclaimer
+
+The code in this repository was written with the assistance of AI tools. The
+following model configuration was used:
+
+- **deepseek v4 pro** — primary authoring assistant.
+- **GLM-5.2** (`openrouter/z-ai/glm-5.2`) — secondary assistant.
+
+Human review depth varied by area:
+
+- **Backend (`ImageShare/`), excluding unit tests** — carefully reviewed.
+- **Frontend (`frontend/`)** — lightly reviewed.
+- **Unit tests (`ImageShare.Tests/`)** — glossed over only.
+
+Treat the frontend and tests with particular scrutiny before relying on them in
+production, and assume that bugs may be present despite the AI assistance.
+
+opencode was used in conjunction with docker to sandbox it.
