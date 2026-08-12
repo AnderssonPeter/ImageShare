@@ -203,6 +203,33 @@ Non-sensitive settings (authorities, role names, limits, formats) are fine as
 environment variables; only the three values above are worth treating as
 secrets.
 
+## Using API key authentication
+
+API keys are a stateless alternative to OIDC for programmatic access. Each key
+is defined under `ApiKeys:Keys:<Name>` (see the [`ApiKeys`](#apikeys) settings)
+and carries a [`Filter`](#filter-globs) glob that restricts which root folders the
+key can read, plus an optional `IsAdmin` flag that grants admin privileges
+(Allows creation of jwt tokens).
+
+### Authenticating a request
+
+A key may be sent in the `X-API-Key` request header **or** the `?X-API-Key=`
+query parameter. The header is preferred for real clients; the query parameter is
+handy for URLs that cannot set headers (e.g. an `<img src>` or a browser address
+bar).
+
+Header (recommended):
+
+```bash
+curl -H "X-API-Key: super-secret-key" https://localhost:7127/api/content/vacation
+```
+
+Query parameter:
+
+```bash
+curl "https://localhost:7127/api/content/vacation?X-API-Key=super-secret-key"
+```
+
 ## Filter globs
 
 Each API key and JWT token carries an `image_share_filter` claim that restricts
