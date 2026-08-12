@@ -45,7 +45,8 @@ secrets:
 
 services:
   imageshare:
-    image: imageshare:latest
+    image: ghcr.io/anderssonpeter/imageshare:latest
+    container_name: imageshare
     ports:
       - "8080:8080"
     environment:
@@ -57,9 +58,6 @@ services:
       Storage__BasePath: /data/images
       ReverseProxy__Enabled: "true"
       ReverseProxy__KnownProxies__0: "172.16.0.0/12"   # Docker bridge network
-      ImageFormats__SupportedFormats__0: avif
-      ImageFormats__SupportedFormats__1: webp
-      ImageFormats__SupportedFormats__2: jpg
     volumes:
       - ./image-share/data:/data/images
     secrets:
