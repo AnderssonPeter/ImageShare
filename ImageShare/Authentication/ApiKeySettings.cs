@@ -6,31 +6,23 @@ namespace ImageShare.Authentication;
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
 public class ApiKeySettings : IValidatableObject
 {
-    public IList<ApiKeyEntry> Keys { get; set; } = [];
+    public IDictionary<string, ApiKeyEntry> Keys { get; set; } = new Dictionary<string, ApiKeyEntry>(StringComparer.Ordinal);
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        for (var index = 0; index < Keys.Count; index++)
+        foreach (var (name, entry) in Keys)
         {
-            var entry = Keys[index];
             if (string.IsNullOrWhiteSpace(entry.Key))
             {
                 yield return new ValidationResult(
-                    FormattableString.Invariant($"API key at index {index} is missing a Key."),
-                    [nameof(Keys)]);
-            }
-
-            if (string.IsNullOrWhiteSpace(entry.Name))
-            {
-                yield return new ValidationResult(
-                    FormattableString.Invariant($"API key at index {index} is missing a Name."),
+                    FormattableString.Invariant($"API key '{name}' is missing a Key."),
                     [nameof(Keys)]);
             }
 
             if (string.IsNullOrWhiteSpace(entry.Filter))
             {
                 yield return new ValidationResult(
-                    FormattableString.Invariant($"API key at index {index} is missing a Filter."),
+                    FormattableString.Invariant($"API key '{name}' is missing a Filter."),
                     [nameof(Keys)]);
             }
         }

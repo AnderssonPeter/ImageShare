@@ -8,9 +8,6 @@ public class ApiKeyEntry
     public string Key { get; set; } = "";
 
     [Required]
-    public string Name { get; set; } = "";
-
-    [Required]
     public string Filter { get; set; } = "";
 
     public bool IsAdmin { get; set; }

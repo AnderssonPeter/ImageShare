@@ -11,25 +11,27 @@ internal sealed class ApiKeyProvider(
 
     public Task<IApiKey?> ProvideAsync(string key)
     {
-        var matchingEntry = apiKeySettings.Value.Keys.FirstOrDefault(entry =>
-            string.Equals(entry.Key, key, StringComparison.Ordinal));
-
-        if (matchingEntry is null)
+        foreach (var (name, entry) in apiKeySettings.Value.Keys)
         {
-            return Task.FromResult<IApiKey?>(null);
+            if (!string.Equals(entry.Key, key, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var claims = new List<Claim>
+            {
+                new(ImageShareClaims.Name, name),
+                new(ImageShareClaims.ImageShareFilter, entry.Filter),
+            };
+
+            if (entry.IsAdmin)
+            {
+                claims.Add(new Claim(ImageShareClaims.Role, oidcSettings.Value.AdminRole));
+            }
+
+            return Task.FromResult<IApiKey?>(new ApiKey(entry.Key, name, claims));
         }
 
-        var claims = new List<Claim>
-        {
-            new(ImageShareClaims.Name, matchingEntry.Name),
-            new(ImageShareClaims.ImageShareFilter, matchingEntry.Filter),
-        };
-
-        if (matchingEntry.IsAdmin)
-        {
-            claims.Add(new Claim(ImageShareClaims.Role, oidcSettings.Value.AdminRole));
-        }
-
-        return Task.FromResult<IApiKey?>(new ApiKey(matchingEntry.Key, matchingEntry.Name, claims));
+        return Task.FromResult<IApiKey?>(null);
     }
 }
