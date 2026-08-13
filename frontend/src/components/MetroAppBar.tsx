@@ -36,7 +36,7 @@ function ShareButtonSlot({ visible, onShare }: ShareButtonSlotProps) {
 function UserChip({ name }: { name: string | undefined }): React.JSX.Element {
   const { t: translate } = useTranslation();
   return (
-    <div className="flex items-center gap-2 px-2 text-sm text-foreground">
+    <div className="hidden items-center gap-2 px-2 text-sm text-foreground sm:flex">
       <CircleUserRound className="size-4 text-muted-foreground" />
       <span className="max-w-32 truncate">{name ?? translate("common.user")}</span>
     </div>
@@ -48,7 +48,7 @@ function AppBarLeft(): React.JSX.Element {
   return (
     <div className="flex shrink-0 items-center gap-2">
       <Logo className="size-6 text-primary" />
-      <span className="text-sm font-medium text-foreground">{translate("common.brand")}</span>
+      <span className="hidden text-sm font-medium text-foreground sm:inline">{translate("common.brand")}</span>
     </div>
   );
 }

@@ -54,7 +54,7 @@ describe("metroAppBar renders the app title and logo", () => {
     renderAppBar();
 
     // Assert
-    expect(screen.getByText("ImageShare")).toBeInTheDocument();
+    expect(screen.getByText("Image Share")).toBeInTheDocument();
     expect(document.querySelector("svg")).toBeInTheDocument();
   }, 1000);
 });
