@@ -129,12 +129,12 @@ prevents startup with a clear error message rather than failing at runtime.
 
 | Path | Type | Default | Description |
 | --- | --- | --- | --- |
-| `ApiKeys:Keys:<Name>:Key` | string | — | The API key value. **Required, secret.** Sent via the `X-API-Key` header or query parameter. |
-| `ApiKeys:Keys:<Name>:Filter` | string | — | Image filter [glob](#filter-globs), e.g. `*` or `vacation/**`. **Required.** |
-| `ApiKeys:Keys:<Name>:IsAdmin` | bool | `false` | Grants admin privileges to the key. |
+| `ApiKeys:<Name>:Key` | string | — | The API key value. **Required, secret.** Sent via the `X-API-Key` header or query parameter. |
+| `ApiKeys:<Name>:Filter` | string | — | Image filter [glob](#filter-globs), e.g. `*` or `vacation/**`. **Required.** |
+| `ApiKeys:<Name>:IsAdmin` | bool | `false` | Grants admin privileges to the key. |
 
 `<Name>` is the human-friendly label used as the dictionary key — repeat it
-for each key, e.g. `ApiKeys:Keys:Developer:Key`, `ApiKeys:Keys:Mobile:Key`, it will also be used as username, both in logs and in the user endpoint.
+for each key, e.g. `ApiKeys:Developer:Key`, `ApiKeys:Mobile:Key`, it will also be used as username, both in logs and in the user endpoint.
 
 #### `Jwt`
 
@@ -197,7 +197,7 @@ The file name must equal the equivalent environment variable name.
 | --- | --- | --- |
 | `OpenIdConnect__ClientSecret` | `OpenIdConnect:ClientSecret` | OIDC client secret. |
 | `Jwt__SigningKey` | `Jwt:SigningKey` | HMAC signing key (≥ 32 chars). |
-| `ApiKeys__Keys__<Name>__Key` | `ApiKeys:Keys:<Name>:Key` | API key value for the named key. |
+| `ApiKeys__<Name>__Key` | `ApiKeys:<Name>:Key` | API key value for the named key. |
 
 Non-sensitive settings (authorities, role names, limits, formats) are fine as
 environment variables; only the three values above are worth treating as
@@ -206,7 +206,7 @@ secrets.
 ## Using API key authentication
 
 API keys are a stateless alternative to OIDC for programmatic access. Each key
-is defined under `ApiKeys:Keys:<Name>` (see the [`ApiKeys`](#apikeys) settings)
+is defined under `ApiKeys:<Name>` (see the [`ApiKeys`](#apikeys) settings)
 and carries a [`Filter`](#filter-globs) glob that restricts which root folders the
 key can read, plus an optional `IsAdmin` flag that grants admin privileges
 (Allows creation of jwt tokens).
