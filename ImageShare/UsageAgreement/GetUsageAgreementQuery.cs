@@ -8,4 +8,4 @@ namespace ImageShare.UsageAgreement;
 [RequireAuthentication]
 public sealed record GetUsageAgreementQuery(
     [FromHeader(Name = "Accept-Language")] string AcceptLanguage = "")
-    : IQuery<Ok<UsageAgreementResponse>>;
+    : IQuery<Results<Ok<UsageAgreementResponse>, NotFound>>;

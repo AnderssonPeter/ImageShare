@@ -25,7 +25,7 @@ public static class UsageAgreementEndpoints
         return endpoints;
     }
 
-    private static async Task<Ok<UsageAgreementResponse>> GetUsageAgreementAsync(
+    private static async Task<Results<Ok<UsageAgreementResponse>, NotFound>> GetUsageAgreementAsync(
         IMediator mediator,
         [AsParameters] GetUsageAgreementQuery request) =>
         await mediator.Send(request);
