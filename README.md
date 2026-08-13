@@ -9,7 +9,7 @@ Pocket ID) and/or API keys, with JWT token issuance for programmatic access.
 ## Getting started
 
 The application ships as a single container built from
-[`ImageShare/Dockerfile`](ImageShare/Dockerfile).
+[`Dockerfile`](Dockerfile).
 
 ### 1. Build the image
 
