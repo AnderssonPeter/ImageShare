@@ -22,11 +22,11 @@ public class IntegrationTests : IntegrationTestBase
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<PaginatedResult<FolderEntry>>();
+        var result = await response.Content.ReadFromJsonAsync<FolderEntry[]>();
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Items.Count).IsEqualTo(1);
-        await Assert.That(result.Items[0].Name).IsEqualTo("vacation");
-        await Assert.That(result.Items[0].Type).IsEqualTo(EntryType.Folder);
+        await Assert.That(result!.Length).IsEqualTo(1);
+        await Assert.That(result[0].Name).IsEqualTo("vacation");
+        await Assert.That(result[0].Type).IsEqualTo(EntryType.Folder);
     }
 
     [Test]
@@ -41,10 +41,10 @@ public class IntegrationTests : IntegrationTestBase
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<PaginatedResult<FolderEntry>>();
+        var result = await response.Content.ReadFromJsonAsync<FolderEntry[]>();
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Items.Count).IsEqualTo(1);
-        await Assert.That(result.Items[0].Name).IsEqualTo("album");
+        await Assert.That(result!.Length).IsEqualTo(1);
+        await Assert.That(result[0].Name).IsEqualTo("album");
     }
 
     [Test]
@@ -59,9 +59,9 @@ public class IntegrationTests : IntegrationTestBase
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<PaginatedResult<FolderEntry>>();
+        var result = await response.Content.ReadFromJsonAsync<FolderEntry[]>();
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.TotalCount).IsEqualTo(2);
+        await Assert.That(result!.Length).IsEqualTo(2);
     }
 
     [Test]

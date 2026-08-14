@@ -402,3 +402,7 @@ opencode/state/*
 opencode/share/*
 ImageShare/openapi.json
 ImageShare/images/**/*
+icon\**\*.png
+icon\**\*.ico
+icon\*.png
+icon\*.ico

@@ -2,26 +2,18 @@
 using ImageShare.Errors;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.Extensions.FileProviders;
 
 namespace ImageShare.Browsing;
 
 internal sealed class GetEntriesQueryHandler(
     ImageEnumerator imageEnumerator,
     IUser user)
-    : IQueryHandler<GetEntriesQuery, Ok<PaginatedResult<FolderEntry>>>
+    : IQueryHandler<GetEntriesQuery, Ok<IReadOnlyList<FolderEntry>>>
 {
-    private const int MaxPageSize = 500;
-
-    public ValueTask<Ok<PaginatedResult<FolderEntry>>> Handle(
+    public ValueTask<Ok<IReadOnlyList<FolderEntry>>> Handle(
         GetEntriesQuery request,
         CancellationToken cancellationToken)
     {
-        if (request.Page < 1 || request.PageSize < 1 || request.PageSize > MaxPageSize)
-        {
-            throw new BadRequestException("Page must be at least 1 and PageSize must be between 1 and 500.");
-        }
-
         if (request.Path.HasRootFolder && !user.CanAccessFolder(request.Path.RootFolder))
         {
             throw new NotFoundException($"Folder '{request.Path}' was not found.");
@@ -34,8 +26,7 @@ internal sealed class GetEntriesQueryHandler(
 
         var entries = CollectEntries(imageEnumerator, request.Path, user);
 
-        var result = TypedResults.Ok(PaginatedResult<FolderEntry>.Paginate(entries, request.Page, request.PageSize));
-        return new(result);
+        return new(TypedResults.Ok<IReadOnlyList<FolderEntry>>(entries));
     }
 
     private static List<FolderEntry> CollectEntries(ImageEnumerator enumerator, RelativePath relativePath, IUser currentUser)

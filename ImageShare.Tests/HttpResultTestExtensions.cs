@@ -19,14 +19,14 @@ internal static class HttpResultTestExtensions
             ForbidHttpResult => statusCode == 403,
             StatusCodeHttpResult statusResult => statusResult.StatusCode == statusCode,
             FileStreamHttpResult => statusCode == 200,
-            Ok<PaginatedResult<FolderEntry>> => statusCode == 200,
+            Ok<IReadOnlyList<FolderEntry>> => statusCode == 200,
             IStatusCodeHttpResult statusCodeResult => statusCodeResult.StatusCode == statusCode,
             _ => statusCode == 200,
         };
     }
 
-    public static PaginatedResult<FolderEntry> GetFolderEntriesResult(this IResult result) =>
-        ((Ok<PaginatedResult<FolderEntry>>)result.Unwrap()).Value!;
+    public static IReadOnlyList<FolderEntry> GetFolderEntriesResult(this IResult result) =>
+        ((Ok<IReadOnlyList<FolderEntry>>)result.Unwrap()).Value!;
 
     public static FileStreamHttpResult GetFileResult(this IResult result) =>
         (FileStreamHttpResult)result.Unwrap();

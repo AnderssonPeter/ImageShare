@@ -11,13 +11,13 @@ public static class ContentEndpoints
         var group = endpoints.MapGroup("/content").RequireAuthorization().WithTags("content");
 
         group.MapGet("/", GetContentAsync)
-            .Produces<Ok<PaginatedResult<FolderEntry>>>()
+            .Produces<Ok<IReadOnlyList<FolderEntry>>>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapGet("/{**path}", GetContentByPathAsync)
-            .Produces<Ok<PaginatedResult<FolderEntry>>>()
+            .Produces<Ok<IReadOnlyList<FolderEntry>>>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
@@ -52,13 +52,11 @@ public static class ContentEndpoints
         return endpoints;
     }
 
-    private static async Task<Ok<PaginatedResult<FolderEntry>>> GetContentAsync(
-        IMediator mediator,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 50) =>
-        await mediator.Send(new GetEntriesQuery(RelativePath.Root, page, pageSize));
+    private static async Task<Ok<IReadOnlyList<FolderEntry>>> GetContentAsync(
+        IMediator mediator) =>
+        await mediator.Send(new GetEntriesQuery(RelativePath.Root));
 
-    private static async Task<Ok<PaginatedResult<FolderEntry>>> GetContentByPathAsync(
+    private static async Task<Ok<IReadOnlyList<FolderEntry>>> GetContentByPathAsync(
         IMediator mediator,
         [AsParameters] GetEntriesQuery request) =>
         await mediator.Send(request);

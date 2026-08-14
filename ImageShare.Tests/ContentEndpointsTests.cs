@@ -11,9 +11,6 @@ namespace ImageShare.Tests;
 [MicrosoftDI]
 public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMediator mediator, ImageEnumerator imageEnumerator, TestUser user, TestUsageAgreement usageAgreement, TestImageFactory imageFactory)
 {
-    private const int Page = 1;
-    private const int PageSize = 50;
-
     [Test]
     public async Task GetEntries_Unauthenticated_ReturnsUnauthorized()
     {
@@ -22,7 +19,7 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetEntriesQuery(RelativePath.Root, Page, PageSize))).Throws<NotAuthenticatedException>();
+        await Assert.That(async () => await mediator.Send(new GetEntriesQuery(RelativePath.Root))).Throws<NotAuthenticatedException>();
     }
 
     [Test]
@@ -30,17 +27,7 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
     [Arguments("/etc")]
     [Arguments("/etc/passwd")]
     public async Task GetEntries_UnsafePath_ThrowsArgumentException(string path) =>
-        await Assert.That(async () => await mediator.Send(new GetEntriesQuery(new RelativePath(path), Page, PageSize))).Throws<ArgumentException>();
-
-    [Test]
-    [Arguments(0, 10)]
-    [Arguments(1, 0)]
-    [Arguments(1, 501)]
-    public async Task GetEntries_InvalidPagination_ReturnsBadRequest(int page, int pageSize) =>
-        // Arrange
-        // Act
-        // Assert
-        await Assert.That(async () => await mediator.Send(new GetEntriesQuery(RelativePath.Root, page, pageSize))).Throws<BadRequestException>();
+        await Assert.That(async () => await mediator.Send(new GetEntriesQuery(new RelativePath(path)))).Throws<ArgumentException>();
 
     [Test]
     public async Task GetEntries_Root_FiltersFoldersByAccess()
@@ -53,21 +40,18 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         user.Allow("allowed-folder");
 
         // Act
-        var result = await mediator.Send(new GetEntriesQuery(RelativePath.Root, Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(RelativePath.Root));
 
         // Assert
-        var paginated = result.GetFolderEntriesResult();
-        await Assert.That(paginated.Items).IsNotNull();
-        await Assert.That(paginated.Items.Count).IsEqualTo(1);
-        await Assert.That(paginated.TotalCount).IsEqualTo(1);
-        await Assert.That(paginated.Page).IsEqualTo(Page);
-        await Assert.That(paginated.PageSize).IsEqualTo(PageSize);
+        var entries = result.GetFolderEntriesResult();
+        await Assert.That(entries).IsNotNull();
+        await Assert.That(entries.Count).IsEqualTo(1);
 
-        var folder = paginated.Items.Single(entry => entry.Name == "allowed-folder");
+        var folder = entries.Single(entry => entry.Name == "allowed-folder");
         await Assert.That(folder.Type).IsEqualTo(EntryType.Folder);
         await Assert.That(folder.Path).IsEqualTo("allowed-folder");
 
-        await Assert.That(paginated.Items.Any(entry => entry.Name == "blocked-folder")).IsFalse();
+        await Assert.That(entries.Any(entry => entry.Name == "blocked-folder")).IsFalse();
     }
 
     [Test]
@@ -81,13 +65,13 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         user.Allow("images");
 
         // Act
-        var paginated = (await mediator.Send(new GetEntriesQuery(RelativePath.Root, Page, PageSize))).GetFolderEntriesResult();
+        var entries = (await mediator.Send(new GetEntriesQuery(RelativePath.Root))).GetFolderEntriesResult();
 
         // Assert
-        await Assert.That(paginated.TotalCount).IsEqualTo(1);
-        await Assert.That(paginated.Items[0].Name).IsEqualTo("images");
-        await Assert.That(paginated.Items[0].Path).IsEqualTo("images");
-        await Assert.That(paginated.Items[0].Type).IsEqualTo(EntryType.Folder);
+        await Assert.That(entries.Count).IsEqualTo(1);
+        await Assert.That(entries[0].Name).IsEqualTo("images");
+        await Assert.That(entries[0].Path).IsEqualTo("images");
+        await Assert.That(entries[0].Type).IsEqualTo(EntryType.Folder);
     }
 
     [Test]
@@ -98,12 +82,11 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         fileProvider.AddFile("public.txt");
 
         // Act
-        var result = await mediator.Send(new GetEntriesQuery(RelativePath.Root, Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(RelativePath.Root));
 
         // Assert
-        var paginated = result.GetFolderEntriesResult();
-        await Assert.That(paginated.Items.Count).IsEqualTo(0);
-        await Assert.That(paginated.TotalCount).IsEqualTo(0);
+        var entries = result.GetFolderEntriesResult();
+        await Assert.That(entries.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -114,7 +97,7 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetEntriesQuery(new RelativePath("secret/nested"), Page, PageSize))).Throws<NotFoundException>();
+        await Assert.That(async () => await mediator.Send(new GetEntriesQuery(new RelativePath("secret/nested")))).Throws<NotFoundException>();
     }
 
     [Test]
@@ -125,7 +108,7 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
 
         // Act
         // Assert
-        await Assert.That(async () => await mediator.Send(new GetEntriesQuery(new RelativePath("allowed/non-existent"), Page, PageSize))).Throws<NotFoundException>();
+        await Assert.That(async () => await mediator.Send(new GetEntriesQuery(new RelativePath("allowed/non-existent")))).Throws<NotFoundException>();
     }
 
     [Test]
@@ -138,21 +121,20 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         user.Allow("allowed");
 
         // Act
-        var result = await mediator.Send(new GetEntriesQuery(new RelativePath("allowed"), Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(new RelativePath("allowed")));
 
         // Assert
-        var paginated = result.GetFolderEntriesResult();
-        await Assert.That(paginated.Items.Count).IsEqualTo(3);
-        await Assert.That(paginated.TotalCount).IsEqualTo(3);
+        var entries = result.GetFolderEntriesResult();
+        await Assert.That(entries.Count).IsEqualTo(3);
 
-        var file = paginated.Items.Single(entry => entry.Name == "sub-file");
+        var file = entries.Single(entry => entry.Name == "sub-file");
         await Assert.That(file.Type).IsEqualTo(EntryType.File);
         await Assert.That(file.Path).IsEqualTo("allowed/sub-file");
 
-        var folder1 = paginated.Items.Single(entry => entry.Name == "sub-secret");
+        var folder1 = entries.Single(entry => entry.Name == "sub-secret");
         await Assert.That(folder1.Type).IsEqualTo(EntryType.Folder);
         await Assert.That(folder1.Path).IsEqualTo("allowed/sub-secret");
-        var folder2 = paginated.Items.Single(entry => entry.Name == "sub-public");
+        var folder2 = entries.Single(entry => entry.Name == "sub-public");
         await Assert.That(folder2.Type).IsEqualTo(EntryType.Folder);
         await Assert.That(folder2.Path).IsEqualTo("allowed/sub-public");
     }
@@ -162,12 +144,11 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
     {
         // Arrange
         // Act
-        var result = await mediator.Send(new GetEntriesQuery(RelativePath.Root, Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(RelativePath.Root));
 
         // Assert
-        var paginated = result.GetFolderEntriesResult();
-        await Assert.That(paginated.Items.Count).IsEqualTo(0);
-        await Assert.That(paginated.TotalCount).IsEqualTo(0);
+        var entries = result.GetFolderEntriesResult();
+        await Assert.That(entries.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -180,12 +161,12 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         user.Allow("populated-folder").Allow("empty-folder");
 
         // Act
-        var result = await mediator.Send(new GetEntriesQuery(RelativePath.Root, Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(RelativePath.Root));
 
         // Assert
-        var paginated = result.GetFolderEntriesResult();
-        await Assert.That(paginated.Items.Count).IsEqualTo(1);
-        await Assert.That(paginated.Items[0].Name).IsEqualTo("populated-folder");
+        var entries = result.GetFolderEntriesResult();
+        await Assert.That(entries.Count).IsEqualTo(1);
+        await Assert.That(entries[0].Name).IsEqualTo("populated-folder");
     }
 
     [Test]
@@ -198,11 +179,11 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         user.Allow("normal-folder").Allow("thumb-only-folder");
 
         // Act
-        var paginated = (await mediator.Send(new GetEntriesQuery(RelativePath.Root, Page, PageSize))).GetFolderEntriesResult();
+        var entries = (await mediator.Send(new GetEntriesQuery(RelativePath.Root))).GetFolderEntriesResult();
 
         // Assert
-        await Assert.That(paginated.Items.Count).IsEqualTo(1);
-        await Assert.That(paginated.Items[0].Name).IsEqualTo("normal-folder");
+        await Assert.That(entries.Count).IsEqualTo(1);
+        await Assert.That(entries[0].Name).IsEqualTo("normal-folder");
     }
 
     [Test]
@@ -215,11 +196,11 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         user.Allow("parent");
 
         // Act
-        var paginated = (await mediator.Send(new GetEntriesQuery(new RelativePath("parent"), Page, PageSize))).GetFolderEntriesResult();
+        var entries = (await mediator.Send(new GetEntriesQuery(new RelativePath("parent")))).GetFolderEntriesResult();
 
         // Assert
-        await Assert.That(paginated.Items.Count).IsEqualTo(1);
-        await Assert.That(paginated.Items[0].Name).IsEqualTo("visible-folder");
+        await Assert.That(entries.Count).IsEqualTo(1);
+        await Assert.That(entries[0].Name).IsEqualTo("visible-folder");
     }
 
     [Test]
@@ -232,14 +213,14 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         user.Allow("sub");
 
         // Act
-        var result = await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(new RelativePath("sub")));
 
         // Assert
-        var paginated = result.GetFolderEntriesResult();
-        await Assert.That(paginated.Items[0].Name).IsEqualTo("z-folder");
-        await Assert.That(paginated.Items[0].Type).IsEqualTo(EntryType.Folder);
-        await Assert.That(paginated.Items[1].Name).IsEqualTo("a");
-        await Assert.That(paginated.Items[1].Type).IsEqualTo(EntryType.File);
+        var entries = result.GetFolderEntriesResult();
+        await Assert.That(entries[0].Name).IsEqualTo("z-folder");
+        await Assert.That(entries[0].Type).IsEqualTo(EntryType.Folder);
+        await Assert.That(entries[1].Name).IsEqualTo("a");
+        await Assert.That(entries[1].Type).IsEqualTo(EntryType.File);
     }
 
     [Test]
@@ -255,14 +236,14 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         user.Allow("sub");
 
         // Act
-        var result = await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), Page, PageSize));
+        var result = await mediator.Send(new GetEntriesQuery(new RelativePath("sub")));
 
         // Assert
-        var paginated = result.GetFolderEntriesResult();
-        await Assert.That(paginated.Items[0].Name).IsEqualTo("a-folder");
-        await Assert.That(paginated.Items[1].Name).IsEqualTo("b-folder");
-        await Assert.That(paginated.Items[2].Name).IsEqualTo("a-file");
-        await Assert.That(paginated.Items[3].Name).IsEqualTo("z-file");
+        var entries = result.GetFolderEntriesResult();
+        await Assert.That(entries[0].Name).IsEqualTo("a-folder");
+        await Assert.That(entries[1].Name).IsEqualTo("b-folder");
+        await Assert.That(entries[2].Name).IsEqualTo("a-file");
+        await Assert.That(entries[3].Name).IsEqualTo("z-file");
     }
 
     [Test]
@@ -274,15 +255,15 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         user.Allow("sub");
 
         // Act
-        var paginated = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), Page, PageSize))).GetFolderEntriesResult();
+        var entries = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub")))).GetFolderEntriesResult();
 
         // Assert
-        await Assert.That(paginated.TotalCount).IsEqualTo(2);
-        await Assert.That(paginated.Items[0].Name).IsEqualTo("image");
-        await Assert.That(paginated.Items[0].Path).IsEqualTo("sub/image");
-        await Assert.That(paginated.Items[0].Type).IsEqualTo(EntryType.File);
-        await Assert.That(paginated.Items[1].Name).IsEqualTo("readme");
-        await Assert.That(paginated.Items[1].Path).IsEqualTo("sub/readme");
+        await Assert.That(entries.Count).IsEqualTo(2);
+        await Assert.That(entries[0].Name).IsEqualTo("image");
+        await Assert.That(entries[0].Path).IsEqualTo("sub/image");
+        await Assert.That(entries[0].Type).IsEqualTo(EntryType.File);
+        await Assert.That(entries[1].Name).IsEqualTo("readme");
+        await Assert.That(entries[1].Path).IsEqualTo("sub/readme");
     }
 
     [Test]
@@ -296,66 +277,14 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         user.Allow("sub");
 
         // Act
-        var paginated = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), Page, PageSize))).GetFolderEntriesResult();
+        var entries = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub")))).GetFolderEntriesResult();
 
         // Assert
-        await Assert.That(paginated.TotalCount).IsEqualTo(2);
-        await Assert.That(paginated.Items[0].Name).IsEqualTo("other");
-        await Assert.That(paginated.Items[0].Path).IsEqualTo("sub/other");
-        await Assert.That(paginated.Items[1].Name).IsEqualTo("photo");
-        await Assert.That(paginated.Items[1].Path).IsEqualTo("sub/photo");
-    }
-
-    [Test]
-    public async Task GetEntries_Pagination_ReturnsRequestedPage()
-    {
-        // Arrange
-        for (var i = 1; i <= 5; i++)
-        {
-            fileProvider.AddFile($"sub/{i}.png");
-        }
-
-        user.Allow("sub");
-
-        // Act
-        var page1 = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), 1, 2))).GetFolderEntriesResult();
-        var page2 = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), 2, 2))).GetFolderEntriesResult();
-        var page3 = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), 3, 2))).GetFolderEntriesResult();
-
-        // Assert
-        await Assert.That(page1.Items.Count).IsEqualTo(2);
-        await Assert.That(page1.TotalCount).IsEqualTo(5);
-        await Assert.That(page1.Page).IsEqualTo(1);
-        await Assert.That(page1.Items[0].Name).IsEqualTo("1");
-        await Assert.That(page1.Items[0].Path).IsEqualTo("sub/1");
-        await Assert.That(page1.Items[1].Name).IsEqualTo("2");
-        await Assert.That(page1.Items[1].Path).IsEqualTo("sub/2");
-
-        await Assert.That(page2.Items.Count).IsEqualTo(2);
-        await Assert.That(page2.Page).IsEqualTo(2);
-        await Assert.That(page2.Items[0].Name).IsEqualTo("3");
-        await Assert.That(page2.Items[1].Name).IsEqualTo("4");
-
-        await Assert.That(page3.Items.Count).IsEqualTo(1);
-        await Assert.That(page3.Page).IsEqualTo(3);
-        await Assert.That(page3.Items[0].Name).IsEqualTo("5");
-    }
-
-    [Test]
-    public async Task GetEntries_PageBeyondTotal_ReturnsEmptyItems()
-    {
-        // Arrange
-        fileProvider.AddFile("sub/only.png");
-        user.Allow("sub");
-
-        // Act
-        var result = await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), 5, 10));
-
-        // Assert
-        var paginated = result.GetFolderEntriesResult();
-        await Assert.That(paginated.Items.Count).IsEqualTo(0);
-        await Assert.That(paginated.TotalCount).IsEqualTo(1);
-        await Assert.That(paginated.Page).IsEqualTo(5);
+        await Assert.That(entries.Count).IsEqualTo(2);
+        await Assert.That(entries[0].Name).IsEqualTo("other");
+        await Assert.That(entries[0].Path).IsEqualTo("sub/other");
+        await Assert.That(entries[1].Name).IsEqualTo("photo");
+        await Assert.That(entries[1].Path).IsEqualTo("sub/photo");
     }
 
     [Test]
@@ -369,14 +298,14 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         user.Allow("sub");
 
         // Act
-        var paginated = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), Page, PageSize))).GetFolderEntriesResult();
+        var entries = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub")))).GetFolderEntriesResult();
 
         // Assert
-        await Assert.That(paginated.TotalCount).IsEqualTo(2);
-        await Assert.That(paginated.Items[0].Name).IsEqualTo("image");
-        await Assert.That(paginated.Items[0].Path).IsEqualTo("sub/image");
-        await Assert.That(paginated.Items[1].Name).IsEqualTo("photo");
-        await Assert.That(paginated.Items[1].Path).IsEqualTo("sub/photo");
+        await Assert.That(entries.Count).IsEqualTo(2);
+        await Assert.That(entries[0].Name).IsEqualTo("image");
+        await Assert.That(entries[0].Path).IsEqualTo("sub/image");
+        await Assert.That(entries[1].Name).IsEqualTo("photo");
+        await Assert.That(entries[1].Path).IsEqualTo("sub/photo");
     }
 
     [Test]
@@ -389,13 +318,13 @@ public class ContentEndpointsTests(ISyncWritableFileProvider fileProvider, IMedi
         user.Allow("sub");
 
         // Act
-        var paginated = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub"), Page, PageSize))).GetFolderEntriesResult();
+        var entries = (await mediator.Send(new GetEntriesQuery(new RelativePath("sub")))).GetFolderEntriesResult();
 
         // Assert
-        await Assert.That(paginated.TotalCount).IsEqualTo(1);
-        await Assert.That(paginated.Items[0].Name).IsEqualTo("photo");
-        await Assert.That(paginated.Items[0].Path).IsEqualTo("sub/photo");
-        await Assert.That(paginated.Items[0].Type).IsEqualTo(EntryType.File);
+        await Assert.That(entries.Count).IsEqualTo(1);
+        await Assert.That(entries[0].Name).IsEqualTo("photo");
+        await Assert.That(entries[0].Path).IsEqualTo("sub/photo");
+        await Assert.That(entries[0].Type).IsEqualTo(EntryType.File);
     }
 
     [Test]

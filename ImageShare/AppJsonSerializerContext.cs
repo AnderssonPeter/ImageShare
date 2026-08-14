@@ -10,7 +10,7 @@ namespace ImageShare;
 [JsonSerializable(typeof(IUser))]
 [JsonSerializable(typeof(FolderEntry))]
 [JsonSerializable(typeof(FolderEntry[]))]
-[JsonSerializable(typeof(PaginatedResult<FolderEntry>))]
+[JsonSerializable(typeof(IReadOnlyList<FolderEntry>))]
 [JsonSerializable(typeof(StorageOptions))]
 [JsonSerializable(typeof(StringValues))]
 [JsonSerializable(typeof(RelativePath))]
