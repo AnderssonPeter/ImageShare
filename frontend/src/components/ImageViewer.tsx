@@ -245,10 +245,7 @@ export default function ImageViewer({
   onShare,
 }: ImageViewerProps): React.JSX.Element {
   const { data } = useFolderContent(folderPath);
-  const images = useMemo(
-    () => (data?.pages.flatMap((page) => page.items) ?? []).filter((entry) => isImage(entry)),
-    [data],
-  );
+  const images = useMemo(() => (data ?? []).filter((entry) => isImage(entry)), [data]);
   const [carouselApi, setCarouselApi] = useState<CarouselApi | undefined>();
   const handleCarouselReady = useCallback((api: CarouselApi | undefined) => {
     setCarouselApi(api);

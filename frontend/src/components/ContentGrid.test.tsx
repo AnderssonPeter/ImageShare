@@ -22,9 +22,6 @@ function folderEntry(name: string, path: string): FolderEntry {
 function setContent(result: Partial<ReturnType<typeof useFolderContent>>): void {
   mockUseFolderContent.mockReturnValue({
     data: undefined,
-    fetchNextPage: noop,
-    hasNextPage: false,
-    isFetchingNextPage: false,
     isPending: false,
     ...result,
   } as ReturnType<typeof useFolderContent>);
@@ -42,7 +39,7 @@ describe("contentGrid skeleton while loading", () => {
     // Assert
     const skeletons = container.querySelectorAll('[data-slot="skeleton"]');
     expect(skeletons.length).toBeGreaterThan(0);
-    const scrollContainer = container.firstElementChild;
+    const scrollContainer = container.querySelector('[class*="overflow-hidden"]');
     expect(scrollContainer).not.toBeNull();
     expect(scrollContainer?.className).toContain("overflow-hidden");
   }, 1000);
@@ -75,19 +72,13 @@ describe("contentGrid restores scrolling once loaded", () => {
     expect.assertions(1);
     // Arrange
     const items = [folderEntry("Holidays", "holidays"), folderEntry("Cats", "cats")];
-    setContent({
-      isPending: false,
-      data: {
-        pages: [{ items, page: 1, pageSize: 50, totalCount: items.length }],
-        pageParams: [1],
-      },
-    });
+    setContent({ isPending: false, data: items });
 
     // Act
     const { container } = render(<ContentGrid onNavigateFolder={noop} onImageOpen={noop} />);
 
     // Assert — scrollbar is restored (the skeleton lock is released)
-    const scrollContainer = container.firstElementChild;
+    const scrollContainer = container.querySelector('[class*="overflow-auto"]');
     expect(scrollContainer?.className).toContain("overflow-auto");
   }, 1000);
 });
@@ -96,10 +87,7 @@ describe("contentGrid empty state", () => {
   it("shows an empty-folder message when the loaded folder has no items", () => {
     expect.assertions(1);
     // Arrange
-    setContent({
-      isPending: false,
-      data: { pages: [{ items: [], page: 1, pageSize: 50, totalCount: 0 }], pageParams: [1] },
-    });
+    setContent({ isPending: false, data: [] });
 
     // Act
     render(<ContentGrid onNavigateFolder={noop} onImageOpen={noop} />);

@@ -32,7 +32,7 @@ function folderEntries(): FolderEntry[] {
 
 function contentResponse() {
   return {
-    data: { items: folderEntries(), page: 1, pageSize: 500, totalCount: ROOT_FOLDER_NAMES.length },
+    data: folderEntries(),
     request: new Request("http://localhost/api/content"),
     response: new Response(),
   } as never;

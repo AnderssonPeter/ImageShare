@@ -48,7 +48,9 @@ function AppBarLeft(): React.JSX.Element {
   return (
     <div className="flex shrink-0 items-center gap-2">
       <Logo className="size-6 text-primary" />
-      <span className="hidden text-sm font-medium text-foreground sm:inline">{translate("common.brand")}</span>
+      <span className="hidden text-sm font-medium text-foreground sm:inline">
+        {translate("common.brand")}
+      </span>
     </div>
   );
 }
@@ -88,7 +90,7 @@ export default function MetroAppBar({
   children: ReactNode;
 }): React.JSX.Element {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-dvh flex-col">
       <header className="flex h-12 items-center gap-3 border-b border-border bg-background px-4">
         <AppBarLeft />
         <AppBarBreadcrumb breadcrumb={breadcrumb} />

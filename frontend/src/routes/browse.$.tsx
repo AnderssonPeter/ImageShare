@@ -24,7 +24,7 @@ export const Route = createFileRoute("/browse/$")({
   }),
   loader: ({ context, params }) => {
     const path = splatToRelativePath(params._splat) || undefined;
-    void context.queryClient.ensureInfiniteQueryData(folderContentQueryOptions(path));
+    void context.queryClient.ensureQueryData(folderContentQueryOptions(path));
   },
   component: BrowseComponent,
 });

@@ -34,7 +34,7 @@ const FUTURE_DATE = "2099-12-31T23:59";
 
 function emptyPageResponse() {
   return {
-    data: { items: [] as FolderEntry[], page: 1, pageSize: 500, totalCount: 0 },
+    data: [] as FolderEntry[],
     request: new Request("http://localhost/api/content"),
     response: new Response(),
   } as never;

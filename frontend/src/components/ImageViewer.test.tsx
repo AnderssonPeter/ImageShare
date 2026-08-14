@@ -1,8 +1,4 @@
-import {
-  type FolderEntry,
-  type PaginatedResultOfFolderEntry,
-  type getContentByPath,
-} from "@lib/api/generated";
+import { type FolderEntry, type getContentByPath } from "@lib/api/generated";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
@@ -36,13 +32,9 @@ function imageEntry(name: string, path: string): FolderEntry {
   return { name, path, type: "File" };
 }
 
-function pageData(items: FolderEntry[]): PaginatedResultOfFolderEntry {
-  return { items, page: 1, pageSize: 50, totalCount: items.length };
-}
-
 function sdkResponse(items: FolderEntry[]) {
   return {
-    data: pageData(items),
+    data: items,
     request: new Request("http://localhost/api/content/photos"),
     response: new Response(),
   } as never;
