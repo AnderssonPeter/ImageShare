@@ -16,7 +16,7 @@ import { type FolderEntry } from "@lib/api/generated";
 import MetroTile from "@components/MetroTile";
 import { randomFolderUrl } from "@lib/api/urls";
 import { tw } from "@lib/utils";
-import { useCallback } from "react";
+import { type CSSProperties, useCallback } from "react";
 import { useTranslation } from "@lib/i18n";
 
 const NAME_CLASS = tw`pointer-events-none absolute bottom-1 left-1 z-[1] text-sm leading-none text-tile-foreground`;
@@ -28,12 +28,15 @@ interface FolderTileProps {
   onNavigate: (path: string) => void;
   /** Additional classes merged onto the tile root (e.g. sizing). */
   className?: string;
+  /** Inline style for the tile root element (e.g. dynamic sizing). */
+  style?: CSSProperties;
 }
 
 export default function FolderTile({
   entry,
   onNavigate,
   className,
+  style,
 }: FolderTileProps): React.JSX.Element {
   const { t: translate } = useTranslation();
   const cover = randomFolderUrl(entry.path, true, true);
@@ -42,6 +45,7 @@ export default function FolderTile({
     <MetroTile
       imageUrl={cover}
       className={className}
+      style={style}
       onClick={handleNavigate}
       ariaLabel={translate("tiles.openFolder", { name: entry.name })}
     >

@@ -12,7 +12,7 @@
 import { type FolderEntry } from "@lib/api/generated";
 import MetroTile from "@components/MetroTile";
 import { imageUrl } from "@lib/api/urls";
-import { useCallback } from "react";
+import { type CSSProperties, useCallback } from "react";
 import { useTranslation } from "@lib/i18n";
 
 interface ImageTileProps {
@@ -22,9 +22,16 @@ interface ImageTileProps {
   onOpen: (path: string) => void;
   /** Additional classes merged onto the tile root (e.g. sizing). */
   className?: string;
+  /** Inline style for the tile root element (e.g. dynamic sizing). */
+  style?: CSSProperties;
 }
 
-export default function ImageTile({ entry, onOpen, className }: ImageTileProps): React.JSX.Element {
+export default function ImageTile({
+  entry,
+  onOpen,
+  className,
+  style,
+}: ImageTileProps): React.JSX.Element {
   const { t: translate } = useTranslation();
   const thumbnail = imageUrl(entry.path, true);
   const handleOpen = useCallback(() => onOpen(entry.path), [onOpen, entry.path]);
@@ -32,6 +39,7 @@ export default function ImageTile({ entry, onOpen, className }: ImageTileProps):
     <MetroTile
       imageUrl={thumbnail}
       className={className}
+      style={style}
       onClick={handleOpen}
       ariaLabel={translate("tiles.openImage", { name: entry.name })}
     />

@@ -16,7 +16,7 @@
 import { type CSSProperties, type ReactNode, useEffect, useMemo, useState } from "react";
 import cn, { tw } from "@lib/utils";
 
-const BASE_CLASS = tw`group relative flex items-center justify-center overflow-hidden rounded-[var(--radius)] bg-tile text-tile-foreground hover:bg-muted active:bg-muted`;
+const BASE_CLASS = tw`group relative flex shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius)] bg-tile text-tile-foreground hover:bg-muted active:bg-muted`;
 const OVERLAY_BASE_CLASS = tw`pointer-events-none absolute -inset-1 bg-cover bg-center transition-[transform,opacity] duration-300 ease-out group-hover:translate-y-[-2px]`;
 const CONTENT_CLASS = tw`absolute inset-0 z-[1] flex items-center justify-center`;
 
