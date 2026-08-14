@@ -8,6 +8,9 @@
  *  - Right:  theme toggle, share button (gated on `user.isAdmin`), and a
  *            user chip showing the signed-in user's name.
  *
+ * On small screens the breadcrumb wraps onto its own row beneath the logo
+ * and controls; on `sm` and up all three regions share a single 48px row.
+ *
  * The bar is a presentational shell — it takes `user` and `breadcrumb` as
  * props so it can be tested in isolation. Page content is rendered below the
  * bar via `children`.
@@ -36,7 +39,7 @@ function ShareButtonSlot({ visible, onShare }: ShareButtonSlotProps) {
 function UserChip({ name }: { name: string | undefined }): React.JSX.Element {
   const { t: translate } = useTranslation();
   return (
-    <div className="hidden items-center gap-2 px-2 text-sm text-foreground sm:flex">
+    <div className="flex items-center gap-2 px-2 text-sm text-foreground">
       <CircleUserRound className="size-4 text-muted-foreground" />
       <span className="max-w-32 truncate">{name ?? translate("common.user")}</span>
     </div>
@@ -59,7 +62,7 @@ function AppBarBreadcrumb({ breadcrumb }: { breadcrumb: ReactNode }) {
   if (breadcrumb === undefined) {
     return;
   }
-  return <div className="min-w-0 flex-1">{breadcrumb}</div>;
+  return <div className="order-3 w-full min-w-0 sm:order-2 sm:w-auto sm:flex-1">{breadcrumb}</div>;
 }
 
 interface AppBarRightProps {
@@ -69,7 +72,7 @@ interface AppBarRightProps {
 
 function AppBarRight({ user, onShare }: AppBarRightProps): React.JSX.Element {
   return (
-    <div className="flex shrink-0 items-center gap-1">
+    <div className="order-2 ml-auto flex shrink-0 items-center gap-1 sm:order-3 sm:ml-0">
       <ThemeToggle />
       <LanguageToggle />
       <ShareButtonSlot visible={user.isAdmin === true} onShare={onShare} />
@@ -91,10 +94,10 @@ export default function MetroAppBar({
 }): React.JSX.Element {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="flex h-12 items-center gap-3 border-b border-border bg-background px-4">
+      <header className="flex flex-wrap items-center gap-2 border-b border-border bg-background px-4 py-2 sm:h-12 sm:flex-nowrap sm:gap-3 sm:py-0">
         <AppBarLeft />
-        <AppBarBreadcrumb breadcrumb={breadcrumb} />
         <AppBarRight user={user} onShare={onShare} />
+        <AppBarBreadcrumb breadcrumb={breadcrumb} />
       </header>
       <main className="flex-1">{children}</main>
     </div>
