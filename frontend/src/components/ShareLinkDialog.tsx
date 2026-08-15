@@ -48,10 +48,21 @@ function endDateSchema(translate: Translate) {
       }),
     )
     .check(
-      refine((value) => new Date(value).getTime() > Date.now(), {
+      refine((value) => expiryDateFrom(value).getTime() > Date.now(), {
         error: translate("share.errors.endDateFuture"),
       }),
     );
+}
+
+/**
+ * Convert a user-picked calendar date (`YYYY-MM-DD`) to the expiry instant the
+ * backend stores: 00:00:00 the following day (UTC), so the chosen day is the
+ * last full day the share link is valid.
+ */
+function expiryDateFrom(endDateValue: string): Date {
+  const date = new Date(`${endDateValue}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + 1);
+  return date;
 }
 
 function validatorsFor(name: "name" | "endDate", translate: Translate) {
@@ -108,7 +119,7 @@ function useShareForm({ onGenerate, initialReturnUrl }: UseShareFormOptions) {
       onGenerate({
         name: value.name.trim(),
         filter: value.filter.trim(),
-        endDate: value.endDate,
+        endDate: expiryDateFrom(value.endDate).toISOString(),
         returnUrl: trimReturnUrl(value.returnUrl),
       });
     },
@@ -185,7 +196,7 @@ function ShareFormFields({ form, showErrors }: ShareFormFieldsProps): React.JSX.
       {textField(form, translate, {
         name: "endDate",
         label: translate("share.fields.endDate"),
-        type: "datetime-local",
+        type: "date",
         showErrors,
       })}
       <form.Field name="returnUrl">

@@ -49,7 +49,9 @@ vi.mock(import("sonner"), async (importOriginal) => {
 });
 
 vi.mock(import("@lib/svgToPng"), () => ({
-  svgElementToPngFile: svgToPngFile,
+  svgElementToPngFile: svgToPngFile.mockResolvedValue(
+    new File([""], "share-qr.png", { type: "image/png" }),
+  ),
 }));
 
 function stubResolvedQrFile(): File {
@@ -163,27 +165,31 @@ describe("shareLinkResult return URL", () => {
   }, 2000);
 });
 
-describe("shareLinkResult send to email", () => {
-  it("renders a Send to email action button", () => {
+describe("shareLinkResult share", () => {
+  it("renders a Share action button", () => {
     expect.assertions(1);
     // Arrange
     stubLocation();
     // Act
     renderResult();
     // Assert
-    expect(screen.getByRole("button", { name: "Send to email" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Share" })).toBeInTheDocument();
   }, 1000);
+});
 
+describe("shareLinkResult share via Web Share API", () => {
   it("shares the QR file and URL via the Web Share API when supported", async () => {
-    expect.assertions(2);
+    expect.hasAssertions();
     // Arrange
     stubLocation();
     stubWebShare(true);
     const file = stubResolvedQrFile();
     mockToastSuccess.mockReset();
     renderResult();
-    // Act
-    fireEvent.click(screen.getByRole("button", { name: "Send to email" }));
+    // Act — wait for the QR file to be rasterized (button enables), then share
+    const sendButton = screen.getByRole("button", { name: "Share" });
+    await waitFor(() => expect(sendButton).not.toBeDisabled());
+    fireEvent.click(sendButton);
     await waitFor(() => mockShare.mock.calls.length > 0);
     // Assert
     expect(mockShare).toHaveBeenCalledWith({
@@ -193,16 +199,20 @@ describe("shareLinkResult send to email", () => {
     });
     expect(mockToastSuccess).toHaveBeenCalledWith("Shared");
   }, 2000);
+});
 
+describe("shareLinkResult share falls back to mailto", () => {
   it("falls back to a mailto link when the Web Share API is unavailable", async () => {
-    expect.assertions(1);
+    expect.hasAssertions();
     // Arrange
     stubLocation();
     stubWebShare(false);
     stubResolvedQrFile();
     renderResult();
-    // Act
-    fireEvent.click(screen.getByRole("button", { name: "Send to email" }));
+    // Act — wait for the QR file to be rasterized (button enables), then share
+    const sendButton = screen.getByRole("button", { name: "Share" });
+    await waitFor(() => expect(sendButton).not.toBeDisabled());
+    fireEvent.click(sendButton);
     await waitFor(() => svgToPngFile.mock.calls.length > 0);
     // Assert
     expect(globalThis.location.href).toBe(

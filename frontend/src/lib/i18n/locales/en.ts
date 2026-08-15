@@ -67,7 +67,7 @@ const en = {
       "Share this link or scan the QR code to grant access to the matching folders.",
     copyLink: "Copy link",
     copied: "Copied",
-    sendToEmail: "Send to email",
+    share: "Share",
     sending: "Sending…",
     shareTitle: "ImageShare link",
     toasts: {

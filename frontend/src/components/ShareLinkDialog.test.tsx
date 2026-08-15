@@ -13,7 +13,8 @@ type GenerateHandler = (params: {
   returnUrl: string;
 }) => void;
 
-const FUTURE_DATE = "2099-12-31T23:59";
+const FUTURE_DATE = "2099-12-31";
+const FUTURE_EXPIRY = "2100-01-01T00:00:00.000Z";
 
 const ROOT_FOLDER_NAMES = ["documents", "photos", "videos"];
 
@@ -125,7 +126,7 @@ describe("shareLinkDialog validation", () => {
     });
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Test" } });
     fireEvent.click(screen.getByLabelText("photos"));
-    fireEvent.change(screen.getByLabelText("End date"), { target: { value: "2020-01-01T00:00" } });
+    fireEvent.change(screen.getByLabelText("End date"), { target: { value: "2020-01-01" } });
     fireEvent.click(screen.getByRole("button", { name: "Share" }));
     // Assert
     await expect(
@@ -191,7 +192,7 @@ describe("shareLinkDialog submission", () => {
       expect(onGenerate).toHaveBeenCalledWith({
         name: "Test User",
         filter: "photos",
-        endDate: FUTURE_DATE,
+        endDate: FUTURE_EXPIRY,
         returnUrl: "",
       });
     });
@@ -216,7 +217,7 @@ describe("shareLinkDialog submission", () => {
       expect(onGenerate).toHaveBeenCalledWith({
         name: "Test",
         filter: "*|!photos",
-        endDate: FUTURE_DATE,
+        endDate: FUTURE_EXPIRY,
         returnUrl: "",
       });
     });
@@ -239,7 +240,7 @@ function assertGenerated(onGenerate: GenerateHandler, returnUrl: string): void {
   expect(onGenerate).toHaveBeenCalledWith({
     name: "Test",
     filter: "*",
-    endDate: FUTURE_DATE,
+    endDate: FUTURE_EXPIRY,
     returnUrl,
   });
 }

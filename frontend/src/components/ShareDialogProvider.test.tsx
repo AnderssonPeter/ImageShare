@@ -29,8 +29,15 @@ vi.mock(import("sonner"), async (importOriginal) => {
   return { ...actual, toast: { ...toast, success: mockToastSuccess } as never };
 });
 
+vi.mock(import("@lib/svgToPng"), () => ({
+  svgElementToPngFile: vi
+    .fn<() => Promise<File>>()
+    .mockResolvedValue(new File([""], "share-qr.png", { type: "image/png" })),
+}));
+
 const TOKEN = "eyJhbGciOiJIUzI1NiJ9.payload.signature";
-const FUTURE_DATE = "2099-12-31T23:59";
+const FUTURE_DATE = "2099-12-31";
+const FUTURE_EXPIRY = "2100-01-01T00:00:00.000Z";
 
 function emptyPageResponse() {
   return {
@@ -118,7 +125,7 @@ function assertTokenPath(): void {
   expect(call).toBeDefined();
   const path = call?.[0]?.path;
   expect(path).toMatchObject({ name: "Test User", filter: "*" });
-  expect(path?.endDate).toBe(FUTURE_DATE);
+  expect(path?.endDate).toBe(FUTURE_EXPIRY);
 }
 
 describe("shareDialogProvider is inert when disabled", () => {

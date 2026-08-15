@@ -67,7 +67,7 @@ const sv = {
       "Dela den här länken eller skanna QR-koden för att ge åtkomst till matchande mappar.",
     copyLink: "Kopiera länk",
     copied: "Kopierad",
-    sendToEmail: "Skicka till e-post",
+    share: "Dela",
     sending: "Skickar…",
     shareTitle: "ImageShare-länk",
     toasts: {

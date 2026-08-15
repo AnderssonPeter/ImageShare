@@ -1,10 +1,10 @@
 import { Check, Copy, Mail } from "lucide-react";
-import { type RefObject, useCallback, useRef, useState } from "react";
+import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
 import Button from "@components/ui/Button";
 import Dialog from "@components/ui/Dialog";
 import { QRCodeSVG } from "qrcode.react";
 import { buildShareUrl } from "@lib/api/urls";
-import logoUrl from "@assets/logo.svg?url";
+import logoSource from "@assets/logo.svg?raw";
 import { type Translate, useTranslation } from "@lib/i18n";
 import { svgElementToPngFile } from "@lib/svgToPng";
 import { toast } from "sonner";
@@ -20,7 +20,12 @@ interface ShareLinkResultProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const QR_LOGO_SETTINGS = { src: logoUrl, height: 40, width: 40, excavate: true } as const;
+// The logo is embedded as a data URI so the QR <svg> is self-contained:
+// `svgElementToPngFile` serializes the SVG to a blob and decodes it, which
+// Cannot resolve external sub-resource URLs (e.g. the hashed
+// `/assets/logo-*.svg`) from within the blob origin.
+const LOGO_DATA_URL = `data:image/svg+xml,${encodeURIComponent(logoSource)}`;
+const QR_LOGO_SETTINGS = { src: LOGO_DATA_URL, height: 40, width: 40, excavate: true } as const;
 const QR_SIZE = 200;
 const COPIED_FEEDBACK_MS = 2000;
 const QR_FILENAME = "share-qr.png";
@@ -35,7 +40,7 @@ function buildMailtoUrl(url: string, translate: Translate): string {
 
 async function dispatchQrFile(file: File, url: string, translate: Translate): Promise<void> {
   if (navigator.canShare?.({ files: [file] }) === true) {
-    await navigator.share({ files: [file], title: translate("share.shareTitle"), text: url });
+    await navigator.share({ files: [file], title: translate("share.shareTitle"), text: url, url });
     toast.success(translate("share.toasts.shared"));
     return;
   }
@@ -43,6 +48,7 @@ async function dispatchQrFile(file: File, url: string, translate: Translate): Pr
 }
 
 function handleEmailError(error: unknown, translate: Translate): void {
+  console.error("Error sending email:", error);
   if (error instanceof DOMException && error.name === "AbortError") {
     return;
   }
@@ -84,10 +90,41 @@ interface ShareActionsProps {
   svgRef: RefObject<SVGSVGElement | null>;
 }
 
+function useQrFile(svgRef: RefObject<SVGSVGElement | null>, url: string) {
+  const [qrFile, setQrFile] = useState<File | undefined>();
+  // Pre-rasterize the QR <svg> to a PNG File once it is mounted (and whenever
+  // The share URL changes). The Web Share API requires `navigator.share()` to
+  // Be called within a user gesture; rasterizing eagerly means the click
+  // Handler can invoke `share()` synchronously without awaiting an image
+  // Decode that would expire the transient user activation.
+  useEffect(() => {
+    let cancelled = false;
+    const svg = svgRef.current;
+    if (svg === null) {
+      return;
+    }
+    void (async () => {
+      try {
+        const file = await svgElementToPngFile(svg, QR_SIZE, QR_FILENAME);
+        if (!cancelled) {
+          setQrFile(file);
+        }
+      } catch {
+        // Rasterization failed — the share button stays disabled.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [svgRef, url]);
+  return qrFile;
+}
+
 function useShareActions(url: string, svgRef: RefObject<SVGSVGElement | null>) {
   const { t: translate } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
+  const qrFile = useQrFile(svgRef, url);
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(url);
     setCopied(true);
@@ -95,21 +132,19 @@ function useShareActions(url: string, svgRef: RefObject<SVGSVGElement | null>) {
     setTimeout(() => setCopied(false), COPIED_FEEDBACK_MS);
   }, [url, translate]);
   const handleSendEmail = useCallback(async () => {
-    const svg = svgRef.current;
-    if (svg === null) {
+    if (qrFile === undefined) {
       return;
     }
     setSending(true);
     try {
-      const file = await svgElementToPngFile(svg, QR_SIZE, QR_FILENAME);
-      await dispatchQrFile(file, url, translate);
+      await dispatchQrFile(qrFile, url, translate);
     } catch (error) {
       handleEmailError(error, translate);
     } finally {
       setSending(false);
     }
-  }, [svgRef, url, translate]);
-  return { copied, sending, handleCopy, handleSendEmail };
+  }, [qrFile, url, translate]);
+  return { copied, sending, qrFileReady: qrFile !== undefined, handleCopy, handleSendEmail };
 }
 
 function CopyLinkButton({
@@ -130,26 +165,31 @@ function CopyLinkButton({
 
 function SendEmailButton({
   sending,
+  disabled,
   onClick,
 }: {
   sending: boolean;
+  disabled: boolean;
   onClick: () => void;
 }): React.JSX.Element {
   const { t: translate } = useTranslation();
   return (
-    <Button type="button" variant="outline" disabled={sending} onClick={onClick}>
+    <Button type="button" variant="outline" disabled={sending || disabled} onClick={onClick}>
       <Mail className="size-4" />
-      {sending ? translate("share.sending") : translate("share.sendToEmail")}
+      {sending ? translate("share.sending") : translate("share.share")}
     </Button>
   );
 }
 
 function ShareActions({ url, svgRef }: ShareActionsProps): React.JSX.Element {
-  const { copied, sending, handleCopy, handleSendEmail } = useShareActions(url, svgRef);
+  const { copied, sending, qrFileReady, handleCopy, handleSendEmail } = useShareActions(
+    url,
+    svgRef,
+  );
   return (
     <Dialog.DialogFooter>
       <CopyLinkButton copied={copied} onClick={handleCopy} />
-      <SendEmailButton sending={sending} onClick={handleSendEmail} />
+      <SendEmailButton sending={sending} disabled={!qrFileReady} onClick={handleSendEmail} />
     </Dialog.DialogFooter>
   );
 }
