@@ -31,6 +31,7 @@ public sealed class ImageShareWebApplicationFactory : TestWebApplicationFactory<
                 ["Jwt:Audience"] = "ImageShare",
                 ["Jwt:SigningKey"] = "test-signing-key-must-be-at-least-32-characters-long",
                 ["Storage:BasePath"] = "images",
+                ["DataProtection:KeyPath"] = "dataprotection-keys",
                 ["RateLimit:PermitLimit"] = "3",
                 ["RateLimit:WindowSeconds"] = "60",
             });

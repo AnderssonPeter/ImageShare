@@ -13,7 +13,11 @@ public static class DataProtectionExtensions
             .BindConfiguration(SectionName)
             .Validated();
 
-        var keyPath = configuration[$"{SectionName}:{nameof(DataProtectionOptions.KeyPath)}"] ?? DataProtectionOptions.DefaultKeyPath;
+        var keyPath = configuration[$"{SectionName}:{nameof(DataProtectionOptions.KeyPath)}"];
+        if (string.IsNullOrWhiteSpace(keyPath))
+        {
+            keyPath = DataProtectionOptions.DefaultKeyPath;
+        }
 #pragma warning disable RS0030
         var keyDirectory = Path.GetFullPath(keyPath);
         if (!Directory.Exists(keyDirectory))

@@ -46,7 +46,7 @@ public static class AuthenticationExtensions
             options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         })
         .AddPolicyScheme(DefaultScheme, null, ConfigurePolicyScheme)
-        .AddCookie()
+        .AddCookie(ConfigureCookie)
         .AddOpenIdConnect(ConfigureOpenIdConnect)
         .AddApiKeyInHeaderOrQueryParams<ApiKeyProvider>(ConfigureApiKey);
 
@@ -77,6 +77,22 @@ public static class AuthenticationExtensions
         };
     }
 
+    private static void ConfigureCookie(CookieAuthenticationOptions options)
+    {
+        options.Events = new CookieAuthenticationEvents
+        {
+            OnSigningIn = context =>
+            {
+                if (context.Properties.ExpiresUtc.HasValue)
+                {
+                    context.Properties.IsPersistent = true;
+                }
+
+                return Task.CompletedTask;
+            },
+        };
+    }
+
     private static void ConfigureApiKey(ApiKeyOptions options)
     {
         options.Realm = "ImageShare";
@@ -87,6 +103,7 @@ public static class AuthenticationExtensions
     private static void ConfigureOpenIdConnect(OpenIdConnectOptions options)
     {
         options.SaveTokens = false;
+        options.UseTokenLifetime = true;
         options.Scope.Add("openid");
         options.Scope.Add("profile");
         options.Scope.Add("email");
