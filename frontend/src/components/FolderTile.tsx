@@ -19,7 +19,7 @@ import { tw } from "@lib/utils";
 import { type CSSProperties, useCallback } from "react";
 import { useTranslation } from "@lib/i18n";
 
-const NAME_CLASS = tw`pointer-events-none absolute bottom-1 left-1 z-[1] text-sm leading-none text-tile-foreground`;
+const NAME_CLASS = tw`pointer-events-none absolute bottom-1 left-1 z-[1] text-sm leading-none text-white [text-shadow:0_0_2px_black,0_0_4px_black]`;
 
 interface FolderTileProps {
   /** Folder entry to render (must have `type === 'Folder'`). */

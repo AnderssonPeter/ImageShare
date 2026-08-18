@@ -196,6 +196,7 @@ describe("shareLinkResult share via Web Share API", () => {
       files: [file],
       title: "ImageShare link",
       text: SHARE_URL,
+      url: SHARE_URL,
     });
     expect(mockToastSuccess).toHaveBeenCalledWith("Shared");
   }, 2000);
