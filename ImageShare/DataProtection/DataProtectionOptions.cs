@@ -6,8 +6,8 @@ namespace ImageShare.DataProtection;
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
 public sealed class DataProtectionOptions
 {
-    public const string DefaultKeyPath = "dataprotection-keys";
+    public const string DefaultKeyStoragePath = "dataprotection-keys";
 
     [Required]
-    public string KeyPath { get; set; } = DefaultKeyPath;
+    public string KeyStoragePath { get; set; } = DefaultKeyStoragePath;
 }

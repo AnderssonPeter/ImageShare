@@ -1,5 +1,4 @@
-﻿using ImageShare.Authentication;
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,7 +30,7 @@ public sealed class ImageShareWebApplicationFactory : TestWebApplicationFactory<
                 ["Jwt:Audience"] = "ImageShare",
                 ["Jwt:SigningKey"] = "test-signing-key-must-be-at-least-32-characters-long",
                 ["Storage:BasePath"] = "images",
-                ["DataProtection:KeyPath"] = "dataprotection-keys",
+                ["DataProtection:KeyStoragePath"] = "dataprotection-keys",
                 ["RateLimit:PermitLimit"] = "3",
                 ["RateLimit:WindowSeconds"] = "60",
             });

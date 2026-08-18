@@ -30,7 +30,7 @@ earlier):
 
 See the [Settings](#settings) section for every supported key. At minimum you
 must supply an OIDC authority, client id/secret, a JWT signing key (≥ 32
-characters) and a storage path.
+characters), a storage path, and a Data Protection key storage path.
 
 ### 3. Run with Docker Compose
 
@@ -56,10 +56,12 @@ services:
       Jwt__Issuer: ImageShare
       Jwt__Audience: ImageShare
       Storage__BasePath: /data/images
+      DataProtection__KeyStoragePath: /data/keys
       ReverseProxy__Enabled: "true"
       ReverseProxy__KnownProxies__0: "172.16.0.0/12"   # Docker bridge network
     volumes:
       - ./image-share/data:/data/images
+      - ./image-share/keys:/data/keys
     secrets:
       - OpenIdConnect__ClientSecret
       - Jwt__SigningKey
@@ -162,6 +164,19 @@ The directory is created on startup if it does not exist.
 | Path | Type | Default | Description |
 | --- | --- | --- | --- |
 | `Storage:BasePath` | string | `images` | Root directory for the image library. **Required.** Mount a volume here in containers. |
+
+#### `DataProtection`
+
+ASP.NET Core Data Protection protects the authentication cookie (and other
+protected data) with a rotating key ring. The key ring must be persisted to a
+Docker volume so that cookies survive container restarts; otherwise users are
+logged out on every restart.
+
+The directory is created on startup if it does not exist.
+
+| Path | Type | Default | Description |
+| --- | --- | --- | --- |
+| `DataProtection:KeyStoragePath` | string | — | Directory where the Data Protection key ring is persisted. **Required.** Mount a volume here in containers. |
 
 #### `ImageFormats`
 
