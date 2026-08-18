@@ -1,6 +1,7 @@
 ﻿using ImageShare;
 using ImageShare.Authentication;
 using ImageShare.Browsing;
+using ImageShare.DataProtection;
 using ImageShare.Errors;
 using ImageShare.Health;
 using ImageShare.ImageConversion;
@@ -30,6 +31,7 @@ builder.Services.AddImageShareOpenApi();
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default));
 builder.Services.AddCustomErrors();
 builder.Services.AddAuthentications();
+builder.Services.AddDataProtectionKeys(builder.Configuration);
 builder.Services.AddImageShareFilter();
 builder.Services.AddUser();
 builder.Services.AddJwtTokens();
