@@ -14,6 +14,7 @@ import { type ReactNode, createContext, useContext } from "react";
 import { type UseQueryResult, useQuery } from "@tanstack/react-query";
 import { type User, getCurrentUser } from "@lib/api/generated";
 import { ensureUser } from "@lib/api/guards";
+import { storeAuthSource } from "@lib/authSource";
 
 /** Query key for the current-user query (shared with route-level prefetch). */
 export const CURRENT_USER_QUERY_KEY = ["current-user"] as const;
@@ -24,7 +25,11 @@ export function currentUserQueryOptions() {
     queryKey: CURRENT_USER_QUERY_KEY,
     queryFn: async ({ signal }: { signal: AbortSignal }): Promise<User> => {
       const { data } = await getCurrentUser({ signal });
-      return ensureUser(data);
+      const user = ensureUser(data);
+      if (user.authenticationSource !== undefined) {
+        storeAuthSource(user.authenticationSource);
+      }
+      return user;
     },
   };
 }

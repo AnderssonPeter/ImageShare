@@ -91,6 +91,9 @@ const en = {
     redirecting: "Redirecting to sign in…",
     notFoundMessage: "We couldn't find what you were looking for.",
     unknown: "Something went wrong.",
+    sessionExpired: "Your session has expired.",
+    noAccess: "You no longer have access.",
+    signIn: "Sign in",
   },
   usageAgreement: {
     title: "Usage agreement",

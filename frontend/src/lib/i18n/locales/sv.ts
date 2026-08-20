@@ -91,6 +91,9 @@ const sv = {
     redirecting: "Omdirigerar till inloggning…",
     notFoundMessage: "Vi kunde inte hitta det du letade efter.",
     unknown: "Något gick fel.",
+    sessionExpired: "Din session har löpt ut.",
+    noAccess: "Du har inte längre åtkomst.",
+    signIn: "Logga in",
   },
   usageAgreement: {
     title: "Användaravtal",
