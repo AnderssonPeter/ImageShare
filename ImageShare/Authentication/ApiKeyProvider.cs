@@ -22,6 +22,7 @@ internal sealed class ApiKeyProvider(
             {
                 new(ImageShareClaims.Name, name),
                 new(ImageShareClaims.ImageShareFilter, entry.Filter),
+                new(ImageShareClaims.AuthenticationSource, AuthenticationSource.ApiKey.ToString()),
             };
 
             if (entry.IsAdmin)

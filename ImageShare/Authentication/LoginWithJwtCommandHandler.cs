@@ -20,7 +20,7 @@ internal sealed class LoginWithJwtCommandHandler(
             .Single(claim => claim.Type.Equals(ImageShareClaims.Name, StringComparison.OrdinalIgnoreCase));
 
         var identity = new ClaimsIdentity(
-            new[] { nameClaim, filterClaim },
+            new[] { nameClaim, filterClaim, new Claim(ImageShareClaims.AuthenticationSource, AuthenticationSource.Jwt.ToString()) },
             CookieAuthenticationDefaults.AuthenticationScheme);
 
         var context = httpContextAccessor.HttpContext ?? throw new InvalidOperationException("Failed to get http context");

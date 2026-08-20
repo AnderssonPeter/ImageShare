@@ -7,6 +7,7 @@ public interface IUser
     bool IsAuthenticated { get; }
     bool IsAdmin { get; }
     string Name { get; }
+    AuthenticationSource AuthenticationSource { get; }
     bool CanAccessFolder(string folder);
     void EnsureAuthenticated();
     void EnsureAdmin();

@@ -13,6 +13,7 @@ public class User : IUser
     public required bool IsAuthenticated { get; init; }
     public required bool IsAdmin { get; init; }
     public required string Name { get; init; }
+    public required AuthenticationSource AuthenticationSource { get; init; }
     private string ImageShareFilter { get; init; }
 
     public bool CanAccessFolder(string folder) =>
@@ -57,6 +58,7 @@ public class User : IUser
             IsAuthenticated = false;
             IsAdmin = false;
             Name = "";
+            AuthenticationSource = AuthenticationSource.None;
             ImageShareFilter = "";
             return;
         }
@@ -67,6 +69,7 @@ public class User : IUser
             throw new InvalidOperationException("Failed to get username");
 
         var imageShareFilter = context.User.Claims.Single(c => c.Type.Equals(ImageShareClaims.ImageShareFilter, StringComparison.OrdinalIgnoreCase)).Value;
+        var authenticationSource = context.User.Claims.Single(c => c.Type.Equals(ImageShareClaims.AuthenticationSource, StringComparison.OrdinalIgnoreCase)).Value;
 
         var isAdmin = context.User.Claims
             .Where(c => c.Type.Equals(ImageShareClaims.Role, StringComparison.OrdinalIgnoreCase) ||
@@ -76,6 +79,7 @@ public class User : IUser
         IsAuthenticated = true;
         IsAdmin = isAdmin;
         Name = name;
+        AuthenticationSource = Enum.Parse<AuthenticationSource>(authenticationSource, ignoreCase: true);
         ImageShareFilter = imageShareFilter;
     }
 }

@@ -7,4 +7,5 @@ public static class ImageShareClaims
     public const string ImageShareFilter = "image_share_filter";
     public const string Role = "role";
     public const string Roles = "roles";
+    public const string AuthenticationSource = "authentication_source";
 }

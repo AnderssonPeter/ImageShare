@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using ImageMagick;
+using ImageShare.Authentication;
 using ImageShare.Browsing;
 
 namespace ImageShare.Tests;
@@ -255,5 +256,27 @@ public class IntegrationTests : IntegrationTestBase
         // Assert
         await Assert.That(downloadResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
         await Assert.That(imageResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+    }
+
+    [Test]
+    public async Task User_WithApiKey_ReturnsApiKeySource()
+    {
+        // Act
+        var response = await CreateClientWithApiKey().GetAsync("/api/authentication/user");
+
+        // Assert
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var user = await response.Content.ReadFromJsonAsync<CurrentUser>();
+        await Assert.That(user).IsNotNull();
+        await Assert.That(user!.IsAuthenticated).IsTrue();
+        await Assert.That(user.AuthenticationSource).IsEqualTo(AuthenticationSource.ApiKey);
+    }
+
+    private sealed class CurrentUser
+    {
+        public bool IsAuthenticated { get; set; }
+        public bool IsAdmin { get; set; }
+        public string? Name { get; set; }
+        public AuthenticationSource AuthenticationSource { get; set; }
     }
 }

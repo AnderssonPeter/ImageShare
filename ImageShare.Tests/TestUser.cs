@@ -9,6 +9,7 @@ public sealed class TestUser : IUser
     public bool IsAuthenticated { get; set; } = true;
     public bool IsAdmin { get; set; }
     public string Name { get; set; } = "test";
+    public AuthenticationSource AuthenticationSource { get; set; } = AuthenticationSource.None;
     private readonly HashSet<string> allowedFolders = [];
 
     public TestUser Allow(string folder)
