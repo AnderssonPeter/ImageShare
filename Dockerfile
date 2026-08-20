@@ -8,7 +8,7 @@ WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 HEALTHCHECK --interval=30s --timeout=1s --start-period=15s --start-interval=3s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
+  CMD curl -f http://localhost:8080/api/health || exit 1
 
 
 # This stage is used to build the service project
