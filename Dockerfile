@@ -7,7 +7,7 @@ USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=1s --start-period=15s --start-interval=3s --retries=3 \
   CMD curl -f http://localhost:8080/health || exit 1
 
 
