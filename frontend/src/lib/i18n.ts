@@ -29,6 +29,18 @@ export { useTranslation } from "react-i18next";
 /** Shorthand for the `t` function returned by `useTranslation()`. */
 export type Translate = ReturnType<typeof useTranslation>["t"];
 
+/** Recursively extracts all dot-separated key paths from a nested translation object. */
+type KeyPaths<Resource, Prefix extends string = ""> = Resource extends string | readonly unknown[]
+  ? Prefix
+  : {
+      [Key in keyof Resource & string]: Prefix extends ""
+        ? KeyPaths<Resource[Key], Key>
+        : KeyPaths<Resource[Key], `${Prefix}.${Key}`>;
+    }[keyof Resource & string];
+
+/** All valid translation keys, derived from the `en` resource. */
+export type TranslationKey = KeyPaths<typeof en>;
+
 /** `localStorage` key for the user's explicit language override. */
 const LANGUAGE_STORAGE_KEY = "language";
 

@@ -79,6 +79,9 @@ const sv = {
   imageViewer: {
     share: "Dela bild",
     close: "Stäng",
+    download: "Hämta bild",
+    downloadStarted: "Nedladdning startad",
+    downloadFailed: "Nedladdning misslyckades",
   },
   tiles: {
     openFolder: "Öppna mapp {{name}}",

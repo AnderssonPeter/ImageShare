@@ -1,12 +1,6 @@
-/**
- * ImageViewerOverlayButtons — the close and share affordances rendered in the
- * image viewer overlay.
- *
- * The share control is the shared `ShareButton` in its `overlay` variant; it is
- * omitted when `onShare` is undefined (i.e. the current user is not an admin).
- */
 import Button from "@components/ui/Button";
 import ShareButton from "@components/ShareButton";
+import ImageDownloadButton from "@components/ImageDownloadButton";
 import { X } from "lucide-react";
 import { tw } from "@lib/utils";
 import { useTranslation } from "@lib/i18n";
@@ -17,16 +11,23 @@ const ICON_CLASS = tw`size-4`;
 interface ImageViewerOverlayButtonsProps {
   onClose: () => void;
   onShare: (() => void) | undefined;
+  downloadImagePath: string | undefined;
+  downloadImageName: string | undefined;
 }
 
 export default function ImageViewerOverlayButtons({
   onClose,
   onShare,
+  downloadImagePath,
+  downloadImageName,
 }: ImageViewerOverlayButtonsProps): React.JSX.Element {
   const { t: translate } = useTranslation();
   return (
     <>
       <ShareButton onClick={onShare} variant="overlay" ariaLabel={translate("imageViewer.share")} />
+      {downloadImagePath !== undefined && downloadImageName !== undefined && (
+        <ImageDownloadButton imagePath={downloadImagePath} imageName={downloadImageName} />
+      )}
       <Button
         variant="ghost"
         size="icon-sm"

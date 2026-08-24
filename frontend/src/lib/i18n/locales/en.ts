@@ -79,6 +79,9 @@ const en = {
   imageViewer: {
     share: "Share image",
     close: "Close",
+    download: "Download image",
+    downloadStarted: "Download started",
+    downloadFailed: "Download failed",
   },
   tiles: {
     openFolder: "Open folder {{name}}",

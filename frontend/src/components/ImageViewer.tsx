@@ -36,6 +36,7 @@ interface CarouselApiHandlerOptions {
   images: FolderEntry[];
   imageName: string;
   onImageChange: ((name: string) => void) | undefined;
+  onCurrentEntryChange: ((entry: FolderEntry) => void) | undefined;
   onReady: ReadyHandler;
 }
 
@@ -139,14 +140,7 @@ function useProgressiveLoading(
   return { handleSlideLoaded, effectiveRange };
 }
 
-function useCarouselApiHandler(options: CarouselApiHandlerOptions): {
-  opts: { startIndex: number };
-  setApi: (api: CarouselApi) => void;
-  currentIndex: number;
-} {
-  const { images, imageName, onImageChange, onReady } = options;
-  const latestRef = useRef({ images, imageName, onImageChange });
-  latestRef.current = { images, imageName, onImageChange };
+function useStartIndex(images: FolderEntry[], imageName: string): number {
   const startIndexRef = useRef<number | null>(null);
   if (startIndexRef.current === null) {
     startIndexRef.current = Math.max(
@@ -154,7 +148,23 @@ function useCarouselApiHandler(options: CarouselApiHandlerOptions): {
       images.findIndex((entry) => entry.name === imageName),
     );
   }
-  const startIndex = startIndexRef.current;
+  return startIndexRef.current;
+}
+
+function useCarouselApiHandler({
+  images,
+  imageName,
+  onImageChange,
+  onCurrentEntryChange,
+  onReady,
+}: CarouselApiHandlerOptions): {
+  opts: { startIndex: number };
+  setApi: (api: CarouselApi) => void;
+  currentIndex: number;
+} {
+  const latestRef = useRef({ images, imageName, onImageChange, onCurrentEntryChange });
+  latestRef.current = { images, imageName, onImageChange, onCurrentEntryChange };
+  const startIndex = useStartIndex(images, imageName);
   const [currentIndex, setCurrentIndex] = useState(startIndex);
   const setApi = useCallback(
     (api: CarouselApi) => {
@@ -163,16 +173,26 @@ function useCarouselApiHandler(options: CarouselApiHandlerOptions): {
         return;
       }
       const embla = api;
+      function emitCurrent(index: number): void {
+        const latest = latestRef.current;
+        const entry = latest.images[index];
+        if (entry !== undefined) {
+          latest.onCurrentEntryChange?.(entry);
+        }
+      }
       function onSelect() {
         const index = embla.selectedScrollSnap();
         setCurrentIndex(index);
+        emitCurrent(index);
         const latest = latestRef.current;
         const name = latest.images[index]?.name;
         if (name !== undefined && name !== latest.imageName) {
           latest.onImageChange?.(name);
         }
       }
-      setCurrentIndex(embla.selectedScrollSnap());
+      const initialIndex = embla.selectedScrollSnap();
+      setCurrentIndex(initialIndex);
+      emitCurrent(initialIndex);
       embla.on("select", onSelect);
     },
     [onReady],
@@ -184,6 +204,7 @@ interface ImageCarouselProps {
   images: FolderEntry[];
   imageName: string;
   onImageChange?: (name: string) => void;
+  onCurrentEntryChange?: (entry: FolderEntry) => void;
   onCarouselReady: ReadyHandler;
 }
 
@@ -191,6 +212,7 @@ function ImageCarousel({
   images,
   imageName,
   onImageChange,
+  onCurrentEntryChange,
   onCarouselReady,
 }: ImageCarouselProps): React.JSX.Element {
   const canLoadImages = useCanLoadImages();
@@ -198,6 +220,7 @@ function ImageCarousel({
     images,
     imageName,
     onImageChange,
+    onCurrentEntryChange,
     onReady: onCarouselReady,
   });
   const { handleSlideLoaded, effectiveRange } = useProgressiveLoading(currentIndex, images.length);
@@ -247,18 +270,28 @@ export default function ImageViewer({
   const { data } = useFolderContent(folderPath);
   const images = useMemo(() => (data ?? []).filter((entry) => isImage(entry)), [data]);
   const [carouselApi, setCarouselApi] = useState<CarouselApi | undefined>();
+  const [currentEntry, setCurrentEntry] = useState<FolderEntry | undefined>();
   const handleCarouselReady = useCallback((api: CarouselApi | undefined) => {
     setCarouselApi(api);
+  }, []);
+  const handleCurrentEntryChange = useCallback((entry: FolderEntry) => {
+    setCurrentEntry(entry);
   }, []);
   useKeyboardNavigation(carouselApi, onClose);
   return (
     <div className={OVERLAY_CLASS}>
-      <ImageViewerOverlayButtons onClose={onClose} onShare={onShare} />
+      <ImageViewerOverlayButtons
+        onClose={onClose}
+        onShare={onShare}
+        downloadImagePath={currentEntry?.path}
+        downloadImageName={currentEntry?.name}
+      />
       {images.length > 0 && (
         <ImageCarousel
           images={images}
           imageName={imageName}
           onImageChange={onImageChange}
+          onCurrentEntryChange={handleCurrentEntryChange}
           onCarouselReady={handleCarouselReady}
         />
       )}

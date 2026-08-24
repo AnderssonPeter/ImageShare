@@ -16,7 +16,7 @@ import Checkbox from "@components/ui/Checkbox";
 import Dialog from "@components/ui/Dialog";
 import RadioGroup from "@components/ui/RadioGroup";
 import { useForm } from "@tanstack/react-form";
-import { type Translate, useTranslation } from "@lib/i18n";
+import { type Translate, type TranslationKey, useTranslation } from "@lib/i18n";
 
 interface DownloadFormValues {
   recursive: boolean;
@@ -50,7 +50,7 @@ const FORMAT_KEYS = [
     labelKey: "download.formats.all",
     descriptionKey: "download.formatDescriptions.all",
   },
-] as const;
+] satisfies { value: string; labelKey: TranslationKey; descriptionKey: TranslationKey }[];
 
 function buildFormatOptions(translate: Translate): readonly FormatOption[] {
   return FORMAT_KEYS.map((option) => ({
