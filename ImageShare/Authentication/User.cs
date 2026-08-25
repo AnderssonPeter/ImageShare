@@ -69,7 +69,7 @@ public class User : IUser
             throw new InvalidOperationException("Failed to get username");
 
         var imageShareFilter = context.User.Claims.Single(c => c.Type.Equals(ImageShareClaims.ImageShareFilter, StringComparison.OrdinalIgnoreCase)).Value;
-        var authenticationSource = context.User.Claims.Single(c => c.Type.Equals(ImageShareClaims.AuthenticationSource, StringComparison.OrdinalIgnoreCase)).Value;
+        var authenticationSource = context.User.Claims.SingleOrDefault(c => c.Type.Equals(ImageShareClaims.AuthenticationSource, StringComparison.OrdinalIgnoreCase))?.Value ?? AuthenticationSource.None.ToString();
 
         var isAdmin = context.User.Claims
             .Where(c => c.Type.Equals(ImageShareClaims.Role, StringComparison.OrdinalIgnoreCase) ||
